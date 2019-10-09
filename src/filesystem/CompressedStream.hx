@@ -22,8 +22,6 @@ class CompressedStream extends BufferedStream {
         compressedBuffer = new UInt8Array(inflateBlockSize);
         this.decompressedSize = decompressedSize;
 
-        trace('DECOMPRESSED SIZE: $decompressedSize');
-
         inflateState = new ZStream();
 
         var wbits = 15;
@@ -36,9 +34,6 @@ class CompressedStream extends BufferedStream {
             throw "Failed to initialize inflate";
         }
     }
-
-    var bigBuffer:UInt8Array = new UInt8Array(1000000);
-    var pos = 0;
 
     override public function readMore(data:UInt8Array, size:Int):Int {
         if (inflateState == null) {
@@ -56,14 +51,12 @@ class CompressedStream extends BufferedStream {
             if (inflateState.avail_in == 0) {
                 var availSize = gzipStream.read(compressedBuffer, compressedBuffer.length);
 
-                bigBuffer.getData().bytes.blit(pos, compressedBuffer.getData().bytes, 0, compressedBuffer.length);
-                pos += availSize;
-
                 if (availSize != compressedBuffer.length) {
                     gzipStream = null;
                 }
                 inflateState.avail_in = availSize;
-                inflateState.input = bigBuffer;
+                inflateState.input = compressedBuffer;
+                inflateState.next_in = 0;
             }
 
             var ret:Int = Inflate.inflate(inflateState, Flush.Z_NO_FLUSH);
