@@ -1,5 +1,6 @@
 package ;
 
+import gui.DefFile;
 import filesystem.CompressedStream;
 import filesystem.InputStream;
 import filesystem.FileInputStream;
@@ -18,12 +19,14 @@ class Game {
     var fileInput:FileInput;
 
     public function new() {
-        parseLod("H3bitmap.lod");
-        var fileName = "BoEHall1.pcx";
+        parseLod("H3sprite.lod");
+        var fileName = "edg.def";
         trace('Reading $fileName');
         var data = getInputStream(fileName).readAll();
         trace('File $fileName was read successfully!');
         saveFile(fileName, data.data.getData().bytes);
+
+        var defFile = new DefFile(data.data.getData().bytes);
     }
 
     private function parseLod(path:String) {
@@ -43,7 +46,7 @@ class Game {
             var name = fileInput.readString(16);
             var index = name.indexOf(String.fromCharCode(0));
             if(index > 0) {
-                name = name.substring(0, index);
+                name = name.substring(0, index).toLowerCase();
             }
             archiveEntry.name = name;
             archiveEntry.offset = fileInput.readInt32();
