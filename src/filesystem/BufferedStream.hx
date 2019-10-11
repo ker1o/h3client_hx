@@ -67,8 +67,7 @@ class BufferedStream extends InputStream {
         var toRead = Std.int(Math.min(size, buffer.length - position));
         data.getData().bytes.blit(0, buffer.getData().bytes, start, toRead);
 
-        trace(start, size);
-        trace(data.getData().bytes.toHex());
+//        trace(data.getData().bytes.toHex());
         position += toRead;
         return size;
     }
