@@ -1,4 +1,5 @@
-package ;
+package filesystem;
+
 class ArchiveEntry {
 
     public var name:String;

@@ -96,7 +96,7 @@ class DefFile {
     }
 
     public function loadFrame(frame:Int, group:Int, loader:ImageLoader) {
-        trace("DefFile.loadFrame($frame, $group)");
+        trace('DefFile.loadFrame($frame, $group)');
         var it:Array<Int> = _offset.get(group);
         var pos = it[frame];
         var sprite:SpriteDef = new SpriteDef();
@@ -110,8 +110,6 @@ class DefFile {
         sprite.height = _data.getInt32(pos); pos += 4;
         sprite.leftMargin = _data.getInt32(pos); pos += 4;
         sprite.topMargin = _data.getInt32(pos); pos += 4;
-
-        trace(sprite);
 
         var currentOffset:Int = 7 * 4;
 

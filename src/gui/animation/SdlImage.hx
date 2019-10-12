@@ -1,6 +1,7 @@
 package gui.animation;
 
 import gui.geometries.Point;
+import gui.geometries.Rect;
 
 class SdlImage implements IImage {
     public var margins:Point;
@@ -11,5 +12,12 @@ class SdlImage implements IImage {
         defFile.loadFrame(frame, group, imageLoader);
     }
 
+    public function drawToPos(where:Dynamic, posX:Int, posY:Int, src:Rect, alpha:Int = 255):Void {
+        trace('SdlImage.drawToPos($posX, $posY, $src, $alpha)');
+    }
+
+    public function drawToRect(where:Dynamic, dest:Rect, src:Rect, alpha:Int = 255):Void {
+        trace('SdlImage.drawToRect($dest, $src, $alpha)');
+    }
 
 }

@@ -46,7 +46,7 @@ class Animation {
     }
 
     public function loadFrame(frame:Int, group:Int):Bool {
-        trace("Animation.loadFrame($frame, $group)");
+        trace('Animation.loadFrame($frame, $group)');
 
         var image = getImage(frame, group, false);
         if (image != null) {

@@ -1,14 +1,14 @@
 package gui.animation;
 
-import haxe.io.UInt8Array;
+import filesystem.ArchiveEntry;
 import filesystem.CompressedStream;
-import filesystem.InputStream;
 import filesystem.FileInputStream;
+import filesystem.InputStream;
+import haxe.io.UInt8Array;
+import sys.FileSystem;
+import sys.io.File;
 import sys.io.FileInput;
 import sys.io.FileSeek;
-import sys.io.File;
-import sys.FileSystem;
-import haxe.io.Bytes;
 
 class FileCache {
 
@@ -39,7 +39,7 @@ class FileCache {
 
         fileInput.seek(0x5C, FileSeek.SeekBegin);
         for(i in 0...totalFiles) {
-            var archiveEntry = new ArchiveEntry();
+            var archiveEntry = new ArchiveEntryO();
             var name = fileInput.readString(16);
             var index = name.indexOf(String.fromCharCode(0));
             if(index > 0) {
