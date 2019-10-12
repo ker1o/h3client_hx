@@ -87,31 +87,22 @@ class DefFile {
         return ret;
     }
 
-    public static function strComponents(bitColor:Int):Int {
-        // we have to invert it because of endian
-        var b = (bitColor & 0x00FF0000) >> 16;
-        var g = (bitColor & 0x0000FF00) >> 8;
-        var r = (bitColor & 0x000000FF);
-        return r << 16 | g << 8 | b;
-    }
-
     public function loadFrame(frame:Int, group:Int, loader:ImageLoader) {
-        trace('DefFile.loadFrame($frame, $group)');
+//        trace('DefFile.loadFrame($frame, $group)');
         var it:Array<Int> = _offset.get(group);
         var pos = it[frame];
         var sprite:SpriteDef = new SpriteDef();
 
-        pos += 4;
+        // first 4 bytes is SpriteDef.size
+        sprite.format = _data.getInt32(pos + 1 * 4);    /// format in which pixel data is stored
+        sprite.fullWidth = _data.getInt32(pos + 2 * 4); /// full width and height of frame, including borders
+        sprite.fullHeight = _data.getInt32(pos + 3 * 4);
+        sprite.width = _data.getInt32(pos + 4 * 4);      /// width and height of pixel data, borders excluded
+        sprite.height = _data.getInt32(pos + 5 * 4);
+        sprite.leftMargin = _data.getInt32(pos + 6 * 4);
+        sprite.topMargin = _data.getInt32(pos + 7 * 4);
 
-        sprite.format = _data.getInt32(pos); pos += 4;    /// format in which pixel data is stored
-        sprite.fullWidth = _data.getInt32(pos); pos += 4; /// full width and height of frame, including borders
-        sprite.fullHeight = _data.getInt32(pos); pos += 4;
-        sprite.width = _data.getInt32(pos); pos += 4;     /// width and height of pixel data, borders excluded
-        sprite.height = _data.getInt32(pos); pos += 4;
-        sprite.leftMargin = _data.getInt32(pos); pos += 4;
-        sprite.topMargin = _data.getInt32(pos); pos += 4;
-
-        var currentOffset:Int = 7 * 4;
+        var currentOffset:Int = 8 * 4;
 
         if (sprite.format == 1 && sprite.width > sprite.fullWidth && sprite.height > sprite.fullHeight) {
             sprite.leftMargin = 0;
@@ -124,14 +115,19 @@ class DefFile {
 
         var baseOffset = currentOffset;
 
+        trace('${sprite.format}');
+
         loader.init(new Point(sprite.width, sprite.height), new Point(sprite.leftMargin, sprite.topMargin), new Point(sprite.fullWidth, sprite.fullHeight), _palette);
+
+        // specific: add empty lines for realizing top margin
+        loader.fillWithColor(sprite.topMargin * sprite.fullWidth);
 
         switch (sprite.format) {
             case 0:
                 //pixel data is not compressed, copy data to surface
                 for(i in 0...sprite.height) {
                     loader.load(sprite.width, _data, pos + currentOffset);
-                    currentOffset += sprite.width * 4;
+                    currentOffset += sprite.width;
                     loader.endLine();
                 }
             case 1:
@@ -140,22 +136,29 @@ class DefFile {
                 currentOffset += 4 * sprite.height;
 
                 for (i in 0...sprite.height) {
+                    // specific: add empty pixels for realizing left margin
+                    loader.fillWithColor(sprite.leftMargin);
+
                     //get position of the line
                     currentOffset = baseOffset + _data.getInt32(RWEntriesLoc + i * 4);
                     var totalRowLength:Int = 0;
 
                     while (totalRowLength < sprite.width) {
-                        var segmentType = _data.get(currentOffset++);
-                        var length = _data.getInt32(currentOffset++) + 1;
+                        var segmentType = _data.get(pos + currentOffset); currentOffset++;
+                        var length = _data.get(pos + currentOffset) + 1; currentOffset++;
 
                         if (segmentType == 0xff) {
                             loader.load(length, _data, pos + currentOffset);
                             currentOffset += length;
                         } else {// RLE
-                            loader.load(length, _data, segmentType);
+//                            loader.load(length, _data, segmentType);
+                            loader.fillWithColor(length);
                         }
                         totalRowLength += length;
                     }
+                    // specific: add empty pixels for realizing right margin
+                    loader.fillWithColor(sprite.fullWidth - sprite.leftMargin - sprite.width);
+
                     loader.endLine();
                 }
             case 2:
@@ -164,19 +167,27 @@ class DefFile {
                 for (i in 0...sprite.height) {
                     var totalRowLength:Int = 0;
 
+                    // specific: add empty pixels for realizing left margin
+                    loader.fillWithColor(sprite.leftMargin);
+
                     while (totalRowLength < sprite.width) {
-                        var segment = _data.get(currentOffset++);
+                        var segment:Int = _data.get(pos + currentOffset); currentOffset++;
                         var code = Std.int(segment / 32);
-                        var length = segment & 31 + 1;
+                        var length = (segment & 31) + 1;
 
                         if (code == 7) {// raw data
                             loader.load(length, _data, pos + currentOffset);
                             currentOffset += length;
                         } else {// RLE
-                            loader.load(length, _data, code);
+                            // original line is commented
+//                            loader.load(length, _data, code);
+                            loader.fillWithColor(length);
                         }
                         totalRowLength += length;
                     }
+                    // specific: add empty pixels for realizing right margin
+                    loader.fillWithColor(sprite.fullWidth - sprite.leftMargin - sprite.width);
+
                     loader.endLine();
                 }
             case 3:
@@ -184,23 +195,33 @@ class DefFile {
                     currentOffset = baseOffset + _data.getUInt16(pos + baseOffset + i * 2 * Std.int(sprite.width / 32));
                     var totalRowLength:Int = 0;
 
+                    // specific: add empty pixels for realizing left margin
+                    loader.fillWithColor(sprite.leftMargin);
+
                     while (totalRowLength < sprite.width) {
-                        var segment = _data.get(currentOffset++);
+                        var segment = _data.get(pos + currentOffset); currentOffset++;
                         var code:Int = Std.int(segment / 32);
-                        var length = segment & 31 + 1;
+                        var length = (segment & 31) + 1;
 
                         if (code == 7) {// raw data
                             loader.load(length, _data, pos + currentOffset);
                             currentOffset += length;
                         } else {// RLE
-                            loader.load(length, _data, code);
+//                            loader.load(length, _data, code);
+                            loader.fillWithColor(length);
                         }
                         totalRowLength += length;
                     }
+                    // specific: add empty pixels for realizing right margin
+                    loader.fillWithColor(sprite.fullWidth - sprite.leftMargin - sprite.width);
+
+                    loader.endLine();
                 }
             default:
                 throw 'Error: unsupported format of def file: ${sprite.format}';
         }
+        // specific: add empty lines for realizing bottom margin
+        loader.fillWithColor((sprite.fullHeight - sprite.topMargin - sprite.height) * sprite.fullWidth);
     }
 
 }

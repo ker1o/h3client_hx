@@ -4,11 +4,12 @@ import gui.geometries.Point;
 import gui.geometries.Rect;
 
 class SdlImage implements IImage {
+    public var surf:Array<Int>;
     public var margins:Point;
     public var fullsize:Point;
 
     public function new(defFile:DefFile, frame:Int, group:Int) {
-        var imageLoader = new SdlImageLoader();
+        var imageLoader = new SdlImageLoader(this);
         defFile.loadFrame(frame, group, imageLoader);
     }
 

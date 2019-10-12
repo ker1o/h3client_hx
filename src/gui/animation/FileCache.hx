@@ -27,7 +27,7 @@ class FileCache {
     }
 
     private function parseLod(path:String) {
-        trace('parse $path exists: ${FileSystem.exists(path)}');
+        trace('parse $path, exists: ${FileSystem.exists(path)}');
         if(!FileSystem.exists(path)) return;
 
         fileInput = File.read(path);
@@ -35,11 +35,11 @@ class FileCache {
         fileInput.seek(8, FileSeek.SeekBegin);
 
         var totalFiles = fileInput.readInt32();
-        trace(totalFiles);
+        trace('Total files: $totalFiles');
 
         fileInput.seek(0x5C, FileSeek.SeekBegin);
         for(i in 0...totalFiles) {
-            var archiveEntry = new ArchiveEntryO();
+            var archiveEntry = new ArchiveEntry();
             var name = fileInput.readString(16);
             var index = name.indexOf(String.fromCharCode(0));
             if(index > 0) {
