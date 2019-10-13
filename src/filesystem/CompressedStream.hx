@@ -1,5 +1,7 @@
 package filesystem;
 
+import haxe.io.UInt8Array;
+import haxe.io.Bytes;
 import pako.zlib.Constants.Flush;
 import haxe.io.UInt8Array;
 import pako.zlib.Constants.ErrorStatus;
@@ -35,7 +37,7 @@ class CompressedStream extends BufferedStream {
         }
     }
 
-    override public function readMore(data:UInt8Array, size:Int):Int {
+    override public function readMore(data:Bytes, size:Int):Int {
         if (inflateState == null) {
             return 0;
         }
@@ -45,11 +47,11 @@ class CompressedStream extends BufferedStream {
 
         var decompressed = inflateState.total_out;
         inflateState.avail_out = size;
-        inflateState.output = data;
+        inflateState.output = UInt8Array.fromBytes(data);
 
         do {
             if (inflateState.avail_in == 0) {
-                var availSize = gzipStream.read(compressedBuffer, compressedBuffer.length);
+                var availSize = gzipStream.read(compressedBuffer.getData().bytes, compressedBuffer.length);
 
                 if (availSize != compressedBuffer.length) {
                     gzipStream = null;

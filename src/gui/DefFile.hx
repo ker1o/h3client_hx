@@ -1,6 +1,6 @@
 package gui;
 
-import gui.animation.FileCache;
+import filesystem.FileCache;
 import gui.animation.ImageLoader;
 import gui.geometries.Point;
 import haxe.io.Bytes;
@@ -13,7 +13,7 @@ class DefFile {
     var _data:Bytes;
 
     public function new(name:String) {
-        _data = FileCache.instance.getCahedFile(name).getData().bytes;
+        _data = FileCache.instance.getCahedFile(name);
         _offset = new Map<Int, Array<Int>>();
         _palette = new Array<Int>();
 

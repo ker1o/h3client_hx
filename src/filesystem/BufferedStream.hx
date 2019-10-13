@@ -1,18 +1,17 @@
 package filesystem;
 
 import haxe.io.Bytes;
-import haxe.io.UInt8Array;
 
 class BufferedStream extends InputStream {
 
     private var position:Int;
-    private var buffer:UInt8Array;
+    private var buffer:Bytes;
     private var endOfFileReached:Bool;
 
     public function new() {
         super();
         position = 0;
-        buffer = new UInt8Array(0);
+        buffer = Bytes.alloc(0);
         endOfFileReached = false;
     }
 
@@ -26,23 +25,21 @@ class BufferedStream extends InputStream {
             var currentStep = size < buffer.length ? size : buffer.length;
             currentStep = currentStep > 1024 ? currentStep : 1024;
 
-            var stepBuffer = new UInt8Array(currentStep);
+            var stepBuffer = Bytes.alloc(currentStep);
 
-            var mergedBytes = BytesUtil.resize(buffer.getData().bytes, initialSize + currentStep);
-            buffer = UInt8Array.fromBytes(mergedBytes);
+            var mergedBytes = BytesUtil.resize(buffer, initialSize + currentStep);
+            buffer = mergedBytes;
             var readSize = readMore(buffer, currentStep);
 
             if (readSize != currentStep) {
                 endOfFileReached = true;
-                buffer = UInt8Array.fromBytes(BytesUtil.resize(buffer.getData().bytes, initialSize + readSize));
+                buffer = BytesUtil.resize(buffer, initialSize + readSize);
                 return;
             }
         }
     }
 
-
-
-    public function readMore(data:UInt8Array, size:Int):Int {
+    public function readMore(data:Bytes, size:Int):Int {
         throw "[ERROR] BufferedStream.readMore() is abstract!";
     }
 
@@ -60,12 +57,12 @@ class BufferedStream extends InputStream {
         return this.position;
     }
 
-    override public function read(data:UInt8Array, size:Int):Int {
+    override public function read(data:Bytes, size:Int):Int {
         ensureSize(position + size);
 
         var start = position;
         var toRead = Std.int(Math.min(size, buffer.length - position));
-        data.getData().bytes.blit(0, buffer.getData().bytes, start, toRead);
+        data.blit(0, buffer, start, toRead);
 
 //        trace(data.getData().bytes.toHex());
         position += toRead;

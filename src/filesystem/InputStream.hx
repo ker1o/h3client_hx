@@ -1,14 +1,15 @@
 package filesystem;
 
+import haxe.io.Bytes;
 import haxe.io.UInt8Array;
 
 class InputStream {
     public function new() {
     }
 
-    public function readAll():{data:UInt8Array, size:Int} {
+    public function readAll():{data:Bytes, size:Int} {
         var size = getSize();
-        var data = new UInt8Array(size);
+        var data = Bytes.alloc(size);
 
         seek(0);
         var readSize = read(data, size);
@@ -27,7 +28,7 @@ class InputStream {
         throw "InputStream.seek() is abstract";
     }
 
-    public function read(data:UInt8Array, size:Int):Int {
+    public function read(data:Bytes, size:Int):Int {
         throw "InputStream.read() is abstract";
     }
 }

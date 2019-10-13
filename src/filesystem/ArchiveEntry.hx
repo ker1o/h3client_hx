@@ -7,7 +7,6 @@ class ArchiveEntry {
     public var fullSize:Int;
     public var compressedSize:Int;
 
-
     public function new() {
     }
 }

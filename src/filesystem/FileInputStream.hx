@@ -1,5 +1,6 @@
 package filesystem;
 
+import haxe.io.Bytes;
 import sys.io.FileSeek;
 import haxe.io.UInt8Array;
 import sys.io.FileInput;
@@ -31,11 +32,11 @@ class FileInputStream extends InputStream {
         return tell();
     }
 
-    override public function read(data:UInt8Array, size:Int):Int {
+    override public function read(data:Bytes, size:Int):Int {
         var origin = tell();
         var toRead = Std.int(Math.min(dataSize - origin, size));
         var bytes = fileStream.read(toRead);
-        data.getData().bytes.blit(0, bytes, 0, bytes.length);
+        data.blit(0, bytes, 0, bytes.length);
         return toRead;
     }
 

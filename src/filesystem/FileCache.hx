@@ -1,5 +1,6 @@
-package gui.animation;
+package filesystem;
 
+import haxe.io.Bytes;
 import filesystem.ArchiveEntry;
 import filesystem.CompressedStream;
 import filesystem.FileInputStream;
@@ -21,7 +22,7 @@ class FileCache {
         parseLod("H3sprite.lod");
     }
 
-    public function getCahedFile(name:String):UInt8Array {
+    public function getCahedFile(name:String):Bytes {
         var data = getInputStream(name).readAll();
         return data.data;
     }
