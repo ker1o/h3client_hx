@@ -1,5 +1,7 @@
 -cp src
 -D analyzer-optimize
 -main Main
-#-swf-version 11
--neko bin/program.n
+-dce full
+
+#-neko bin/program.n
+-js bin/www/program.js

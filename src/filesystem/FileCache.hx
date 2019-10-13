@@ -1,12 +1,14 @@
 package filesystem;
 
+#if js
+import js.Promise;
+import js.JsLoader;
+#end
 import haxe.io.Bytes;
 import filesystem.ArchiveEntry;
 import filesystem.CompressedStream;
 import filesystem.FileInputStream;
 import filesystem.InputStream;
-import sys.FileSystem;
-import sys.io.File;
 
 class FileCache {
 
@@ -16,23 +18,51 @@ class FileCache {
     private var fileBytes:Bytes;
 
     private function new() {
+    }
+
+#if js
+    public function initAsync():Promise<Array<String>> {
+        return new Promise(function (resolve, reject) {
+            loadLodByUrl("H3sprite.lod").then(function(bytes:Bytes) {
+                fileBytes = bytes;
+                parseLod(fileBytes);
+                resolve([for (key in bitmaps.keys()) key]);
+            });
+        });
+    }
+#else
+    public function init() {
+        // use it for local checks in neko
         fileBytes = loadLod("H3sprite.lod");
         parseLod(fileBytes);
     }
+#end
 
     public function getCahedFile(name:String):Bytes {
         var data = getInputStream(name).readAll();
         return data.data;
     }
 
-    private function loadLod(url:String):Bytes {
-        trace('load $url, exists: ${FileSystem.exists(url)}');
-        if(!FileSystem.exists(url)) return null;
-        return File.getBytes(url);
+#if js
+    private function loadLodByUrl(url:String):Promise<Bytes> {
+        return new Promise(function (resolve, reject) {
+            var jsLoader = new JsLoader(url);
+            jsLoader.load().then(function(bytes:Bytes) {
+                resolve(bytes);
+            });
+        });
     }
+#else
+    private function loadLod(url:String):Bytes {
+        trace('load $url, exists: ${sys.FileSystem.exists(url)}');
+        if(!sys.FileSystem.exists(url)) return null;
+        return sys.io.File.getBytes(url);
+    }
+#end
 
     private function parseLod(bytes:Bytes) {
         var pos:Int = 8;
+        trace('bytes length: ${bytes.length}, ${bytes == null}');
         var totalFiles = bytes.getInt32(pos);
         trace('Total files: $totalFiles');
 
@@ -42,9 +72,9 @@ class FileCache {
             var name = bytes.getString(pos, 16); pos += 16;
             var index = name.indexOf(String.fromCharCode(0));
             if(index > 0) {
-                name = name.substring(0, index).toLowerCase();
+                name = name.substring(0, index);
             }
-            archiveEntry.name = name;
+            archiveEntry.name = name.toLowerCase();
             archiveEntry.offset = bytes.getInt32(pos); pos += 4;
             archiveEntry.fullSize = bytes.getInt32(pos); pos += 4;
             pos += 4;

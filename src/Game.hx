@@ -1,22 +1,145 @@
 package ;
 
+import filesystem.FileCache;
+import gui.animation.IImage;
 import gui.Animation;
-import haxe.io.Bytes;
-import sys.io.File;
+#if js
+import js.Browser;
+import js.html.CanvasElement;
+import js.html.CanvasRenderingContext2D;
+import js.html.ImageData;
+import js.html.InputElement;
+import js.html.OptionElement;
+import js.html.SelectElement;
+#end
 
 using StringTools;
 
 class Game {
 
+    #if js
+    private var canvas(default, null):CanvasElement;
+    private var ctx(default, null):CanvasRenderingContext2D;
+    private var select:SelectElement;
+    private var range:InputElement;
+
+    private var animationKeys:Array<Int>;
+
+    private var oldTimestamp:Float = 0;
+    private var delta:Float = 0;
+    private var iFrame:Int = 0;
+    #end
+
+    private var anim:Animation;
+    private var group:Int = 0;
 
     public function new() {
-        var fileName = "zm196z.def";
-        var anim:Animation = new Animation(fileName);
+        var defaultFilename:String = "zm196z.def";
+
+        #if js
+        // init html objects
+        canvas = cast Browser.document.getElementById("gameview");
+        ctx = canvas.getContext2d();
+
+        select = cast Browser.document.getElementById("def_select");
+        select.onchange = onAnimChange;
+
+        range = cast Browser.document.getElementById("groups_range");
+        range.onchange = onGroupChange;
+
+        // load binnary nodels
+        FileCache.instance.initAsync().then(function(files:Array<String>) {
+            return files.filter(function(filename:String) {
+                return filename.indexOf(".def") > -1;
+            });
+        }).then(function(defFiles:Array<String>) {
+            initSelect(defFiles);
+            startRendering();
+            selectAnimation(defaultFilename);
+        });
+        #else
+        FileCache.instance.init();
+        anim = new Animation(defaultFilename);
         anim.preload();
+        #end
     }
 
-    function saveFile(path:String, bytes:Bytes) {
-        File.saveBytes(path, bytes);
+    #if js
+    private function selectAnimation(name:String) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        trace('Show $name');
+        anim = new Animation(name);
+        anim.preload();
+        trace('$name is ready');
+
+        initRange();
     }
+
+    private function initRange() {
+        animationKeys = [];
+        for (key in anim.images.keys()) {
+            animationKeys.push(key);
+        }
+        untyped range.max = animationKeys.length;
+        untyped range.value = 0;
+        group = 0;
+        iFrame = 0;
+    }
+
+    private function initSelect(filenames:Array<String>) {
+        for (filename in filenames) {
+            var optionElement:OptionElement = cast Browser.document.createElement("Option");
+            optionElement.label = filename;
+            optionElement.value = filename;
+            select.options.add(optionElement);
+        }
+    }
+
+    private function onGroupChange() {
+        group = animationKeys[Std.parseInt(range.value)];
+        iFrame = 0;
+    }
+
+    private function onAnimChange() {
+        untyped selectAnimation(select.options[select.selectedIndex].value);
+    }
+
+    private function startRendering() {
+        Browser.window.requestAnimationFrame(drawFrame);
+    }
+
+    private function drawFrame(timestamp:Float) {
+        delta += (timestamp - oldTimestamp);
+
+        if (delta > 100) {
+            delta = delta % 100;
+
+            if (anim != null && anim.images.exists(group)) {
+                var image:IImage = anim.images[group][iFrame];
+                if(image != null) {
+                    ctx.putImageData(createImageData(image.surf, image.fullsize.x, image.fullsize.y), 0, 0);
+                }
+
+                iFrame++;
+                if (iFrame == anim.images[group].length) {
+                    iFrame = 0;
+                }
+            }
+        }
+
+        oldTimestamp = timestamp;
+
+        Browser.window.requestAnimationFrame(drawFrame);
+    }
+
+    private inline function createImageData(arr:Array<Int>, w:Int, h:Int):ImageData {
+        var imageData = ctx.createImageData(w, h);
+        for (i in 0...arr.length) {
+            imageData.data[i] = arr[i];
+        }
+        return imageData;
+    }
+    #end
 
 }

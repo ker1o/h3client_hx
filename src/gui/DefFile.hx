@@ -12,11 +12,18 @@ class DefFile {
     var _palette:Array<Int>;
     var _data:Bytes;
 
+    var _name:String;
+
     public function new(name:String) {
-        _data = FileCache.instance.getCahedFile(name);
+        _name = name;
         _offset = new Map<Int, Array<Int>>();
         _palette = new Array<Int>();
 
+        _data = FileCache.instance.getCahedFile(_name);
+        initDef();
+    }
+
+    private function initDef() {
         var it = 0;
         var type:Int = _data.getInt32(it);
         it += 4;
