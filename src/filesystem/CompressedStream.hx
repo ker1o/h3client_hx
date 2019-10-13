@@ -3,7 +3,6 @@ package filesystem;
 import haxe.io.UInt8Array;
 import haxe.io.Bytes;
 import pako.zlib.Constants.Flush;
-import haxe.io.UInt8Array;
 import pako.zlib.Constants.ErrorStatus;
 import pako.zlib.Inflate;
 import pako.zlib.ZStream;

@@ -1,26 +1,25 @@
 package filesystem;
 
 import haxe.io.Bytes;
-import sys.io.FileSeek;
-import haxe.io.UInt8Array;
-import sys.io.FileInput;
 
 class FileInputStream extends InputStream {
     private var dataStart:Int;
     private var dataSize:Int;
-    private var fileStream:FileInput;
+    private var fileBytes:Bytes;
 
-    public function new(fileStream:FileInput, start:Int, size:Int) {
+    private var pos:Int;
+
+    public function new(fileBytes:Bytes, start:Int, size:Int) {
         super();
-        this.fileStream = fileStream;
+        this.fileBytes = fileBytes;
         this.dataStart = start;
         this.dataSize = size;
 
-        fileStream.seek(start, FileSeek.SeekBegin);
+        pos = start;
     }
 
     public function tell():Int {
-        return fileStream.tell() - dataStart;
+        return pos - dataStart;
     }
 
     override public function getSize():Int {
@@ -28,15 +27,15 @@ class FileInputStream extends InputStream {
     }
 
     override public function seek(position:Int):Int {
-        fileStream.seek(dataStart + Std.int(Math.min(position, dataSize)), FileSeek.SeekBegin);
+        pos = dataStart + Std.int(Math.min(position, dataSize));
         return tell();
     }
 
     override public function read(data:Bytes, size:Int):Int {
         var origin = tell();
         var toRead = Std.int(Math.min(dataSize - origin, size));
-        var bytes = fileStream.read(toRead);
-        data.blit(0, bytes, 0, bytes.length);
+        data.blit(0, fileBytes, pos, toRead);
+        pos += toRead;
         return toRead;
     }
 

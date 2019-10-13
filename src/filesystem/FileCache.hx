@@ -5,21 +5,19 @@ import filesystem.ArchiveEntry;
 import filesystem.CompressedStream;
 import filesystem.FileInputStream;
 import filesystem.InputStream;
-import haxe.io.UInt8Array;
 import sys.FileSystem;
 import sys.io.File;
-import sys.io.FileInput;
-import sys.io.FileSeek;
 
 class FileCache {
 
     public static var instance(default, null) = new FileCache();
 
     private var bitmaps = new Map<String, ArchiveEntry>();
-    private var fileInput:FileInput;
+    private var fileBytes:Bytes;
 
     private function new() {
-        parseLod("H3sprite.lod");
+        fileBytes = loadLod("H3sprite.lod");
+        parseLod(fileBytes);
     }
 
     public function getCahedFile(name:String):Bytes {
@@ -27,30 +25,30 @@ class FileCache {
         return data.data;
     }
 
-    private function parseLod(path:String) {
-        trace('parse $path, exists: ${FileSystem.exists(path)}');
-        if(!FileSystem.exists(path)) return;
+    private function loadLod(url:String):Bytes {
+        trace('load $url, exists: ${FileSystem.exists(url)}');
+        if(!FileSystem.exists(url)) return null;
+        return File.getBytes(url);
+    }
 
-        fileInput = File.read(path);
-
-        fileInput.seek(8, FileSeek.SeekBegin);
-
-        var totalFiles = fileInput.readInt32();
+    private function parseLod(bytes:Bytes) {
+        var pos:Int = 8;
+        var totalFiles = bytes.getInt32(pos);
         trace('Total files: $totalFiles');
 
-        fileInput.seek(0x5C, FileSeek.SeekBegin);
+        pos = 0x5C;
         for(i in 0...totalFiles) {
             var archiveEntry = new ArchiveEntry();
-            var name = fileInput.readString(16);
+            var name = bytes.getString(pos, 16); pos += 16;
             var index = name.indexOf(String.fromCharCode(0));
             if(index > 0) {
                 name = name.substring(0, index).toLowerCase();
             }
             archiveEntry.name = name;
-            archiveEntry.offset = fileInput.readInt32();
-            archiveEntry.fullSize = fileInput.readInt32();
-            fileInput.seek(4, FileSeek.SeekCur);
-            archiveEntry.compressedSize = fileInput.readInt32();
+            archiveEntry.offset = bytes.getInt32(pos); pos += 4;
+            archiveEntry.fullSize = bytes.getInt32(pos); pos += 4;
+            pos += 4;
+            archiveEntry.compressedSize = bytes.getInt32(pos); pos += 4;
 
 //            trace(archiveEntry);
             bitmaps.set(archiveEntry.name, archiveEntry);
@@ -62,10 +60,10 @@ class FileCache {
         if(entry == null) throw '$name resource is not found';
 
         if (entry.compressedSize != 0) {
-            var filestream = new FileInputStream(fileInput, entry.offset, entry.compressedSize);
+            var filestream = new FileInputStream(fileBytes, entry.offset, entry.compressedSize);
             return new CompressedStream(filestream, false, entry.fullSize);
         } else {
-            return new FileInputStream(fileInput, entry.offset, entry.fullSize);
+            return new FileInputStream(fileBytes, entry.offset, entry.fullSize);
         }
     }
 

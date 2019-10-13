@@ -1,7 +1,6 @@
 package filesystem;
 
 import haxe.io.Bytes;
-import haxe.io.UInt8Array;
 
 class InputStream {
     public function new() {
