@@ -115,7 +115,7 @@ class DefFile {
 
         var baseOffset = currentOffset;
 
-        trace('${sprite.format}');
+//        trace('${sprite.format}');
 
         loader.init(new Point(sprite.width, sprite.height), new Point(sprite.leftMargin, sprite.topMargin), new Point(sprite.fullWidth, sprite.fullHeight), _palette);
 
@@ -151,8 +151,7 @@ class DefFile {
                             loader.load(length, _data, pos + currentOffset);
                             currentOffset += length;
                         } else {// RLE
-//                            loader.load(length, _data, segmentType);
-                            loader.fillWithColor(length);
+                            loader.fillWithPixelIndex(length, segmentType);
                         }
                         totalRowLength += length;
                     }
@@ -179,9 +178,7 @@ class DefFile {
                             loader.load(length, _data, pos + currentOffset);
                             currentOffset += length;
                         } else {// RLE
-                            // original line is commented
-//                            loader.load(length, _data, code);
-                            loader.fillWithColor(length);
+                            loader.fillWithPixelIndex(length, code);
                         }
                         totalRowLength += length;
                     }
@@ -207,8 +204,7 @@ class DefFile {
                             loader.load(length, _data, pos + currentOffset);
                             currentOffset += length;
                         } else {// RLE
-//                            loader.load(length, _data, code);
-                            loader.fillWithColor(length);
+                            loader.fillWithPixelIndex(length, code);
                         }
                         totalRowLength += length;
                     }

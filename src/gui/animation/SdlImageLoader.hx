@@ -58,10 +58,17 @@ class SdlImageLoader implements ImageLoader {
 //        trace('SdlImageLoader.endLine');
     }
 
-    public function fillWithColor(size:Int, color:Int = 0xffffff):Void {
+    public function fillWithColor(size:Int, color:Int = 0):Void {
         for (i in 0...size) {
             pushPixel(color);
         }
+    }
+
+    public function fillWithPixelIndex(size:Int, index:Int):Void {
+        for (i in 0...size) {
+            pushPixel(palete[index]);
+        }
+
     }
 
 }

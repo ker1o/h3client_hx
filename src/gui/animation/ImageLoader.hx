@@ -8,5 +8,6 @@ interface ImageLoader {
     function load(size:Int, bytes:Bytes, pos:Int):Void;
     function endLine():Void;
 
-    function fillWithColor(size:Int, color:Int = 0xffffff):Void;
+    function fillWithColor(size:Int, color:Int = 0):Void;
+    function fillWithPixelIndex(size:Int, index:Int):Void;
 }

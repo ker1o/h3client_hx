@@ -10,7 +10,7 @@ class Game {
 
 
     public function new() {
-        var fileName = "zm152z.def";
+        var fileName = "zm196z.def";
         var anim:Animation = new Animation(fileName);
         anim.preload();
     }
