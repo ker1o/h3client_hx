@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<style>
+#gameview {
+    float: left;
+}
+
+#groups_range {
+    float: left;
+    clear: left;
+    width: 100%;
+}
+</style>
+</head>
+
+<body>
+
+<div style="display: inline-block; ">
+    <canvas id="gameview" width="450" height="450" style="border:1px solid #d3d3d3;"><>
+    Your browser does not support the HTML5 canvas tag.</canvas>
+
+    <input type="range" id="groups_range" min="0" max="0" step="1">
+</div>
+<select id="def_select" style="height:450px; vertical-align: top;" multiple>
+</select>
+
+<script src="program.js"></script>
+
+</body>
+</html>
