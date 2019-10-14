@@ -16,13 +16,10 @@ class CompressedStream extends BufferedStream {
     private var compressedBuffer:Bytes;
     private var inflateState:ZStream;
 
-    private var decompressedSize:Int;
-
     public function new(stream:InputStream, gzip:Bool, decompressedSize:Int) {
-        super();
+        super(decompressedSize);
         gzipStream = stream;
         compressedBuffer = Bytes.alloc(inflateBlockSize);
-        this.decompressedSize = decompressedSize;
 
         inflateState = new ZStream();
 
@@ -37,7 +34,7 @@ class CompressedStream extends BufferedStream {
         }
     }
 
-    override public function readMore(data:Bytes, size:Int):Int {
+    override public function readMore(data:UInt8Array, size:Int):Int {
         if (inflateState == null) {
             return 0;
         }
@@ -47,7 +44,7 @@ class CompressedStream extends BufferedStream {
 
         var decompressed = inflateState.total_out;
         inflateState.avail_out = size;
-        inflateState.output = UInt8Array.fromBytes(data);
+        inflateState.output = data;
 
         do {
             if (inflateState.avail_in == 0) {

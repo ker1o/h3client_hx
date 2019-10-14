@@ -1,18 +1,23 @@
 package filesystem;
 
+import haxe.io.UInt8Array;
 import haxe.io.Bytes;
 
 class BufferedStream extends InputStream {
 
     private var position:Int;
-    private var buffer:Bytes;
+    private var buffer:UInt8Array;
     private var endOfFileReached:Bool;
 
-    public function new() {
+    private var decompressedSize:Int;
+    private var currentLength:Int;
+
+    public function new(decompressedSize = 0) {
         super();
         position = 0;
-        buffer = Bytes.alloc(0);
+        buffer = new UInt8Array(decompressedSize);
         endOfFileReached = false;
+        currentLength = 0;
     }
 
     public function tell():Int {
@@ -20,26 +25,25 @@ class BufferedStream extends InputStream {
     }
 
     public function ensureSize(size:Int) {
-        while (buffer.length < size && !endOfFileReached) {
-            var initialSize = buffer.length;
-            var currentStep = size < buffer.length ? size : buffer.length;
+        while (currentLength < size && !endOfFileReached) {
+            var initialSize = currentLength;
+            var currentStep = size < currentLength ? size : currentLength;
             currentStep = currentStep > 1024 ? currentStep : 1024;
 
             var stepBuffer = Bytes.alloc(currentStep);
 
-            var mergedBytes = BytesUtil.resize(buffer, initialSize + currentStep);
-            buffer = mergedBytes;
+            currentLength = initialSize + currentStep;
             var readSize = readMore(buffer, currentStep);
 
             if (readSize != currentStep) {
                 endOfFileReached = true;
-                buffer = BytesUtil.resize(buffer, initialSize + readSize);
+                currentLength = initialSize + readSize;
                 return;
             }
         }
     }
 
-    public function readMore(data:Bytes, size:Int):Int {
+    public function readMore(data:UInt8Array, size:Int):Int {
         throw "[ERROR] BufferedStream.readMore() is abstract!";
     }
 
@@ -53,7 +57,7 @@ class BufferedStream extends InputStream {
 
     override public function seek(position:Int):Int {
         ensureSize(position);
-        this.position = position < buffer.length ? position : buffer.length;
+        this.position = position < currentLength ? position : currentLength;
         return this.position;
     }
 
@@ -61,8 +65,8 @@ class BufferedStream extends InputStream {
         ensureSize(position + size);
 
         var start = position;
-        var toRead = Std.int(Math.min(size, buffer.length - position));
-        data.blit(0, buffer, start, toRead);
+        var toRead = Std.int(Math.min(size, currentLength - position));
+        data.blit(0, buffer.view.buffer, start, toRead);
 
 //        trace(data.getData().bytes.toHex());
         position += toRead;

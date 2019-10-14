@@ -68,10 +68,14 @@ class Game {
     private function selectAnimation(name:String) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        var now = Date.now().getTime();
+
         trace('Show $name');
         anim = new Animation(name);
         anim.preload();
-        trace('$name is ready');
+
+        var currentTime = Date.now().getTime();
+        trace('$name is ready. Loading time: ${(currentTime - now)}ms');
 
         initRange();
     }
