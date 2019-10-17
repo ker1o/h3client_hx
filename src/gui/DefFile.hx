@@ -6,7 +6,7 @@ import gui.geometries.Point;
 import haxe.io.Bytes;
 
 class DefFile {
-    static var h3Palette = [0, 32, 64, 128, 128, 0, 128, 64];
+    static var h3Palette = [0 << 24, 32 << 24, 64 << 24, 128 << 24, 128 << 24, 0 << 24, 128 << 24, 64 << 24];
 
     var _offset:Map<Int, Array<Int>>;
     var _palette:Array<Int>;
@@ -32,7 +32,8 @@ class DefFile {
         it += 4;
 
         for (i in 0...256) {
-            var c = _data.getInt32(it);
+            // set alpha as 255
+            var c = _data.getInt32(it) | 0xFF000000;
             _palette.push(c);
             it += 3;
         }
@@ -126,9 +127,6 @@ class DefFile {
 
         loader.init(new Point(sprite.width, sprite.height), new Point(sprite.leftMargin, sprite.topMargin), new Point(sprite.fullWidth, sprite.fullHeight), _palette);
 
-        // specific: add empty lines for realizing top margin
-        loader.fillWithColor(sprite.topMargin * sprite.fullWidth);
-
         switch (sprite.format) {
             case 0:
                 //pixel data is not compressed, copy data to surface
@@ -143,9 +141,6 @@ class DefFile {
                 currentOffset += 4 * sprite.height;
 
                 for (i in 0...sprite.height) {
-                    // specific: add empty pixels for realizing left margin
-                    loader.fillWithColor(sprite.leftMargin);
-
                     //get position of the line
                     currentOffset = baseOffset + _data.getInt32(RWEntriesLoc + i * 4);
                     var totalRowLength:Int = 0;
@@ -162,9 +157,6 @@ class DefFile {
                         }
                         totalRowLength += length;
                     }
-                    // specific: add empty pixels for realizing right margin
-                    loader.fillWithColor(sprite.fullWidth - sprite.leftMargin - sprite.width);
-
                     loader.endLine();
                 }
             case 2:
@@ -172,9 +164,6 @@ class DefFile {
 
                 for (i in 0...sprite.height) {
                     var totalRowLength:Int = 0;
-
-                    // specific: add empty pixels for realizing left margin
-                    loader.fillWithColor(sprite.leftMargin);
 
                     while (totalRowLength < sprite.width) {
                         var segment:Int = _data.get(pos + currentOffset); currentOffset++;
@@ -189,18 +178,12 @@ class DefFile {
                         }
                         totalRowLength += length;
                     }
-                    // specific: add empty pixels for realizing right margin
-                    loader.fillWithColor(sprite.fullWidth - sprite.leftMargin - sprite.width);
-
                     loader.endLine();
                 }
             case 3:
                 for (i in 0...sprite.height) {
                     currentOffset = baseOffset + _data.getUInt16(pos + baseOffset + i * 2 * Std.int(sprite.width / 32));
                     var totalRowLength:Int = 0;
-
-                    // specific: add empty pixels for realizing left margin
-                    loader.fillWithColor(sprite.leftMargin);
 
                     while (totalRowLength < sprite.width) {
                         var segment = _data.get(pos + currentOffset); currentOffset++;
@@ -215,16 +198,11 @@ class DefFile {
                         }
                         totalRowLength += length;
                     }
-                    // specific: add empty pixels for realizing right margin
-                    loader.fillWithColor(sprite.fullWidth - sprite.leftMargin - sprite.width);
-
                     loader.endLine();
                 }
             default:
                 throw 'Error: unsupported format of def file: ${sprite.format}';
         }
-        // specific: add empty lines for realizing bottom margin
-        loader.fillWithColor((sprite.fullHeight - sprite.topMargin - sprite.height) * sprite.fullWidth);
     }
 
 }

@@ -123,7 +123,8 @@ class Game {
             if (anim != null && anim.images.exists(group)) {
                 var image:IImage = anim.images[group][iFrame];
                 if(image != null) {
-                    ctx.putImageData(createImageData(image.surf, image.fullsize.x, image.fullsize.y), 0, 0);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.putImageData(createImageData(image.surf, image.size.x, image.size.y), image.margins.x, image.margins.y);
                 }
 
                 iFrame++;

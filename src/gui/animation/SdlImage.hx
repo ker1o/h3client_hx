@@ -9,6 +9,8 @@ class SdlImage implements IImage {
     public var margins:Point;
     public var fullsize:Point;
 
+    public var size:Point;
+
     public function new(defFile:DefFile, frame:Int, group:Int) {
         var imageLoader = new SdlImageLoader(this);
         defFile.loadFrame(frame, group, imageLoader);
