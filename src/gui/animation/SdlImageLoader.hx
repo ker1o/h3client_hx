@@ -1,6 +1,6 @@
 package gui.animation;
 
-import utils.Utils;
+import js.html.Uint8ClampedArray;
 import haxe.io.Bytes;
 import gui.geometries.Point;
 
@@ -11,7 +11,7 @@ class SdlImageLoader implements ImageLoader {
     public var position:Int;
 
     private var palete:Array<Int>;
-    private var arr:Array<Int>;
+    private var arr:Uint8ClampedArray;
 
     public function new(img:SdlImage) {
         image = img;
@@ -20,7 +20,7 @@ class SdlImageLoader implements ImageLoader {
     }
 
     public function init(spriteSize:Point, margins:Point, fullSize:Point, palette:Array<Int>):Void {
-        arr = [];
+        arr = new Uint8ClampedArray(fullSize.x * fullSize.y * 4);
 
         image.surf = arr;
         image.margins = margins;
@@ -48,10 +48,15 @@ class SdlImageLoader implements ImageLoader {
         var r = (bitColor & 0x000000FF);
         var a = 255; //bitColor >> 24;
 
-        arr.push(r);
-        arr.push(g);
-        arr.push(b);
-        arr.push(a);
+        arr[position] = r; position++;
+        arr[position] = g; position++;
+        arr[position] = b; position++;
+        arr[position] = a; position++;
+
+//        arr.push(r);
+//        arr.push(g);
+//        arr.push(b);
+//        arr.push(a);
     }
 
     public function endLine():Void {
@@ -68,7 +73,6 @@ class SdlImageLoader implements ImageLoader {
         for (i in 0...size) {
             pushPixel(palete[index]);
         }
-
     }
 
 }

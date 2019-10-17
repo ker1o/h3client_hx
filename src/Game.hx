@@ -1,5 +1,6 @@
 package ;
 
+import js.html.Uint8ClampedArray;
 import filesystem.FileCache;
 import gui.animation.IImage;
 import gui.Animation;
@@ -137,11 +138,8 @@ class Game {
         Browser.window.requestAnimationFrame(drawFrame);
     }
 
-    private inline function createImageData(arr:Array<Int>, w:Int, h:Int):ImageData {
-        var imageData = ctx.createImageData(w, h);
-        for (i in 0...arr.length) {
-            imageData.data[i] = arr[i];
-        }
+    private inline function createImageData(arr:Uint8ClampedArray, w:Int, h:Int):ImageData {
+        var imageData = new ImageData(arr, w, h);
         return imageData;
     }
     #end

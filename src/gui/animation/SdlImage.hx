@@ -1,10 +1,11 @@
 package gui.animation;
 
+import js.html.Uint8ClampedArray;
 import gui.geometries.Point;
 import gui.geometries.Rect;
 
 class SdlImage implements IImage {
-    public var surf:Array<Int>;
+    public var surf:Uint8ClampedArray;
     public var margins:Point;
     public var fullsize:Point;
 
