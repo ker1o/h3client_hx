@@ -1,8 +1,8 @@
 package gui.animation;
 
-import js.html.Uint8ClampedArray;
-import haxe.io.Bytes;
+import gui.animation.IImage.BufferType;
 import gui.geometries.Point;
+import haxe.io.Bytes;
 
 class SdlImageLoader implements ImageLoader {
 
@@ -11,7 +11,7 @@ class SdlImageLoader implements ImageLoader {
     public var position:Int;
 
     private var palete:Array<Int>;
-    private var arr:Uint8ClampedArray;
+    private var arr:BufferType;
 
     public function new(img:SdlImage) {
         image = img;
@@ -20,7 +20,7 @@ class SdlImageLoader implements ImageLoader {
     }
 
     public function init(spriteSize:Point, margins:Point, fullSize:Point, palette:Array<Int>):Void {
-        arr = new Uint8ClampedArray(spriteSize.x * spriteSize.y * 4);
+        arr = new BufferType(spriteSize.x * spriteSize.y * 4);
 
         image.surf = arr;
         image.size = spriteSize;

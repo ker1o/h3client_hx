@@ -1,14 +1,20 @@
 package gui.animation;
 
-import js.html.Uint8ClampedArray;
+#if js
+import js.html.CanvasRenderingContext2D;
+#end
 import gui.geometries.Point;
 import gui.geometries.Rect;
 
+typedef BufferType = #if js js.html.Uint8ClampedArray #else haxe.io.UInt8Array #end;
+
 interface IImage {
-    var surf:Uint8ClampedArray;
+    var surf:BufferType;
     var fullsize:Point;
     var margins:Point;
     var size:Point;
-    function drawToPos(where:Dynamic, posX:Int, posY:Int, src:Rect, alpha:Int = 255):Void;
-    function drawToRect(where:Dynamic, dest:Rect, src:Rect, alpha:Int = 255):Void;
+#if js
+    function drawToPos(where:CanvasRenderingContext2D, posX:Int, posY:Int, src:Rect, alpha:Int = 255):Void;
+    function drawToRect(where:CanvasRenderingContext2D, dest:Rect, src:Rect, alpha:Int = 255):Void;
+#end
 }

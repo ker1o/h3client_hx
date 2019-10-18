@@ -1,6 +1,5 @@
 package ;
 
-import js.html.Uint8ClampedArray;
 import filesystem.FileCache;
 import gui.animation.IImage;
 import gui.Animation;
@@ -12,6 +11,7 @@ import js.html.ImageData;
 import js.html.InputElement;
 import js.html.OptionElement;
 import js.html.SelectElement;
+import js.html.Uint8ClampedArray;
 #end
 
 using StringTools;
@@ -124,7 +124,7 @@ class Game {
                 var image:IImage = anim.images[group][iFrame];
                 if(image != null) {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.putImageData(createImageData(image.surf, image.size.x, image.size.y), image.margins.x, image.margins.y);
+                    image.drawToPos(ctx, image.margins.x, image.margins.y, null);
                 }
 
                 iFrame++;

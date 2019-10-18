@@ -1,11 +1,15 @@
 package gui.animation;
 
-import js.html.Uint8ClampedArray;
+import gui.animation.IImage.BufferType;
 import gui.geometries.Point;
 import gui.geometries.Rect;
+#if js
+import js.html.CanvasRenderingContext2D;
+import js.html.ImageData;
+#end
 
 class SdlImage implements IImage {
-    public var surf:Uint8ClampedArray;
+    public var surf:BufferType;
     public var margins:Point;
     public var fullsize:Point;
 
@@ -16,12 +20,15 @@ class SdlImage implements IImage {
         defFile.loadFrame(frame, group, imageLoader);
     }
 
-    public function drawToPos(where:Dynamic, posX:Int, posY:Int, src:Rect, alpha:Int = 255):Void {
-        trace('SdlImage.drawToPos($posX, $posY, $src, $alpha)');
+    #if js
+    public function drawToPos(where:CanvasRenderingContext2D, posX:Int, posY:Int, src:Rect, alpha:Int = 255):Void {
+        var imgData = new ImageData(surf, size.x, size.y);
+        where.putImageData(imgData, posX, posY);
     }
 
-    public function drawToRect(where:Dynamic, dest:Rect, src:Rect, alpha:Int = 255):Void {
-        trace('SdlImage.drawToRect($dest, $src, $alpha)');
+    public function drawToRect(where:CanvasRenderingContext2D, dest:Rect, src:Rect, alpha:Int = 255):Void {
+        trace('SdlImage.drawToRect($dest, $src, $alpha) STUB');
     }
+    #end
 
 }
