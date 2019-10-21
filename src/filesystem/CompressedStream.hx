@@ -1,7 +1,6 @@
 package filesystem;
 
 import haxe.io.UInt8Array;
-import haxe.io.UInt8Array;
 import haxe.io.Bytes;
 import pako.zlib.Constants.Flush;
 import pako.zlib.Constants.ErrorStatus;
@@ -16,7 +15,7 @@ class CompressedStream extends BufferedStream {
     private var compressedBuffer:Bytes;
     private var inflateState:ZStream;
 
-    public function new(stream:InputStream, gzip:Bool, decompressedSize:Int) {
+    public function new(stream:InputStream, gzip:Bool, decompressedSize:Int = 0) {
         super(decompressedSize);
         gzipStream = stream;
         compressedBuffer = Bytes.alloc(inflateBlockSize);

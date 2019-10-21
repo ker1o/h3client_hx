@@ -3,5 +3,5 @@
 -main Main
 -dce full
 
-#-neko bin/program.n
--js bin/www/program.js
+-neko bin/program.n
+#-js bin/www/program.js

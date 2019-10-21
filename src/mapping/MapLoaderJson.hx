@@ -1,12 +1,22 @@
 package mapping;
 
-import filesystem.MemoryStream;
+import haxe.io.Bytes;
+import filesystem.InputStream;
 
 class MapLoaderJson implements IMapLoader {
 
-    private var _stream:MemoryStream;
+    private var _stream:Bytes;
 
-    public function new(stream:MemoryStream) {
+    public function new(stream:Bytes) {
         _stream = stream;
     }
+
+    public function loadMapHeader():MapHeader {
+        return new MapHeader();
+    }
+
+    public function loadMap():Map {
+        return new Map();
+    }
+
 }

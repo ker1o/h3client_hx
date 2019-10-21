@@ -1,5 +1,7 @@
 package filesystem;
 
+import filesystem.BytesUtil;
+import utils.Utils;
 import haxe.io.UInt8Array;
 import haxe.io.Bytes;
 
@@ -9,13 +11,14 @@ class BufferedStream extends InputStream {
     private var buffer:UInt8Array;
     private var endOfFileReached:Bool;
 
-    private var decompressedSize:Int;
     private var currentLength:Int;
+    private var noDecompressedSize:Bool; // true if we don't know the final bytes size and increase the buffer size dynamically
 
     public function new(decompressedSize = 0) {
         super();
         position = 0;
         buffer = new UInt8Array(decompressedSize);
+        noDecompressedSize = decompressedSize == 0;
         endOfFileReached = false;
         currentLength = 0;
     }
@@ -33,11 +36,17 @@ class BufferedStream extends InputStream {
             var stepBuffer = Bytes.alloc(currentStep);
 
             currentLength = initialSize + currentStep;
+            if (noDecompressedSize) {
+                buffer = UInt8Array.fromBytes(BytesUtil.resize(buffer.getData().bytes, currentLength));
+            }
             var readSize = readMore(buffer, currentStep);
 
             if (readSize != currentStep) {
                 endOfFileReached = true;
                 currentLength = initialSize + readSize;
+                if (noDecompressedSize) {
+                    buffer = UInt8Array.fromBytes(BytesUtil.resize(buffer.getData().bytes, currentLength));
+                }
                 return;
             }
         }

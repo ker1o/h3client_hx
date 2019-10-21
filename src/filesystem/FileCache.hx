@@ -4,6 +4,7 @@ package filesystem;
 import js.Promise;
 import js.JsLoader;
 #end
+import filesystem.FileInputStream;
 import haxe.io.Bytes;
 import filesystem.ArchiveEntry;
 import filesystem.CompressedStream;
@@ -16,14 +17,15 @@ class FileCache {
 
     private var bitmaps = new Map<String, ArchiveEntry>();
     private var fileBytes:Bytes;
+    private var mapBytes:Bytes;
 
     private function new() {
     }
 
 #if js
-    public function initAsync():Promise<Array<String>> {
+    public function initGraphicsAsync():Promise<Array<String>> {
         return new Promise(function (resolve, reject) {
-            loadLodByUrl("H3sprite.lod").then(function(bytes:Bytes) {
+            loadBinaryByUrl("H3sprite.lod").then(function(bytes:Bytes) {
                 fileBytes = bytes;
                 parseLod(fileBytes);
                 resolve([for (key in bitmaps.keys()) key]);
@@ -31,12 +33,20 @@ class FileCache {
         });
     }
 #else
-    public function init() {
+    public function initGraphics() {
         // use it for local checks in neko
-        fileBytes = loadLod("H3sprite.lod");
+        fileBytes = loadBinary("H3sprite.lod");
         parseLod(fileBytes);
     }
+
+    public function initMap(name:String) {
+        mapBytes = loadBinary(name);
+    }
 #end
+
+    public function getMap(name:String):Bytes {
+        return mapBytes;
+    }
 
     public function getCahedFile(name:String):Bytes {
         var data = getInputStream(name).readAll();
@@ -44,7 +54,7 @@ class FileCache {
     }
 
 #if js
-    private function loadLodByUrl(url:String):Promise<Bytes> {
+    private function loadBinaryByUrl(url:String):Promise<Bytes> {
         return new Promise(function (resolve, reject) {
             var jsLoader = new JsLoader(url);
             jsLoader.load().then(function(bytes:Bytes) {
@@ -53,7 +63,7 @@ class FileCache {
         });
     }
 #else
-    private function loadLod(url:String):Bytes {
+    private function loadBinary(url:String):Bytes {
         trace('load $url, exists: ${sys.FileSystem.exists(url)}');
         if(!sys.FileSystem.exists(url)) return null;
         return sys.io.File.getBytes(url);

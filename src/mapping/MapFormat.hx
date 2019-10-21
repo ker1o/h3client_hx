@@ -1,6 +1,6 @@
 package mapping;
 
-@:enum abstract MapFormat {
+@:enum abstract MapFormat(Int) from Int to Int {
     public var INVALID = 0;
                 //    HEX     DEC
     public var ROE = 0x0e; // 14

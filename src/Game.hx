@@ -1,5 +1,7 @@
 package ;
 
+import haxe.io.Bytes;
+import mapping.MapService;
 import filesystem.FileCache;
 import gui.animation.IImage;
 import gui.Animation;
@@ -35,6 +37,11 @@ class Game {
     private var group:Int = 0;
 
     public function new() {
+        var mapName:String = "Peaceful Ending.h3m";
+        FileCache.instance.initMap(mapName);
+        new MapService().loadMapHeaderByName(mapName);
+
+        return;
         var defaultFilename:String = "zm196z.def";
 
         #if js
@@ -49,7 +56,7 @@ class Game {
         range.onchange = onGroupChange;
 
         // load binnary nodels
-        FileCache.instance.initAsync().then(function(files:Array<String>) {
+        FileCache.instance.initGraphicsAsync().then(function(files:Array<String>) {
             return files.filter(function(filename:String) {
                 return filename.indexOf(".def") > -1;
             });
@@ -59,7 +66,7 @@ class Game {
             selectAnimation(defaultFilename);
         });
         #else
-        FileCache.instance.init();
+        FileCache.instance.initGraphics();
         anim = new Animation(defaultFilename);
         anim.preload();
         #end

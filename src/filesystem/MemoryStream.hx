@@ -9,6 +9,8 @@ class MemoryStream extends InputStream {
     private var _position:Int;
 
     public function new(data:Bytes, size:Int) {
+        super();
+
         this.data = data;
         _size = size;
         _position = 0;
@@ -16,7 +18,7 @@ class MemoryStream extends InputStream {
 
     override public function read(data:Bytes, size:Int):Int {
         var toRead:Int = Std.int(Math.min(_size - tell(), size));
-        data.blit(0, _data, _position, toRead);
+        data.blit(0, this.data, _position, toRead);
         _position += size;
         return toRead;
     }

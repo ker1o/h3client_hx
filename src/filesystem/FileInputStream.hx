@@ -9,11 +9,11 @@ class FileInputStream extends InputStream {
 
     private var pos:Int;
 
-    public function new(fileBytes:Bytes, start:Int, size:Int) {
+    public function new(fileBytes:Bytes, start:Int = 0, size:Int = 0) {
         super();
         this.fileBytes = fileBytes;
         this.dataStart = start;
-        this.dataSize = size;
+        this.dataSize = size == 0 ? fileBytes.length : size;
 
         pos = start;
     }
