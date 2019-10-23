@@ -32,6 +32,16 @@ class FileCache {
             });
         });
     }
+
+    public function initMapAsync(name:String):Promise<Bool> {
+        return new Promise(function (resolve, reject) {
+            loadBinaryByUrl(name).then(function(bytes:Bytes) {
+                mapBytes = bytes;
+                resolve(true);
+            });
+        });
+    }
+
 #else
     public function initGraphics() {
         // use it for local checks in neko

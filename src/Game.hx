@@ -37,11 +37,16 @@ class Game {
     private var group:Int = 0;
 
     public function new() {
-        var mapName:String = "Peaceful Ending.h3m";
+        var mapName:String = "Vial of Life.h3m";
+        #if js
+        FileCache.instance.initMapAsync(mapName).then(function(success:Bool) {
+            new MapService().loadMapHeaderByName(mapName);
+        });
+        #else
         FileCache.instance.initMap(mapName);
         new MapService().loadMapHeaderByName(mapName);
-
-        return;
+        #end
+/*
         var defaultFilename:String = "zm196z.def";
 
         #if js
@@ -70,6 +75,7 @@ class Game {
         anim = new Animation(defaultFilename);
         anim.preload();
         #end
+*/
     }
 
     #if js

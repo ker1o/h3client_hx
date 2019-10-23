@@ -37,7 +37,7 @@ class BufferedStream extends InputStream {
 
             currentLength = initialSize + currentStep;
             if (noDecompressedSize) {
-                buffer = UInt8Array.fromBytes(BytesUtil.resize(buffer.getData().bytes, currentLength));
+                buffer = UInt8Array.fromBytes(BytesUtil.resize(buffer.view.buffer, currentLength));
             }
             var readSize = readMore(buffer, currentStep);
 
@@ -45,7 +45,7 @@ class BufferedStream extends InputStream {
                 endOfFileReached = true;
                 currentLength = initialSize + readSize;
                 if (noDecompressedSize) {
-                    buffer = UInt8Array.fromBytes(BytesUtil.resize(buffer.getData().bytes, currentLength));
+                    buffer = UInt8Array.fromBytes(BytesUtil.resize(buffer.view.buffer, currentLength));
                 }
                 return;
             }

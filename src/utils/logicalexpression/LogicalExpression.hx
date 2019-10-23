@@ -29,7 +29,7 @@ class LogicalExpression<T> {
     }
 
     public function toString():String {
-        return Std.string(_data);
+        return _data.toString();
     }
 
 }
