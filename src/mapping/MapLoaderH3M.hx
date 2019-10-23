@@ -81,8 +81,8 @@ class MapLoaderH3M implements IMapLoader {
                     case MapFormat.ROE:
                         _reader.skip(6);
                     default:
-                        continue;
                 }
+                continue;
             }
 
             _mapHeader.players[i].aiTactic = _reader.readUInt8();
@@ -403,7 +403,7 @@ class MapLoaderH3M implements IMapLoader {
         _mapHeader.triggeredEvents.push(standardDefeat);
 
         //ToDo: remove
-        trace(standardDefeat.trigger);
+        trace(standardDefeat.trigger.toString());
         standardDefeat.trigger.test(function (ec:EventCondition) {
             return true;
         });
