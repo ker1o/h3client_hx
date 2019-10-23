@@ -403,6 +403,7 @@ class MapLoaderH3M implements IMapLoader {
         _mapHeader.triggeredEvents.push(standardDefeat);
 
         //ToDo: remove
+        trace(standardDefeat.trigger);
         standardDefeat.trigger.test(function (ec:EventCondition) {
             return true;
         });

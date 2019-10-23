@@ -28,4 +28,8 @@ class LogicalExpression<T> {
         return _data;
     }
 
+    public function toString():String {
+        return Std.string(_data);
+    }
+
 }

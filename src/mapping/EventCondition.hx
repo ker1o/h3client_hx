@@ -21,4 +21,8 @@ class EventCondition {
         this.position = position == null ? new Int3(-1, -1, -1) : position;
         this.condition = condition;
     }
+
+    public function toString() {
+        return '{$condition:$value}';
+    }
 }

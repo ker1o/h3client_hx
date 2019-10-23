@@ -20,4 +20,12 @@ abstract Variant<T>(Either<LogicalElement<T>, T>) from Either<LogicalElement<T>,
         case Right(b): b;
         default: null;
     }
+
+    public function toString():String {
+        return switch(this) {
+            case Left(a): Std.string(a);
+            case Right(b): Std.string(b);
+        }
+
+    }
 }

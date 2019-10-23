@@ -21,4 +21,27 @@ package mapping;
     public var HAVE_0:Int = 12;
     public var HAVE_BUILDING_0:Int = 13;
     public var DESTROY_0:Int = 14;
+
+    public function toString():String {
+        return switch(this) {
+            case HAVE_ARTIFACT: "HAVE_ARTIFACT";
+            case HAVE_CREATURES: "HAVE_CREATURES";
+            case HAVE_RESOURCES: "HAVE_RESOURCES";
+            case HAVE_BUILDING: "HAVE_BUILDING";
+            case CONTROL: "CONTROL";
+            case DESTROY: "DESTROY";
+            case TRANSPORT: "TRANSPORT";
+            case DAYS_PASSED: "DAYS_PASSED";
+            case IS_HUMAN: "IS_HUMAN";
+            case DAYS_WITHOUT_TOWN: "DAYS_WITHOUT_TOWN";
+            case STANDARD_WIN: "STANDARD_WIN";
+            case CONST_VALUE: "CONST_VALUE";
+            case HAVE_0: "HAVE_0";
+            case HAVE_BUILDING_0: "HAVE_BUILDING_0";
+            case DESTROY_0: "DESTROY_0";
+            default: "?";
+        }
+
+    }
+
 }

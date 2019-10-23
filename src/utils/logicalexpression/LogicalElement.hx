@@ -9,4 +9,8 @@ class LogicalElement<T> {
         this.type = type;
         this.expressions = expressions == null ? [] : expressions;
     }
+
+    public function toString():String {
+        return '(${expressions.join(" " + type.toString() + " ")})';
+    }
 }
