@@ -24,6 +24,12 @@ class LogicalExpression<T> {
         return testVisitor.test(_data);
     }
 
+    public function morph(morpher:T->Variant<T>):LogicalExpression<T> {
+        var forEachVisitor = new ForEachVisitor<T>(morpher);
+        forEachVisitor.visit(_data);
+        return this;
+    }
+
     public function get():Variant<T> {
         return _data;
     }

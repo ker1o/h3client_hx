@@ -1,5 +1,9 @@
 package mapping;
 
+import lib.Artifact;
+import constants.ArtifactId;
+import utils.logicalexpression.Variant;
+import constants.PlayerColor;
 import utils.logicalexpression.EventExpression;
 import constants.Obj;
 import constants.BuildingID;
@@ -13,149 +17,165 @@ class MapLoaderH3M implements IMapLoader {
 
     private var _stream:Bytes;
 
-    private var _mapHeader:MapHeader;
-    private var _map:Map;
-    private var _reader:BinaryReader;
+    private var mapHeader:MapHeader;
+    private var map:Map;
+    private var reader:BinaryReader;
 
     public function new(stream:Bytes) {
         _stream = stream;
-        _reader = new BinaryReader(stream);
+        reader = new BinaryReader(stream);
     }
 
     public function loadMap():Map {
-        _map = new Map();
-        _mapHeader = _map;
+        map = new Map();
+        mapHeader = map;
         init();
         return new Map();
     }
 
     public function loadMapHeader():MapHeader {
-        _mapHeader = new MapHeader();
+        mapHeader = new MapHeader();
         readHeader();
-        return _mapHeader;
+        return mapHeader;
     }
 
     private function init() {
 
         readHeader();
 
-        // read header details
+        map.allHeroes = [for (i in 0...map.allowedHeroes.length) true]; //ToDo
+
+        readDisposedHeroes();
+
+        readAllowedArtifacts();
+
+        readAllowedSpellsAbilities();
+
+        readRumors();
+
+        readPredefinedHeroes();
 
         readTerrain();
+
+        readDefInfo();
+
+        readObjects();
+
+        readEvents();
     }
 
     private function readHeader() {
-        _mapHeader.version = _reader.readUInt32();
-        _mapHeader.areAnyPlayers = _reader.readBool();
-        _mapHeader.height = _mapHeader.width = _reader.readUInt32();
-        _mapHeader.twoLevel = _reader.readBool();
-        _mapHeader.name = _reader.readString();
-        _mapHeader.description = _reader.readString();
-        _mapHeader.difficulty = _reader.readInt8();
+        mapHeader.version = reader.readUInt32();
+        mapHeader.areAnyPlayers = reader.readBool();
+        mapHeader.height = mapHeader.width = reader.readUInt32();
+        mapHeader.twoLevel = reader.readBool();
+        mapHeader.name = reader.readString();
+        mapHeader.description = reader.readString();
+        mapHeader.difficulty = reader.readInt8();
 
-        if(_mapHeader.version != MapFormat.ROE) {
-            _mapHeader.levelLimit = _reader.readUInt8();
+        if(mapHeader.version != MapFormat.ROE) {
+            mapHeader.levelLimit = reader.readUInt8();
         } else {
-            _mapHeader.levelLimit = 0;
+            mapHeader.levelLimit = 0;
         }
 
         // TBD
         readPlayerInfo();
         readVictoryLossConditions();
-//        readTeamInfo();
-//        readAllowedHeroes();
+        readTeamInfo();
+        readAllowedHeroes();
     }
 
     private function readPlayerInfo() {
-        for (i in 0..._mapHeader.players.length) {
-            _mapHeader.players[i].canHumanPlay = _reader.readBool();
-            _mapHeader.players[i].canComputerPlay = _reader.readBool();
+        for (i in 0...mapHeader.players.length) {
+            mapHeader.players[i].canHumanPlay = reader.readBool();
+            mapHeader.players[i].canComputerPlay = reader.readBool();
 
             // If nobody can play with this player
-            if(!(_mapHeader.players[i].canHumanPlay || _mapHeader.players[i].canComputerPlay)) {
-                switch(_mapHeader.version) {
+            if(!(mapHeader.players[i].canHumanPlay || mapHeader.players[i].canComputerPlay)) {
+                switch(mapHeader.version) {
                     case MapFormat.SOD | MapFormat.WOG:
-                        _reader.skip(13);
+                        reader.skip(13);
                     case MapFormat.AB:
-                        _reader.skip(12);
+                        reader.skip(12);
                     case MapFormat.ROE:
-                        _reader.skip(6);
+                        reader.skip(6);
                     default:
                 }
                 continue;
             }
 
-            _mapHeader.players[i].aiTactic = _reader.readUInt8();
+            mapHeader.players[i].aiTactic = reader.readUInt8();
 
-            if(_mapHeader.version == MapFormat.SOD || _mapHeader.version == MapFormat.WOG) {
-                _mapHeader.players[i].p7 = _reader.readUInt8();
+            if(mapHeader.version == MapFormat.SOD || mapHeader.version == MapFormat.WOG) {
+                mapHeader.players[i].p7 = reader.readUInt8();
             } else {
-                _mapHeader.players[i].p7 = -1;
+                mapHeader.players[i].p7 = -1;
             }
 
             // Factions this player can choose
-            var allowedFactions:Int = _reader.readUInt8();
+            var allowedFactions:Int = reader.readUInt8();
             // How many factions will be read from map
             var totalFactions:Int = GameConstants.F_NUMBER;
 
-            if(_mapHeader.version != MapFormat.ROE) {
-                allowedFactions += _reader.readUInt8() * 256;
+            if(mapHeader.version != MapFormat.ROE) {
+                allowedFactions += reader.readUInt8() * 256;
             } else {
                 totalFactions--; //exclude conflux for ROE
             }
 
             for(fact in 0...totalFactions) {
                 if((allowedFactions & (1 << fact)) == 0) {
-                    _mapHeader.players[i].allowedFactions.remove(fact);
+                    mapHeader.players[i].allowedFactions.remove(fact);
                 }
             }
 
-            _mapHeader.players[i].isFactionRandom = _reader.readBool();
-            _mapHeader.players[i].hasMainTown = _reader.readBool();
-            if(_mapHeader.players[i].hasMainTown) {
-                if(_mapHeader.version != MapFormat.ROE) {
-                    _mapHeader.players[i].generateHeroAtMainTown = _reader.readBool();
-                    _mapHeader.players[i].generateHero = _reader.readBool();
+            mapHeader.players[i].isFactionRandom = reader.readBool();
+            mapHeader.players[i].hasMainTown = reader.readBool();
+            if(mapHeader.players[i].hasMainTown) {
+                if(mapHeader.version != MapFormat.ROE) {
+                    mapHeader.players[i].generateHeroAtMainTown = reader.readBool();
+                    mapHeader.players[i].generateHero = reader.readBool();
                 } else {
-                    _mapHeader.players[i].generateHeroAtMainTown = true;
-                    _mapHeader.players[i].generateHero = false;
+                    mapHeader.players[i].generateHeroAtMainTown = true;
+                    mapHeader.players[i].generateHero = false;
                 }
-               _mapHeader.players[i].posOfMainTown = readInt3();
+               mapHeader.players[i].posOfMainTown = readInt3();
             }
 
-            _mapHeader.players[i].hasRandomHero = _reader.readBool();
-            _mapHeader.players[i].mainCustomHeroId = _reader.readUInt8();
+            mapHeader.players[i].hasRandomHero = reader.readBool();
+            mapHeader.players[i].mainCustomHeroId = reader.readUInt8();
 
-            if(_mapHeader.players[i].mainCustomHeroId != 0xff) {
-                _mapHeader.players[i].mainCustomHeroPortrait = _reader.readUInt8();
-                if (_mapHeader.players[i].mainCustomHeroPortrait == 0xff) {
-                    _mapHeader.players[i].mainCustomHeroPortrait = -1; //correct 1-byte -1 (0xff) into 4-byte -1
+            if(mapHeader.players[i].mainCustomHeroId != 0xff) {
+                mapHeader.players[i].mainCustomHeroPortrait = reader.readUInt8();
+                if (mapHeader.players[i].mainCustomHeroPortrait == 0xff) {
+                    mapHeader.players[i].mainCustomHeroPortrait = -1; //correct 1-byte -1 (0xff) into 4-byte -1
                 }
 
-                 _mapHeader.players[i].mainCustomHeroName = _reader.readString();
+                 mapHeader.players[i].mainCustomHeroName = reader.readString();
             } else {
-                _mapHeader.players[i].mainCustomHeroId = -1; //correct 1-byte -1 (0xff) into 4-byte -1
+                mapHeader.players[i].mainCustomHeroId = -1; //correct 1-byte -1 (0xff) into 4-byte -1
             }
 
-            if(_mapHeader.version != MapFormat.ROE) {
-                _mapHeader.players[i].powerPlaceholders = _reader.readUInt8(); //unknown byte
-                var heroCount = _reader.readUInt8();
-                _reader.skip(3);
+            if(mapHeader.version != MapFormat.ROE) {
+                mapHeader.players[i].powerPlaceholders = reader.readUInt8(); //unknown byte
+                var heroCount = reader.readUInt8();
+                reader.skip(3);
                 for(pp in 0...heroCount) {
                     var vv = new HeroName();
-                    vv.id = _reader.readUInt8();
-                    vv.name = _reader.readString();
+                    vv.id = reader.readUInt8();
+                    vv.name = reader.readString();
 
-                    _mapHeader.players[i].heroesNames.push(vv);
+                    mapHeader.players[i].heroesNames.push(vv);
                 }
             }
         }
     }
 
     private function readVictoryLossConditions() {
-        _mapHeader.triggeredEvents.splice(0, _mapHeader.triggeredEvents.length);
+        mapHeader.triggeredEvents.splice(0, mapHeader.triggeredEvents.length);
 
-        var vicCondition:VictoryConditionType = _reader.readUInt8();
+        var vicCondition:VictoryConditionType = reader.readUInt8();
 
         var victoryCondition:EventCondition = new EventCondition(WinLoseType.STANDARD_WIN);
         var defeatCondition:EventCondition = new EventCondition(WinLoseType.DAYS_WITHOUT_TOWN);
@@ -180,20 +200,20 @@ class MapLoaderH3M implements IMapLoader {
         // Specific victory conditions
         if(vicCondition == VictoryConditionType.WINSTANDARD) {
             // create normal condition
-            _mapHeader.triggeredEvents.push(standardVictory);
-            _mapHeader.victoryIconIndex = 11;
-            _mapHeader.victoryMessage = "TBD: mapHeader.victoryMessage"; //VLC.generaltexth.victoryConditions[0];
+            mapHeader.triggeredEvents.push(standardVictory);
+            mapHeader.victoryIconIndex = 11;
+            mapHeader.victoryMessage = "TBD: mapHeader.victoryMessage"; //VLC.generaltexth.victoryConditions[0];
         } else {
             var specialVictory = new TriggeredEvent();
             specialVictory.effect.type = EventEffectType.VICTORY;
             specialVictory.identifier = "specialVictory";
             specialVictory.description = ""; // TODO: display in quest window
 
-            _mapHeader.victoryIconIndex = vicCondition;
-            _mapHeader.victoryMessage = "TBD: mapHeader.victoryMessage"; //VLC.generaltexth.victoryConditions[size_t(vicCondition) + 1];
+            mapHeader.victoryIconIndex = vicCondition;
+            mapHeader.victoryMessage = "TBD: mapHeader.victoryMessage"; //VLC.generaltexth.victoryConditions[size_t(vicCondition) + 1];
 
-            var allowNormalVictory:Bool = _reader.readBool();
-            var appliesToAI:Bool = _reader.readBool();
+            var allowNormalVictory:Bool = reader.readBool();
+            var appliesToAI:Bool = reader.readBool();
 
             if (allowNormalVictory) {
                 // ToDo
@@ -208,9 +228,9 @@ class MapLoaderH3M implements IMapLoader {
             switch (vicCondition) {
                 case VictoryConditionType.ARTIFACT:
                     var cond = new EventCondition(WinLoseType.HAVE_ARTIFACT);
-                    cond.objectType = _reader.readUInt8();
-                    if (_mapHeader.version != MapFormat.ROE)
-                        _reader.skip(1);
+                    cond.objectType = reader.readUInt8();
+                    if (mapHeader.version != MapFormat.ROE)
+                        reader.skip(1);
 
                     specialVictory.effect.toOtherMessage = "TBD: VLC.generaltexth.allTexts[281]"; //VLC.generaltexth.allTexts[281];
                     specialVictory.onFulfill = "TBD: VLC.generaltexth.allTexts[280]"; //VLC.generaltexth.allTexts[280];
@@ -218,10 +238,10 @@ class MapLoaderH3M implements IMapLoader {
 
                 case VictoryConditionType.GATHERTROOP:
                     var cond = new EventCondition(WinLoseType.HAVE_CREATURES);
-                    cond.objectType = _reader.readUInt8();
-                    if (_mapHeader.version != MapFormat.ROE)
-                        _reader.skip(1);
-                    cond.value = _reader.readUInt32();
+                    cond.objectType = reader.readUInt8();
+                    if (mapHeader.version != MapFormat.ROE)
+                        reader.skip(1);
+                    cond.value = reader.readUInt32();
 
                     specialVictory.effect.toOtherMessage = "VLC.generaltexth.allTexts[277]"; //VLC.generaltexth.allTexts[277];
                     specialVictory.onFulfill = "VLC.generaltexth.allTexts[276]"; //VLC.generaltexth.allTexts[276];
@@ -229,8 +249,8 @@ class MapLoaderH3M implements IMapLoader {
 
                 case VictoryConditionType.GATHERRESOURCE:
                     var cond = new EventCondition(WinLoseType.HAVE_RESOURCES);
-                    cond.objectType = _reader.readUInt8();
-                    cond.value = _reader.readUInt32();
+                    cond.objectType = reader.readUInt8();
+                    cond.value = reader.readUInt32();
 
                     specialVictory.effect.toOtherMessage = "VLC.generaltexth.allTexts[279]"; //VLC.generaltexth.allTexts[279]
                     specialVictory.onFulfill = "TBD: VLC.generaltexth.allTexts[278]"; //VLC.generaltexth.allTexts[278];
@@ -240,9 +260,9 @@ class MapLoaderH3M implements IMapLoader {
                     var oper = EventExpression.getOperatorAll();
                     var cond = new EventCondition(WinLoseType.HAVE_BUILDING);
                     cond.position = readInt3();
-                    cond.objectType = BuildingID.VILLAGE_HALL + _reader.readUInt8();
+                    cond.objectType = BuildingID.VILLAGE_HALL + reader.readUInt8();
                     oper.expressions.push(cond);
-                    cond.objectType = BuildingID.FORT + _reader.readUInt8();
+                    cond.objectType = BuildingID.FORT + reader.readUInt8();
                     oper.expressions.push(cond);
 
                     specialVictory.effect.toOtherMessage = "TBD: VLC.generaltexth.allTexts[283]"; //VLC.generaltexth.allTexts[283];
@@ -306,7 +326,7 @@ class MapLoaderH3M implements IMapLoader {
 
                 case VictoryConditionType.TRANSPORTITEM:
                     var cond = new EventCondition(WinLoseType.TRANSPORT);
-                    cond.objectType = _reader.readUInt8();
+                    cond.objectType = reader.readUInt8();
                     cond.position = readInt3();
 
                     specialVictory.effect.toOtherMessage = "TBD: VLC.generaltexth.allTexts[293]"; //VLC.generaltexth.allTexts[293];
@@ -330,18 +350,18 @@ class MapLoaderH3M implements IMapLoader {
             // if normal victory allowed - add one more quest
             if (allowNormalVictory)
             {
-                _mapHeader.victoryMessage += " / ";
-                _mapHeader.victoryMessage += "TBD: VLC.generaltexth.victoryConditions[0]"; //VLC.generaltexth.victoryConditions[0];
-                _mapHeader.triggeredEvents.push(standardVictory);
+                mapHeader.victoryMessage += " / ";
+                mapHeader.victoryMessage += "TBD: VLC.generaltexth.victoryConditions[0]"; //VLC.generaltexth.victoryConditions[0];
+                mapHeader.triggeredEvents.push(standardVictory);
             }
-            _mapHeader.triggeredEvents.push(specialVictory);
+            mapHeader.triggeredEvents.push(specialVictory);
         }
 
         // Read loss conditions
-        var lossCond:LossConditionType = _reader.readUInt8();
+        var lossCond:LossConditionType = reader.readUInt8();
         if (lossCond == LossConditionType.LOSSSTANDARD) {
-            _mapHeader.defeatIconIndex = 3;
-            _mapHeader.defeatMessage = "TBD: VLC.generaltexth.lossCondtions[0]"; //VLC.generaltexth.lossCondtions[0];
+            mapHeader.defeatIconIndex = 3;
+            mapHeader.defeatMessage = "TBD: VLC.generaltexth.lossCondtions[0]"; //VLC.generaltexth.lossCondtions[0];
         } else {
             var specialDefeat = new TriggeredEvent();
             specialDefeat.effect.type = EventEffectType.DEFEAT;
@@ -349,8 +369,8 @@ class MapLoaderH3M implements IMapLoader {
             specialDefeat.identifier = "specialDefeat";
             specialDefeat.description = ""; // TODO: display in quest window
 
-            _mapHeader.defeatIconIndex = lossCond;
-            _mapHeader.defeatMessage = "TBD: VLC.generaltexth.lossCondtions[size_t(lossCond) + 1]"; //VLC.generaltexth.lossCondtions[size_t(lossCond) + 1];
+            mapHeader.defeatIconIndex = lossCond;
+            mapHeader.defeatMessage = "TBD: VLC.generaltexth.lossCondtions[size_t(lossCond) + 1]"; //VLC.generaltexth.lossCondtions[size_t(lossCond) + 1];
 
             switch(lossCond) {
                 case LossConditionType.LOSSCASTLE:
@@ -375,7 +395,7 @@ class MapLoaderH3M implements IMapLoader {
 
                 case LossConditionType.TIMEEXPIRES:
                     var cond = new EventCondition(WinLoseType.DAYS_PASSED);
-                    cond.value = _reader.readUInt16();
+                    cond.value = reader.readUInt16();
 
                     specialDefeat.onFulfill = "TBD: VLC.generaltexth.allTexts[254]"; //VLC.generaltexth.allTexts[254];
                     specialDefeat.trigger = new EventExpression(cond);
@@ -398,35 +418,136 @@ class MapLoaderH3M implements IMapLoader {
             allOf.expressions.push(specialDefeat.trigger.get());
             specialDefeat.trigger = new EventExpression(allOf);
 
-            _mapHeader.triggeredEvents.push(specialDefeat);
+            mapHeader.triggeredEvents.push(specialDefeat);
         }
-        _mapHeader.triggeredEvents.push(standardDefeat);
+        mapHeader.triggeredEvents.push(standardDefeat);
+    }
 
-        //ToDo: remove
-        trace(standardDefeat.trigger.toString());
-        standardDefeat.trigger.test(function (ec:EventCondition) {
-            return true;
-        });
+    private function readTeamInfo() {
+        mapHeader.howManyTeams = reader.readUInt8();
+        if(mapHeader.howManyTeams > 0)
+        {
+            // Teams
+            for(i in 0...PlayerColor.PLAYER_LIMIT) {
+                mapHeader.players[i].team = new TeamID(reader.readUInt8());
+            }
+        }
+        else
+        {
+            // No alliances
+            for(i in 0...PlayerColor.PLAYER_LIMIT) {
+                if(mapHeader.players[i].canComputerPlay || mapHeader.players[i].canHumanPlay) {
+                    mapHeader.players[i].team = new TeamID(mapHeader.howManyTeams++);
+                }
+            }
+        }
+    }
+
+    private function readAllowedHeroes() {
+        var allowedHeroesCount = 8;//ToDo: VLC.heroh.heroes.size()
+        mapHeader.allowedHeroes = [for (i in 0...allowedHeroesCount) true];
+
+        var bytes = mapHeader.version == MapFormat.ROE ? 16 : 20;
+
+        readBitmask(mapHeader.allowedHeroes, bytes, GameConstants.HEROES_QUANTITY, false);
+
+        // Probably reserved for further heroes
+        if((mapHeader.version:Int) > (MapFormat.ROE:Int)) {
+            var placeholdersQty:Int = reader.readUInt32();
+
+            reader.skip(placeholdersQty * 1);
+        }
+    }
+
+    private function readDisposedHeroes() {
+        // Reading disposed heroes (20 bytes)
+        if((map.version:Int) >= (MapFormat.SOD:Int)) {
+            var disp = reader.readUInt8();
+            //map.disposedHeroes.resize(disp);
+            for(g in 0...disp) {
+                map.disposedHeroes[g].heroId = reader.readUInt8();
+                map.disposedHeroes[g].portrait = reader.readUInt8();
+                map.disposedHeroes[g].name = reader.readString();
+                map.disposedHeroes[g].players = reader.readUInt8();
+            }
+        }
+
+        //omitting NULLS
+        reader.skip(31);
+    }
+
+    private function readAllowedArtifacts() {
+        var globalArtifacts:Array<Artifact> = [];// ToDo: VLC.arth.artifacts;
+
+        map.allowedArtifact = [for(i in 0...globalArtifacts.length) true]; //handle new artifacts, make them allowed by default
+
+        // Reading allowed artifacts:  17 or 18 bytes
+        if(map.version != MapFormat.ROE) {
+            var bytes = map.version == MapFormat.AB ? 17 : 18;
+
+            readBitmask(map.allowedArtifact, bytes, GameConstants.ARTIFACTS_QUANTITY);
+        }
+
+        // ban combo artifacts
+        if (map.version == MapFormat.ROE || map.version == MapFormat.AB)
+        {
+            for(artifact in globalArtifacts)
+            {
+                // combo
+                if (artifact.constituents != null)
+                {
+                    map.allowedArtifact[artifact.id] = false;
+                }
+            }
+            if (map.version == MapFormat.ROE)
+            {
+                map.allowedArtifact[ArtifactId.ARMAGEDDONS_BLADE] = false;
+            }
+        }
+
+        // Messy, but needed
+        for (event in map.triggeredEvents) {
+            var patcher = function (cond:EventCondition) : Variant<EventCondition> {
+                if (cond.condition == WinLoseType.HAVE_ARTIFACT || cond.condition == WinLoseType.TRANSPORT) {
+                    map.allowedArtifact[cond.objectType] = false;
+                }
+                return cond;
+            };
+
+            event.trigger = event.trigger.morph(patcher);
+        }
+    }
+
+    private function readAllowedSpellsAbilities() {
+
+    }
+
+    private function readRumors() {
+
+    }
+
+    private function readPredefinedHeroes() {
+
     }
 
     private function readTerrain() {
-        _map.initTerrain();
+        map.initTerrain();
 
         for(a in 0...2) {
-            if(a == 1 && !_map.twoLevel) {
+            if(a == 1 && !map.twoLevel) {
                 break;
             }
 
-            for(c in 0..._map.width) {
-                for(z in 0..._map.height) {
-                    var tile = _map.getTile(z, c, a);
-                    tile.terType = _reader.readUInt8();
-                    tile.terView = _reader.readUInt8();
-                    tile.riverType = _reader.readUInt8();
-                    tile.riverDir = _reader.readUInt8();
-                    tile.roadType = _reader.readUInt8();
-                    tile.roadDir = _reader.readUInt8();
-                    tile.extTileFlags = _reader.readUInt8();
+            for(c in 0...map.width) {
+                for(z in 0...map.height) {
+                    var tile = map.getTile(z, c, a);
+                    tile.terType = reader.readUInt8();
+                    tile.terView = reader.readUInt8();
+                    tile.riverType = reader.readUInt8();
+                    tile.riverDir = reader.readUInt8();
+                    tile.roadType = reader.readUInt8();
+                    tile.roadDir = reader.readUInt8();
+                    tile.extTileFlags = reader.readUInt8();
                     tile.blocked = ((tile.terType == TerrainType.ROCK || tile.terType == TerrainType.BORDER ) ? true : false); //underground tiles are always blocked
                     tile.visitable = false;
                 }
@@ -434,8 +555,35 @@ class MapLoaderH3M implements IMapLoader {
         }
     }
 
+    private function readDefInfo() {
+
+    }
+
+    private function readObjects() {
+
+    }
+
+    private function readEvents() {
+
+    }
+
+
+    function readBitmask(dest:Array<Bool>, byteCount:Int, limit:Int, negate:Bool = true) {
+        for(byte in 0...byteCount) {
+            var mask:Int = reader.readUInt8();
+            for(bit in 0...8)
+            {
+                if(byte * 8 + bit < limit) {
+                    var flag:Bool = (mask & (1 << bit)) == 1;
+                    if((negate && flag) || (!negate && !flag)) // FIXME: check PR388
+                        dest[byte * 8 + bit] = false;
+                }
+            }
+        }
+    }
+
     function readInt3():Int3 {
-        var int3 = new Int3(_reader.readUInt8(), _reader.readUInt8(), _reader.readUInt8());
+        var int3 = new Int3(reader.readUInt8(), reader.readUInt8(), reader.readUInt8());
         return int3;
 
     }

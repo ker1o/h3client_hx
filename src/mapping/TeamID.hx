@@ -4,6 +4,7 @@ class TeamID {
 
     public var id:Int;
 
-    public function new() {
+    public function new(id:Int) {
+        this.id = id;
     }
 }
