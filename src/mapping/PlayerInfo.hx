@@ -17,7 +17,7 @@ class PlayerInfo {
     public var mainCustomHeroPortrait:Int;
     public var mainCustomHeroName:String;
 
-    // ID of custom hero (only if portrait and hero name are set, otherwise unpredicted value), -1 if none (not always -1)
+    // ID of custom lib.hero (only if portrait and lib.hero name are set, otherwise unpredicted value), -1 if none (not always -1)
     public var mainCustomHeroId:Int;
 
     public var heroesNames:Array<HeroName>; // list of placed heroes on the map
@@ -29,7 +29,7 @@ class PlayerInfo {
 
     public var generateHero:Bool; /// Unused.
     public var p7:Int; /// Unknown and unused.
-    /// Unused. Count of hero placeholders containing hero type.
+    /// Unused. Count of lib.hero placeholders containing lib.hero type.
     /// WARNING: powerPlaceholders sometimes gives false 0 (eg. even if there is one placeholder), maybe different meaning ???
     public var powerPlaceholders:Int;
 
