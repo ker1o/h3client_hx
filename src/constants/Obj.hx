@@ -1,4 +1,5 @@
 package constants;
+
 @:enum abstract Obj(Int) from Int to Int{
     public var NO_OBJ = -1;
     public var ALTAR_OF_SACRIFICE = 2;

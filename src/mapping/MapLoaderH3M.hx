@@ -1,6 +1,6 @@
 package mapping;
 
-import lib.Artifact;
+import lib.artifacts.Artifact;
 import constants.ArtifactId;
 import utils.logicalexpression.Variant;
 import constants.PlayerColor;

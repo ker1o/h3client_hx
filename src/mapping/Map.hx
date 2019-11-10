@@ -4,7 +4,6 @@ import utils.Int3;
 import Array;
 
 class Map extends MapHeader {
-
     private var _terrain:Array<Array<Array<TerrainTile>>>;
     private var _guardingCreaturePositions:Array<Array<Array<Int>>>;
 
