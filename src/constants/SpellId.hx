@@ -1,5 +1,7 @@
 package constants;
 
+import lib.spells.Spell;
+import lib.mod.VLC;
 @:enum abstract SpellId(Int) from Int to Int{
     public var PRESET:Int = -2;
     public var NONE:Int = -1;
@@ -87,4 +89,8 @@ package constants;
     public var ACID_BREATH_DAMAGE:Int = 81;
     public var FIRST_NON_SPELL:Int = 70;
     public var AFTER_LAST:Int = 82;
+
+    public inline function toSpell():Spell {
+        return VLC.instance.spellh.objects[this];
+    }
 }

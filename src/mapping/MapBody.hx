@@ -1,30 +1,38 @@
 package mapping;
 
-import utils.Int3;
+import constants.id.ArtifactInstanceID;
 import Array;
+import lib.artifacts.ArtifactInstance;
+import lib.mapObjects.GObjectInstance;
+import lib.mapObjects.hero.GHeroInstance;
+import lib.mapObjects.quest.Quest;
+import lib.mapObjects.town.GTownInstance;
+import lib.mapping.MapEvent;
+import lib.mapping.Rumor;
+import utils.Int3;
 
-class Map extends MapHeader {
+class MapBody extends MapHeader {
     private var _terrain:Array<Array<Array<TerrainTile>>>;
     private var _guardingCreaturePositions:Array<Array<Array<Int>>>;
 
 
-    public var checksum:Int /* UInt32 */;
-    public var rumors:Array<Dynamic/*Rumor*/>;
+    public var checksum:UInt /* UInt32 */;
+    public var rumors:Array<Rumor>;
     public var disposedHeroes:Array<Dynamic/*DisposedHero*/>;
-    public var predefinedHeroes:Array<Dynamic/*CGHeroInstance*/>;
+    public var predefinedHeroes:Array<GHeroInstance>;
     public var allowedSpell:Array<Bool>;
     public var allowedArtifact:Array<Bool>;
     public var allowedAbilities:Array<Bool>;
-    public var events:Array<Dynamic/*CMapEvent*/>;
+    public var events:Array<MapEvent>;
     public var grailPos:Int3;
     public var grailRadius:Int;
 
     //Central lists of items in game. Position of item in the vectors below is their (instance) id.
-    public var objects:Array<Dynamic/*CGObjectInstance*/>;
-    public var towns:Array<Dynamic/*CGTownInstance*/>;
-    public var artInstances:Array<Dynamic/*CArtifactInstance*/>;
-    public var quests:Array<Dynamic/*CQuest*/>;
-    public var allHeroes:Array<Dynamic/*CGHeroInstance*/>; //indexed by [hero_type_id]; on map, disposed, prisons, etc.
+    public var objects:Array<GObjectInstance>;
+    public var towns:Array<GTownInstance>;
+    public var artInstances:Array<ArtifactInstance>;
+    public var quests:Array<Quest>;
+    public var allHeroes:Array<GHeroInstance>; //indexed by [hero_type_id]; on map, disposed, prisons, etc.
 
     public function new() {
         super();
@@ -52,4 +60,8 @@ class Map extends MapHeader {
         return _terrain[x][y][z];
     }
 
+    public function addNewArtifactInstance(art:ArtifactInstance) {
+        art.id = new ArtifactInstanceID(artInstances.length);
+        artInstances.push(art);
+    }
 }

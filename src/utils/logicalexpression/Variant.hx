@@ -26,6 +26,5 @@ abstract Variant<T>(Either<LogicalElement<T>, T>) from Either<LogicalElement<T>,
             case Left(a): Std.string(a);
             case Right(b): Std.string(b);
         }
-
     }
 }

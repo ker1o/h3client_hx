@@ -37,4 +37,8 @@ class PlayerInfo {
         // ToDo: initialize some default as in VCMI
         allowedFactions = [];
     }
+
+    public function canAnyonePlay() {
+        return canHumanPlay || canComputerPlay;
+    }
 }

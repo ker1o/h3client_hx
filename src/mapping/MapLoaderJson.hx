@@ -15,8 +15,8 @@ class MapLoaderJson implements IMapLoader {
         return new MapHeader();
     }
 
-    public function loadMap():Map {
-        return new Map();
+    public function loadMap():MapBody {
+        return new MapBody();
     }
 
 }

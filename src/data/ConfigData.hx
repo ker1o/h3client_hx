@@ -1,8 +1,8 @@
 package data;
 class ConfigData {
 
-    static public var data(default, null) = [
-        "terrains.json" => {
+    static public var data(default, null):Map<String, String> = [
+        "config/terrains.json" => '{
             "dirt" :
             {
                 "moveCost" : 100,
@@ -71,10 +71,10 @@ class ConfigData {
                 "moveCost" : -1,
                 "minimapUnblocked" : [ 0, 0, 0 ],
                 "minimapBlocked"   : [ 0, 0, 0 ],
-                "music" : "Underground.mp3" // Impossible in H3
+                "music" : "Underground.mp3"
             }
-        },
-        "config/obstacles.json" => {
+        }',
+        "config/obstacles.json" => '{
             "obstacles" : [
                 {
                     "id" : 0,
@@ -1295,40 +1295,38 @@ class ConfigData {
                     "defname" : "ObMCL00.pcx"
                 }
             ]
-        },
-        "config/resources.json" => {
-            // Price of each resource in gold, in usual resource order
+        }',
+        // Price of each resource in gold, in usual resource order
+        "config/resources.json" => '{
             "resources_prices": [ 250, 500, 250, 500, 500, 500, 1, 0 ]
-        },
-        "config/terrainViewPatterns.json" => {
-            // Defines terrain view/types patterns.
+        }',
+        // Defines terrain view/types patterns.
 
-            // The following table shows the rules for the 3x3 pattern of all terrain types:
-            // I) normal(e.g. grass, lava, ...):
-            // N:		Native type
-            // D:		Dirt border
-            // S:		Sand border
-            // T:		Sand OR dirt border(all Ts in the pattern are replaced by dirt OR sand)
-            // ?:		D,S or N
-            // II) dirt:
-            // N:		Native type or normal type(grass, lava, ...)
-            // S:		Sand border
-            // ?:		Any border
-            // III) sand:
-            // No rules
-            // IV) water, rock:
-            // N:		Native type
-            // S:		Sand border
-            // ?:		Any border
+        // The following table shows the rules for the 3x3 pattern of all terrain types:
+        // I) normal(e.g. grass, lava, ...):
+        // N:		Native type
+        // D:		Dirt border
+        // S:		Sand border
+        // T:		Sand OR dirt border(all Ts in the pattern are replaced by dirt OR sand)
+        // ?:		D,S or N
+        // II) dirt:
+        // N:		Native type or normal type(grass, lava, ...)
+        // S:		Sand border
+        // ?:		Any border
+        // III) sand:
+        // No rules
+        // IV) water, rock:
+        // N:		Native type
+        // S:		Sand border
+        // ?:		Any border
 
-            // Additional rule for validiting terrain type:
-            // N!:		Native type always(unlike N for dirt)
+        // Additional rule for validiting terrain type:
+        // N!:		Native type always(unlike N for dirt)
 
-            // The order of the patterns is important, do not change!
+        // The order of the patterns is important, do not change!
+        "config/terrainViewPatterns.json" => '{
 
-            "terrainView" :
-            [
-                // Extended mixed transitions
+            "terrainView" : [
                 {
                     "id" : "x1",
                     "data" :
@@ -1379,7 +1377,6 @@ class ConfigData {
                     ],
                     "mapping" : { "normal" : "78" }
                 },
-                    // No transition
                 {
                     "id" : "n1",
                     "data" :
@@ -1390,7 +1387,6 @@ class ConfigData {
                     ],
                     "mapping" : { "normal" : "49-72", "dirt" : "21-44", "sand" : "0-23", "water" : "20-32", "rock": "0-7" }
                 },
-                    // Mixed transitions
                 {
                     "id" : "m1",
                     "data" :
@@ -1473,7 +1469,6 @@ class ConfigData {
                     "minPoints" : 1,
                     "mapping" : { "normal" : "48" }
                 },
-                    // Standard transitions
                 {
                     "id" : "s2",
                     "data" :
@@ -1538,8 +1533,7 @@ class ConfigData {
                     "mapping" : { "normal" : "0-3, 20-23", "dirt" : "0-3", "water" : "0-3", "rock": "4D:8-15" }
                 }
             ],
-            "terrainType" :
-            [
+            "terrainType" : [
                 {
                     "id" : "n1",
                     "data" :
@@ -1586,10 +1580,10 @@ class ConfigData {
                     ]
                 }
             ]
-        },
-        "" => {
-
-        }
+        }'
+//        "" => {
+//
+//        }
     ];
 
     public function new() {

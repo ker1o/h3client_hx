@@ -1,8 +1,4 @@
 package constants.id;
 
-class QueryId extends BaseForId {
-
-    public function new() {
-        super();
-    }
-}
+@:forward(getNum)
+abstract QueryId(BaseForId) {}

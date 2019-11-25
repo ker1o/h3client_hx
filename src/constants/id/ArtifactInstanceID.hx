@@ -1,8 +1,8 @@
 package constants.id;
 
-class ArtifactInstanceID extends BaseForId {
-
-    public function new() {
-        super();
+@:forward(getNum)
+abstract ArtifactInstanceID(BaseForId) {
+    public function new(num:Int) {
+        this = num;
     }
 }

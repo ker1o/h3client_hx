@@ -16,7 +16,7 @@ class MapService implements IMapService {
 //        return new Map();
 //    }
 
-    public function loadMapByName(name:String):Map {
+    public function loadMapByName(name:String):MapBody {
         var stream = getStreamFromFs(name);
         return getMapLoader(stream).loadMap();
     }

@@ -1,5 +1,4 @@
 package constants.id;
-class ObjectInstanceId {
-    public function new() {
-    }
-}
+
+@:forward(getNum)
+abstract ObjectInstanceId(BaseForId) {}

@@ -1,8 +1,4 @@
 package constants.id;
 
-class TeleportChannelID extends BaseForId {
-
-    public function new() {
-        super();
-    }
-}
+@:forward(getNum)
+abstract TeleportChannelId(BaseForId) {}

@@ -1,8 +1,4 @@
 package constants.id;
 
-class TeamID extends BaseForId {
-
-    public function new() {
-        super();
-    }
-}
+@:forward(getNum)
+abstract TeamID(BaseForId) {}

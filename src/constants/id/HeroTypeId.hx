@@ -1,8 +1,4 @@
 package constants.id;
 
-class HeroTypeId extends BaseForId {
-
-    public function new() {
-        super();
-    }
-}
+@:forward(getNum)
+abstract HeroTypeId(BaseForId) from Int to Int {}

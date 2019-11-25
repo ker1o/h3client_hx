@@ -1,5 +1,6 @@
 package ;
 
+import lib.mod.VLC;
 import haxe.io.Bytes;
 import mapping.MapService;
 import filesystem.FileCache;
@@ -38,13 +39,20 @@ class Game {
 
     public function new() {
         var mapName:String = "Vial of Life.h3m";
+        VLC.instance.loadFilesystem();
+        VLC.instance.init();
         #if js
         FileCache.instance.initMapAsync(mapName).then(function(success:Bool) {
-            new MapService().loadMapHeaderByName(mapName);
+            var mapService = new MapService();
+            mapService.loadMapHeaderByName(mapName);
+            mapService.loadMapByName(mapName);
         });
         #else
         FileCache.instance.initMap(mapName);
-        new MapService().loadMapHeaderByName(mapName);
+
+        var mapService = new MapService();
+        mapService.loadMapHeaderByName(mapName);
+        mapService.loadMapByName(mapName);
         #end
 /*
         var defaultFilename:String = "zm196z.def";

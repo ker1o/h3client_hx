@@ -1,8 +1,11 @@
 package constants.id;
-class BaseForId {
-    public var num:Int;
 
+abstract BaseForId(Int) from Int to Int {
     public function new(num:Int = -1) {
-        this.num = num;
+        this = num;
+    }
+
+    public inline function getNum():Int {
+        return this;
     }
 }

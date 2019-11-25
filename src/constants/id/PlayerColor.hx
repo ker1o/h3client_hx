@@ -1,8 +1,4 @@
 package constants.id;
 
-class PlayerColor extends BaseForId {
-
-    public function new() {
-        super();
-    }
-}
+@:forward(getNum)
+abstract PlayerColor(BaseForId) {}

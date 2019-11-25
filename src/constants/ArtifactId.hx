@@ -1,5 +1,8 @@
 package constants;
 
+import lib.mod.VLC;
+import lib.artifacts.Artifact;
+
 @:enum abstract ArtifactId(Int) from Int to Int {
     public var NONE:Int = -1;
     public var SPELLBOOK:Int = 0;
@@ -27,4 +30,8 @@ package constants;
     public var DRAGON_EYE_RING:Int = 153;
     public var HARDENED_SHIELD:Int = 154;
     //public var SLAVAS_RING_OF_POWER:Int = 155;
+
+    public inline function toArtifact():Artifact {
+        return VLC.instance.arth.artifacts[this];
+    }
 }
