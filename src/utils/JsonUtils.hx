@@ -12,7 +12,12 @@ class JsonUtils {
 
     public static function merge(dest:Dynamic, destField:String, source:Dynamic, noOverride:Bool = false):Void {
         if(!dest.hasField(destField) || dest.field(destField) == null) {
-            dest.setField(destField, source);
+            try {
+                dest.setField(destField, source);
+            }
+            catch(e:Dynamic) {
+                trace("");
+            }
             return;
         }
 

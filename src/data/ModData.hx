@@ -12958,7 +12958,7 @@ class ModData {
 			}
 		}
 	},
-	"torosar ":
+	"torosar":
 	{
 		"index": 36,
 		"class" : "alchemist",
