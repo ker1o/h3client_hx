@@ -1580,7 +1580,42 @@ class ConfigData {
                     ]
                 }
             ]
+        }',
+        "config/commanders.json" => '{
+            "bonusPerLevel": [
+                ["CREATURE_DAMAGE", 1, 1, 0 ],
+                ["CREATURE_DAMAGE", 2, 2, 0 ],
+                ["STACK_HEALTH", 5, 0, 0 ]
+            ],
+            "skillLevels": [
+                {"name": "ATTACK", "levels": [2, 5, 9, 15, 25]},
+                {"name": "DEFENSE", "levels": [4, 10, 18, 30, 50]},
+                {"name": "HEALTH", "levels": [10, 25, 45, 70, 100]},
+                {"name": "DAMAGE", "levels": [10, 25, 45, 70, 100]},
+                {"name": "SPEED", "levels": [1, 2, 3, 4, 6]},
+                {"name": "SPELL_POWER", "levels": [1, 3, 6, 14, 29]},
+                {"name": "CASTS", "levels": [1, 2, 3, 4, 5]},
+                {"name": "RESISTANCE", "levels": [5, 15, 35, 60, 90]}
+            ],
+            "abilityRequirements": [
+                {"ability": ["ENEMY_DEFENCE_REDUCTION", 50, 0, 0 ], "skills": [0, 1]},
+                {"ability": ["FEAR", 0, 0, 0 ], "skills": [0, 2]},
+                {"ability": ["ALWAYS_MAXIMUM_DAMAGE", 0, -1, 0 ], "skills": [0, 3]},
+                {"ability": ["SHOOTER", 0, 0, 0 ], "skills": [0, 4]},
+                {"ability": ["BLOCKS_RETALIATION", 0, 1, 0 ], "skills": [0,5]},
+                {"ability": ["UNLIMITED_RETALIATIONS", 0, 0, 0 ], "skills": [1, 2]},
+                {"ability": ["ATTACKS_ALL_ADJACENT", 0, 0, 0 ], "skills": [1, 3]},
+                {"ability": ["BLOCK", 30, 0, 0 ], "skills": [1, 4]},
+                {"ability": ["FIRE_SHIELD", 1, 1, 0 ], "skills": [1, 5]},
+                {"ability": ["ADDITIONAL_ATTACK", 1, 0, 0 ], "skills": [2, 3]},
+                {"ability": ["HP_REGENERATION", 50, 0, 0 ], "skills": [2, 4]},
+                {"ability": ["SPELL_AFTER_ATTACK", 30, "spell.paralyze", 0 ], "skills": [2, 5]},
+                {"ability": ["JOUSTING", 0, 0, 0 ], "skills": [3, 4]},
+                {"ability": ["DEATH_STARE", 1, 1, 0 ], "skills": [3,5]},
+                {"ability": ["FLYING", 0, 0, 0 ], "skills": [4,5]}
+            ]
         }'
+
 //        "" => {
 //
 //        }

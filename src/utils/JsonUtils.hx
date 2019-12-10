@@ -10,6 +10,22 @@ class JsonUtils {
         return new Bonus();
     }
 
+    public static function parseBonusVector(abilityArr:Array<Dynamic>):Bonus {
+        //ToDo
+        return new Bonus();
+    }
+
+    public static function parseTypedBonusShort(dource:Array<Dynamic>, dest:Bonus):Void {
+        //ToDo
+    }
+
+    public static function inherit(descendant:Dynamic, base:Dynamic):Void {
+        // ToDo: check
+        var inheritedNode = Reflect.copy(base);
+        merge(inheritedNode, descendant, true);
+        swap(descendant, inheritedNode);
+    }
+
     public static function merge(dest:Dynamic, destField:String, source:Dynamic, noOverride:Bool = false):Void {
         if(!dest.hasField(destField) || dest.field(destField) == null) {
             try {
@@ -29,14 +45,27 @@ class JsonUtils {
             dest.setField(destField, source);
         } else {
             // there must be an object
-//        if(!noOverride && source.flags, "override")) {
-//            dest.setField(destField, source);
-//        } else {
-            //recursively merge all entries from struct
-            for(nodeField in source.fields()) {
-                merge(dest.field(destField), nodeField, source.field(nodeField), noOverride);
-            }
-//        }
+//            if(!noOverride && source.flags, "override")) {
+//                dest.setField(destField, source);
+//            } else {
+                //recursively merge all entries from struct
+                for(nodeField in source.fields()) {
+                    merge(dest.field(destField), nodeField, source.field(nodeField), noOverride);
+                }
+//            }
+        }
+    }
+
+    public static function swap(a:Dynamic, b:Dynamic) {
+        // currently only a becames b
+        var fields = a.fields();
+        for (field in fields) {
+            a.deleteField(field);
+        }
+
+        fields = b.fields();
+        for (field in fields) {
+            a.setField(field, b.field(field));
         }
     }
 }
