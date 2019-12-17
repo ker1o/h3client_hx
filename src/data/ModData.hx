@@ -1,9 +1,9 @@
 package data;
 
 class ModData {
-//    public static var data:Map<String, String> = ["" => ""];
+    public static var data:Map<String, String> = ["" => ""];
 
-    public static var data:Map<String, String> = [
+/*    public static var data:Map<String, String> = [
         "artifacts" => '{
     "spellBook":
     {
@@ -21111,5 +21111,5 @@ class ModData {
 
 	}
 }'
-    ];
+    ];*/
 }
