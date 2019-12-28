@@ -1,9 +1,9 @@
 package data;
 
 class H3mConfigData {
-    public static var data:Map<String, String> = ["" => ""];
+//    public static var data:Map<String, String> = ["" => ""];
 
-/*    public static var data:Map<String, String> = [
+    public static var data:Map<String, String> = [
         "DATA/BALLIST.TXT" => '[
             [5, 10, 25, 50, 1, 10, 60, 30, 100],
             [7, 15, 30, 60, 1, 0, 50, 50, 100],
@@ -3706,6 +3706,6 @@ class H3mConfigData {
                 "Сопряжение",
                 "Фабрика Големов"
             ]'
-    ];*/
+    ];
 
 }

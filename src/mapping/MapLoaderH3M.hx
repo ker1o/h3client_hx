@@ -540,6 +540,8 @@ class MapLoaderH3M implements IMapLoader {
 
         //do not generate special abilities and spells
         for (spell in VLC.instance.spellh.objects) {
+            if (spell == null) continue;
+
             if (spell.isSpecialSpell() || spell.isCreatureAbility()) {
                 map.allowedSpell[spell.id] = false;
             }

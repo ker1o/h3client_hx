@@ -1,6 +1,6 @@
 package constants;
 
-class BuildingID {
+@:enum abstract BuildingID(Int) from Int to Int {
     //Quite useful as long as most of building mechanics hardcoded
     // NOTE: all building with completely configurable mechanics will be removed from list
     public static inline var DEFAULT:Int = -50;
