@@ -22,7 +22,9 @@ class JsonUtils {
     public static function inherit(descendant:Dynamic, base:Dynamic):Void {
         // ToDo: check
         var inheritedNode = Reflect.copy(base);
-        merge(inheritedNode, descendant, true);
+        for (fieldName in descendant.fields()) {
+            merge(inheritedNode, fieldName, descendant.field(fieldName), true);
+        }
         swap(descendant, inheritedNode);
     }
 
