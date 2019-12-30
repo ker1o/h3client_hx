@@ -10,4 +10,8 @@ class Int3 {
         this.y = y;
         this.z = z;
     }
+
+    public function toString():String {
+        return 'x: $x, y: $y, z: $z';
+    }
 }

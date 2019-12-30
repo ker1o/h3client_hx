@@ -9,4 +9,9 @@ package mapping;
     // HOTA = 0x1e ... 0x20 // 28 ... 30
     public var WOG = 0x33;  // 51
     public var VCMI = 0xF0;
+
+    @:op(A > B)
+    static function gt(a:MapFormat, b:MapFormat):Bool {
+        return (a:Int) > (b:Int);
+    }
 }

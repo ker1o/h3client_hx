@@ -1,5 +1,9 @@
 package mapping;
 
+import lib.mapping.MapEditManager;
+import constants.id.ObjectInstanceId;
+import lib.mapObjects.misc.TeleportChannel;
+import constants.id.TeleportChannelId;
 import constants.id.ArtifactInstanceID;
 import Array;
 import lib.artifacts.ArtifactInstance;
@@ -18,7 +22,7 @@ class MapBody extends MapHeader {
 
     public var checksum:UInt /* UInt32 */;
     public var rumors:Array<Rumor>;
-    public var disposedHeroes:Array<Dynamic/*DisposedHero*/>;
+    public var disposedHeroes:Array<DisposedHero>;
     public var predefinedHeroes:Array<GHeroInstance>;
     public var allowedSpell:Array<Bool>;
     public var allowedArtifact:Array<Bool>;
@@ -34,8 +38,19 @@ class MapBody extends MapHeader {
     public var quests:Array<Quest>;
     public var allHeroes:Array<GHeroInstance>; //indexed by [hero_type_id]; on map, disposed, prisons, etc.
 
+    //Helper lists
+    public var heroesOnMap:Array<GHeroInstance>;
+    public var teleportChannels:Map<TeleportChannelId, TeleportChannel>;
+
+    public var questIdentifierToId:Map<Int, ObjectInstanceId>;
+    public var editManager:MapEditManager;
+    public var instanceNames:Map<String, GObjectInstance>;
+
     public function new() {
         super();
+
+        questIdentifierToId = new Map<Int, ObjectInstanceId>();
+        instanceNames = new Map<String, GObjectInstance>();
     }
 
     public function initTerrain() {
@@ -63,5 +78,21 @@ class MapBody extends MapHeader {
     public function addNewArtifactInstance(art:ArtifactInstance) {
         art.id = new ArtifactInstanceID(artInstances.length);
         artInstances.push(art);
+    }
+
+    public function addNewObject(obj:GObjectInstance) {
+        var it = instanceNames.get(obj.instanceName);
+        if(it == null)
+            throw 'Object instance name duplicated: ${obj.instanceName}';
+
+        objects.push(obj);
+        instanceNames[obj.instanceName] = obj;
+        addBlockVisTiles(obj);
+
+        obj.afterAddToMap(this);
+    }
+
+    private function addBlockVisTiles(obj:GObjectInstance) {
+        //ToDo
     }
 }

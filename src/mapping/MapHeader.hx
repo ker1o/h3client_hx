@@ -1,7 +1,7 @@
 package mapping;
 
 import mapping.EventEffect.EventEffectType;
-import constants.PlayerColor;
+import constants.id.PlayerColor;
 
 class MapHeader {
 

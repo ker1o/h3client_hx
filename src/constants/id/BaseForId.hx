@@ -1,7 +1,7 @@
 package constants.id;
 
 abstract BaseForId(Int) from Int to Int {
-    public function new(num:Int = -1) {
+    public inline function new(num:Int = -1) {
         this = num;
     }
 

@@ -1,26 +1,62 @@
 package mapping;
 
-import constants.SpellId;
-import lib.netpacks.ArtifactLocation;
-import lib.artifacts.ArtifactInstance;
-import constants.ArtifactPosition;
-import constants.SecondarySkill;
-import constants.PrimarySkill;
-import lib.mapping.Rumor;
-import lib.mapObjects.hero.GHeroInstance;
-import lib.mod.VLC;
-import lib.artifacts.Artifact;
+import lib.mapObjects.town.GTownInstance;
+import lib.mapObjects.quest.IQuestObject;
+import lib.mapObjects.quest.Quest;
+import lib.mapObjects.quest.GSeerHut;
+import lib.mapObjects.quest.GSeerHut.SeerHutRewardType;
+import lib.herobonus.BonusType;
+import lib.herobonus.BonusSource;
+import lib.res.ResourceSet;
+import constants.id.SlotId;
+import constants.id.CreatureId;
+import lib.creature.CreatureSet;
+import constants.id.ObjectInstanceId;
+import lib.mapObjects.misc.GLighthouse;
+import lib.mapObjects.Bank;
+import lib.mapObjects.quest.GBorderGuard;
+import lib.mapObjects.quest.GBorderGate;
+import lib.mapObjects.hero.GHeroPlaceholder;
+import lib.mapObjects.misc.GShipyard;
+import lib.mapObjects.quest.GQuestGuard;
+import lib.mapObjects.town.SpecObjInfo;
+import lib.mapObjects.pandorabox.GPandoraBox;
+import lib.mapObjects.misc.GShrine;
+import lib.mapObjects.town.GDwelling;
+import lib.mapObjects.misc.GMine;
+import lib.res.ResType;
+import lib.mapObjects.misc.GResource;
+import lib.mapObjects.misc.GArtifact;
+import lib.mapObjects.misc.GGarrison;
+import lib.mapObjects.misc.GScholar;
+import lib.mapObjects.misc.GWitchHut;
+import lib.mapObjects.misc.GSignBottle;
+import lib.creature.StackInstance;
+import lib.mapObjects.misc.GCreature;
+import lib.mapObjects.pandorabox.GEvent;
+import lib.mapObjects.GObjectInstance;
 import constants.ArtifactId;
-import utils.logicalexpression.Variant;
-import constants.PlayerColor;
-import utils.logicalexpression.EventExpression;
-import constants.Obj;
+import constants.ArtifactPosition;
 import constants.BuildingID;
+import constants.GameConstants;
+import constants.Obj;
+import constants.id.PlayerColor;
+import constants.PrimarySkill;
+import constants.SecondarySkill;
+import constants.SpellId;
+import filesystem.BinaryReader;
+import haxe.io.Bytes;
+import lib.artifacts.Artifact;
+import lib.artifacts.ArtifactInstance;
+import lib.mapObjects.hero.GHeroInstance;
+import lib.mapObjects.ObjectTemplate;
+import lib.mapping.Rumor;
+import lib.mod.VLC;
+import lib.netpacks.ArtifactLocation;
 import mapping.EventEffect.EventEffectType;
 import utils.Int3;
-import constants.GameConstants;
-import haxe.io.Bytes;
-import filesystem.BinaryReader;
+import utils.logicalexpression.EventExpression;
+import utils.logicalexpression.Variant;
 
 class MapLoaderH3M implements IMapLoader {
 
@@ -29,6 +65,10 @@ class MapLoaderH3M implements IMapLoader {
     private var mapHeader:MapHeader;
     private var map:MapBody;
     private var reader:BinaryReader;
+
+    /** List of templates loaded from the map, used on later stage to create
+	 *  objects but not needed for fully functional CMap */
+    private var templates:Array<ObjectTemplate>;
 
     public function new(stream:Bytes) {
         _stream = stream;
@@ -730,12 +770,711 @@ class MapLoaderH3M implements IMapLoader {
     }
 
     private function readDefInfo() {
+        var defAmount:Int = reader.readUInt32();
 
+        templates = [];
+
+        // Read custom defs
+        for(idd in 0...defAmount) {
+            var tmpl = new ObjectTemplate();
+            tmpl.readMap(reader);
+            templates.push(tmpl);
+        }
     }
 
     private function readObjects() {
+        var howManyObjs:Int = reader.readUInt32();
 
+        for(ww in 0...howManyObjs) {
+            var nobj:GObjectInstance = null;
+
+            var objPos:Int3 = readInt3();
+
+            var defnum:Int = reader.readUInt32();
+            var idToBeGiven:ObjectInstanceId = new ObjectInstanceId(map.objects.length);
+
+            var objTempl:ObjectTemplate = templates[defnum];
+            reader.skip(5);
+
+            switch(objTempl.id) {
+                case Obj.EVENT:
+                    var evnt = new GEvent();
+                    nobj = evnt;
+
+                    readMessageAndGuards(evnt.message, evnt.creatureSet);
+
+                    evnt.gainedExp = reader.readUInt32();
+                    evnt.manaDiff = reader.readUInt32();
+                    evnt.moraleDiff = reader.readInt8();
+                    evnt.luckDiff = reader.readInt8();
+
+                    readResourses(evnt.resources);
+
+//                    evnt.primskills.resize(GameConstants.PRIMARY_SKILLS);
+                    for (x in 0...4) {
+                        evnt.primskills[x] = (reader.readUInt8():PrimarySkill);
+                    }
+
+                    var gabn:Int = reader.readUInt8(); // Number of gained abilities
+                    for(oo in 0...gabn) {
+                        evnt.abilities.push((reader.readUInt8():SecondarySkill));
+                        evnt.abilityLevels.push(reader.readUInt8());
+                    }
+
+                    var gart = reader.readUInt8(); // Number of gained artifacts
+                    for(oo in 0...gart) {
+                        if(map.version == MapFormat.ROE) {
+                            evnt.artifacts.push((reader.readUInt8():ArtifactId));
+                        } else {
+                            evnt.artifacts.push((reader.readUInt16():ArtifactId));
+                        }
+                    }
+
+                    var gspel:Int = reader.readUInt8(); // Number of gained spells
+                    for(oo in 0...gspel) {
+                        evnt.spells.push((reader.readUInt8():SpellId));
+                    }
+
+                    var gcre = reader.readUInt8(); //number of gained creatures
+                    readCreatureSet(evnt.creatures, gcre);
+
+                    reader.skip(8);
+                    evnt.availableFor = reader.readUInt8();
+                    evnt.computerActivate = reader.readUInt8() != 0;
+                    evnt.removeAfterVisit = reader.readUInt8() != 0;
+                    evnt.humanActivate = true;
+
+                    reader.skip(4);
+
+                case Obj.HERO | Obj.RANDOM_HERO | Obj.PRISON:
+                    nobj = readHero(idToBeGiven, objPos);
+
+                case Obj.MONSTER | Obj.RANDOM_MONSTER | Obj.RANDOM_MONSTER_L1 | Obj.RANDOM_MONSTER_L2 | Obj.RANDOM_MONSTER_L3 | Obj.RANDOM_MONSTER_L4 | Obj.RANDOM_MONSTER_L5 | Obj.RANDOM_MONSTER_L6 | Obj.RANDOM_MONSTER_L7:
+                    var cre = new GCreature();
+                    nobj = cre;
+
+                    if((map.version:Int) > (MapFormat.ROE:Int)) {
+                        cre.identifier = reader.readUInt32();
+                        map.questIdentifierToId[cre.identifier] = idToBeGiven;
+                    }
+
+                    var hlp = new StackInstance();
+                    hlp.stackBasicDescriptor.count = reader.readUInt16();
+
+                    //type will be set during initialization
+                    cre.creatureSet.putStack(new SlotId(0), hlp);
+
+                    cre.character = reader.readUInt8();
+
+                    var hasMessage:Bool = reader.readBool();
+                    if (hasMessage) {
+                        cre.message = reader.readString();
+                        readResourses(cre.resources);
+
+                        var artID:Int;
+                        if (map.version == MapFormat.ROE) {
+                            artID = reader.readUInt8();
+                        } else {
+                            artID = reader.readUInt16();
+                        }
+
+                        if(map.version == MapFormat.ROE) {
+                            if(artID != 0xff) {
+                                cre.gainedArtifact = (artID:ArtifactId);
+                            } else {
+                                cre.gainedArtifact = ArtifactId.NONE;
+                            }
+                        } else {
+                            if(artID != 0xffff) {
+                                cre.gainedArtifact = (artID:ArtifactId);
+                            } else {
+                                cre.gainedArtifact = ArtifactId.NONE;
+                            }
+                        }
+                    }
+                    cre.neverFlees = reader.readUInt8() != 0;
+                    cre.notGrowingTeam =reader.readUInt8() != 0;
+                    reader.skip(2);
+
+                case Obj.OCEAN_BOTTLE | Obj.SIGN:
+                    var sb = new GSignBottle();
+                    nobj = sb;
+                    sb.message = reader.readString();
+                    reader.skip(4);
+
+                case Obj.SEER_HUT:
+                    nobj = readSeerHut();
+
+                case Obj.WITCH_HUT:
+                    var wh = new GWitchHut();
+                    nobj = wh;
+
+                    // in RoE we cannot specify it - all are allowed (I hope)
+                    if (map.version > MapFormat.ROE) {
+                        for (i in 0...4) {
+                            var c:Int = reader.readUInt8();
+                            for (yy in 0...8) {
+                                if (i * 8 + yy < GameConstants.SKILL_QUANTITY) {
+                                    if (c == (c | Std.int(Math.pow(2, yy)))) {
+                                        wh.allowedAbilities.push(i * 8 + yy);
+                                    }
+                                }
+                            }
+                        }
+                            // enable new (modded) skills
+                        if (wh.allowedAbilities.length != 1) {
+                            for(skillID in GameConstants.SKILL_QUANTITY...VLC.instance.skillh.size()) {
+                                wh.allowedAbilities.push(skillID);
+                            }
+                        }
+                    } else {
+                        // RoE map
+                        for(skillID in 0...VLC.instance.skillh.size()) {
+                            wh.allowedAbilities.push(skillID);
+                        }
+                    }
+                case Obj.SCHOLAR:
+                    var sch = new GScholar();
+                    nobj = sch;
+                    sch.bonusType = (reader.readUInt8():ScholarBonusType);
+                    sch.bonusID = reader.readUInt8();
+                    reader.skip(6);
+
+                case Obj.GARRISON | Obj.GARRISON2:
+                    var gar = new GGarrison();
+                    nobj = gar;
+                    nobj.setOwner(new PlayerColor(reader.readUInt8()));
+                    reader.skip(3);
+                    readCreatureSet(gar.creatureSet, 7);
+                    if ((map.version:Int) > (MapFormat.ROE:Int)) {
+                        gar.removableUnits = reader.readBool();
+                    } else {
+                        gar.removableUnits = true;
+                    }
+                    reader.skip(8);
+
+                case Obj.ARTIFACT | Obj.RANDOM_ART | Obj.RANDOM_TREASURE_ART | Obj.RANDOM_MINOR_ART | Obj.RANDOM_MAJOR_ART | Obj.RANDOM_RELIC_ART | Obj.SPELL_SCROLL:
+                    var artID:Int = ArtifactId.NONE; //random, set later
+                    var spellID:Int = -1;
+                    var art = new GArtifact();
+                    nobj = art;
+
+                    readMessageAndGuards(art.message, art.creatureSet);
+
+                    if (objTempl.id == Obj.SPELL_SCROLL) {
+                        spellID = reader.readUInt32();
+                        artID = ArtifactId.SPELL_SCROLL;
+                    } else if (objTempl.id == Obj.ARTIFACT) {
+                        //specific artifact
+                        artID = objTempl.subid;
+                    }
+
+                    art.storedArtifact = ArtifactInstance.createArtifact(map, artID, spellID);
+
+                case Obj.RANDOM_RESOURCE | Obj.RESOURCE:
+                    var res = new GResource();
+                    nobj = res;
+
+                    readMessageAndGuards(res.message, res.creatureSet);
+
+                    res.amount = reader.readUInt32();
+                    if(objTempl.subid == ResType.GOLD) {
+                        // Gold is multiplied by 100.
+                        res.amount *= 100;
+                    }
+                    reader.skip(4);
+
+                case Obj.RANDOM_TOWN | Obj.TOWN:
+                    nobj = readTown(objTempl.subid);
+
+                case Obj.MINE | Obj.ABANDONED_MINE:
+                    nobj = new GMine();
+                    nobj.setOwner(new PlayerColor(reader.readUInt8()));
+                    reader.skip(3);
+
+                case Obj.CREATURE_GENERATOR1 | Obj.CREATURE_GENERATOR2 | Obj.CREATURE_GENERATOR3 | Obj.CREATURE_GENERATOR4:
+                    nobj = new GDwelling();
+                    nobj.setOwner(new PlayerColor(reader.readUInt8()));
+                    reader.skip(3);
+
+                case Obj.SHRINE_OF_MAGIC_INCANTATION | Obj.SHRINE_OF_MAGIC_GESTURE | Obj.SHRINE_OF_MAGIC_THOUGHT:
+                    var shr = new GShrine();
+                    nobj = shr;
+                    var raw_id = reader.readUInt8();
+
+                    if (255 == raw_id) {
+                        shr.spell = SpellId.NONE;
+                    } else {
+                        shr.spell = (raw_id:SpellId);
+                    }
+
+                    reader.skip(3);
+
+                case Obj.PANDORAS_BOX:
+                    var box = new GPandoraBox();
+                    nobj = box;
+                    readMessageAndGuards(box.message, box.creatureSet);
+
+                    box.gainedExp = reader.readUInt32();
+                    box.manaDiff = reader.readUInt32();
+                    box.moraleDiff = reader.readInt8();
+                    box.luckDiff = reader.readInt8();
+
+                    readResourses(box.resources);
+
+//                    box.primskills.resize(GameConstants.PRIMARY_SKILLS);
+                    for ( x in 0...4) {
+                        box.primskills[x] = (reader.readUInt8():PrimarySkill);
+                    }
+
+                    var gabn:Int = reader.readUInt8();//number of gained abilities
+                    for (oo in 0...gabn) {
+                        box.abilities.push((reader.readUInt8():SecondarySkill));
+                        box.abilityLevels.push(reader.readUInt8());
+                    }
+                    var gart:Int = reader.readUInt8(); //number of gained artifacts
+                    for(oo in 0...gart) {
+                        if(map.version > MapFormat.ROE) {
+                            box.artifacts.push((reader.readUInt16():ArtifactId));
+                        } else {
+                            box.artifacts.push((reader.readUInt8():ArtifactId));
+                        }
+                    }
+                    var gspel:Int = reader.readUInt8(); //number of gained spells
+                    for(oo in 0...gspel) {
+                        box.spells.push((reader.readUInt8():SpellId));
+                    }
+                    var gcre:Int = reader.readUInt8(); //number of gained creatures
+                    readCreatureSet(box.creatures, gcre);
+                    reader.skip(8);
+
+                case Obj.GRAIL:
+                    map.grailPos = objPos;
+                    map.grailRadius = reader.readUInt32();
+                    continue;
+
+                case Obj.RANDOM_DWELLING | //same as castle + level range
+                  Obj.RANDOM_DWELLING_LVL | //same as castle, fixed level
+                  Obj.RANDOM_DWELLING_FACTION: //level range, fixed faction
+                    var dwelling = new GDwelling();
+                    nobj = dwelling;
+                    var spec:SpecObjInfo = null;
+                    switch(objTempl.id) {
+                        case Obj.RANDOM_DWELLING:
+                            spec = new CreGenLeveledCastleInfo();
+                        case Obj.RANDOM_DWELLING_LVL:
+                            spec = new CreGenAsCastleInfo();
+                        case Obj.RANDOM_DWELLING_FACTION:
+                            spec = new CreGenLeveledInfo();
+                        default:
+                            throw "Invalid random dwelling format";
+                    }
+                    spec.owner = dwelling;
+
+                    nobj.setOwner(new PlayerColor(reader.readUInt32()));
+
+                    //216 and 217
+                    var castleSpec:CreGenAsCastleInfo = cast spec;
+                    if (castleSpec != null) {
+                        castleSpec.instanceId = "";
+                        castleSpec.identifier = reader.readUInt32();
+                        if(castleSpec.identifier == null) {
+                            castleSpec.asCastle = false;
+                            var MASK_SIZE:Int = 8;
+                            var mask = [reader.readUInt8(), reader.readUInt8()];
+
+                            castleSpec.allowedFactions = [];
+
+                            for(i in 0...MASK_SIZE) {
+                                castleSpec.allowedFactions[i] = ((mask[0] & (1 << i))>0);
+                            }
+
+                            for(i in 0...(GameConstants.F_NUMBER - MASK_SIZE)) {
+                                castleSpec.allowedFactions[i+MASK_SIZE] = ((mask[1] & (1 << i))>0);
+                            }
+                        } else {
+                            castleSpec.asCastle = true;
+                        }
+                    }
+
+                    //216 and 218
+                    var lvlSpec:CreGenLeveledInfo = cast spec;
+                    if (lvlSpec != null) {
+                        lvlSpec.minLevel = Math.max(reader.readUInt8(), 1);
+                        lvlSpec.maxLevel = Math.min(reader.readUInt8(), 7);
+                    }
+                    dwelling.info = spec;
+
+                case Obj.QUEST_GUARD:
+                    var guard = new GQuestGuard();
+                    readQuest(guard);
+                    nobj = guard;
+
+                case Obj.SHIPYARD:
+                    nobj = new GShipyard();
+                    nobj.setOwner(new PlayerColor(reader.readUInt32()));
+
+                case Obj.HERO_PLACEHOLDER: //hero placeholder
+                    var hp = new GHeroPlaceholder();
+                    nobj = hp;
+
+                    hp.setOwner(new PlayerColor(reader.readUInt8()));
+
+                    var htid:Int = reader.readUInt8(); //hero type id
+                    nobj.subID = htid;
+
+                    if(htid == 0xff) {
+                        hp.power = reader.readUInt8();
+                        trace("Hero placeholder: by power at ${objPos}");
+                    } else {
+                        trace("Hero placeholder: ${VLC.instance.heroh.heroes[htid].name} at ${objPos}");
+                        hp.power = 0;
+                    }
+
+                case Obj.BORDERGUARD:
+                    nobj = new GBorderGuard();
+
+                case Obj.BORDER_GATE:
+                    nobj = new GBorderGate();
+
+                case Obj.PYRAMID: //Pyramid of WoG object
+                    if(objTempl.subid == 0) {
+                        nobj = new Bank();
+                    } else {
+                        //WoG object
+                        //TODO: possible special handling
+                        nobj = new GObjectInstance();
+                    }
+
+                case Obj.LIGHTHOUSE: //Lighthouse
+                    nobj = new GLighthouse();
+                    nobj.tempOwner = new PlayerColor(reader.readUInt32());
+
+                default: //any other object
+                    if (VLC.instance.objtypeh.knownSubObjects(objTempl.id).count(objTempl.subid)) {
+                        nobj = VLC.instance.objtypeh.getHandlerFor(objTempl.id, objTempl.subid).create(objTempl);
+                    } else {
+                        trace('Unrecognized object: ${objTempl.id}:${objTempl.subid} at ${objPos} on map ${map.name}');
+                        nobj = new GObjectInstance();
+                    }
+            }
+
+            nobj.pos = objPos;
+            nobj.ID = objTempl.id;
+            nobj.id = idToBeGiven;
+            if(nobj.ID != Obj.HERO && nobj.ID != Obj.HERO_PLACEHOLDER && nobj.ID != Obj.PRISON) {
+                nobj.subID = objTempl.subid;
+            }
+            nobj.appearance = objTempl;
+            if (idToBeGiven != new ObjectInstanceId(map.objects.length)) {
+                trace('[Assert] idToBeGiven == ObjectInstanceID(map.objects.length)' );
+            }
+            //TODO: define valid typeName and subtypeName fro H3M maps
+            nobj.instanceName = 'obj_${nobj.id.getNum()}';
+            map.addNewObject(nobj);
+        }
+
+        map.heroesOnMap.sort(function(a:GHeroInstance, b:GHeroInstance) {
+            return a.subID < b.subID ? 1 : -1;
+        });
     }
+
+    private function readMessageAndGuards(message:String, guards:CreatureSet) {
+        var hasMessage = reader.readBool();
+        if(hasMessage) {
+            message = reader.readString();
+            var hasGuards = reader.readBool();
+            if(hasGuards)  {
+                readCreatureSet(guards, 7);
+            }
+            reader.skip(4);
+        }
+    }
+
+    private function readCreatureSet(out:CreatureSet, number:Int) {
+        var version:Bool = ((map.version:Int) > (MapFormat.ROE:Int));
+        var maxID:Int = version ? 0xffff : 0xff;
+
+        for (ir in 0...number) {
+            var creID:CreatureId;
+            var count:Int;
+
+            if (version) {
+                creID = new CreatureId(reader.readUInt16());
+            } else {
+                creID = new CreatureId(reader.readUInt8());
+            }
+            count = reader.readUInt16();
+
+            // Empty slot
+            if(creID == maxID) {
+                continue;
+            }
+
+            var hlp = new StackInstance();
+            hlp.stackBasicDescriptor.count = count;
+
+            var creIdInt:Int = creID;
+            if(creIdInt > maxID - 0xf) {
+                //this will happen when random object has random army
+                hlp.idRand = maxID - creIdInt - 1;
+            } else {
+                hlp.setTypeById(creID);
+            }
+
+            out.putStack(new SlotId(ir), hlp);
+        }
+
+        out.validTypes(true);
+    }
+
+    private function readResourses(resources:ResourceSet) {
+//        resources.resize(GameConstants::RESOURCE_QUANTITY); //needed?
+        for(x in 0...7) {
+            resources[x] = reader.readUInt32();
+        }
+    }
+
+    private function readHero(idToBeGiven:ObjectInstanceId, initialPos:Int3) {
+        var nhi = new GHeroInstance();
+
+        if ((map.version:Int) > (MapFormat.ROE:Int)) {
+            var identifier = reader.readUInt32();
+            map.questIdentifierToId[identifier] = idToBeGiven;
+        }
+
+        var owner = new PlayerColor(reader.readUInt8());
+        nhi.subID = reader.readUInt8();
+
+        //assert(!nhi.getArt(ArtifactPosition.MACH4));
+
+        //If hero of this type has been predefined, use that as a base.
+        //Instance data will overwrite the predefined values where appropriate.
+        for (elem in map.predefinedHeroes) {
+            if(elem.subID == nhi.subID) {
+                trace('Hero ${nhi.subID} will be taken from the predefined heroes list.');
+                nhi = elem;
+                break;
+            }
+        }
+        nhi.setOwner(owner);
+
+        nhi.portrait = nhi.subID;
+
+        for (elem in map.disposedHeroes) {
+            if (elem.heroId == nhi.subID) {
+                nhi.name = elem.name;
+                nhi.portrait = elem.portrait;
+                break;
+            }
+        }
+
+        var hasName = reader.readBool();
+        if (hasName) {
+            nhi.name = reader.readString();
+        }
+        if ((map.version:Int) > (MapFormat.AB:Int)) {
+            var hasExp = reader.readBool();
+            if(hasExp) {
+                nhi.exp = reader.readUInt32();
+            } else {
+                nhi.exp = 0xffffffff;
+            }
+        } else {
+            nhi.exp = reader.readUInt32();
+
+            //0 means "not set" in <=AB maps
+            if(nhi.exp == 0) {
+                nhi.exp = 0xffffffff;
+            }
+        }
+
+        var hasPortrait = reader.readBool();
+        if (hasPortrait) {
+            nhi.portrait = reader.readUInt8();
+        }
+
+        var hasSecSkills = reader.readBool();
+        if (hasSecSkills) {
+            if (nhi.secSkills.length > 0) {
+                while (nhi.secSkills.length > 0) {
+                    nhi.secSkills.pop();
+                }
+                //logGlobal.warn("Hero %s subID=%d has set secondary skills twice (in map properties and on adventure map instance). Using the latter set...", nhi.name, nhi.subID);
+            }
+
+            var howMany:Int = reader.readUInt32();
+//            nhi.secSkills.resize(howMany);
+            for(yy in 0...howMany) {
+                nhi.secSkills[yy].skill = (reader.readUInt8():SecondarySkill);
+                nhi.secSkills[yy].level = reader.readUInt8();
+            }
+        }
+
+        var hasGarison = reader.readBool();
+        if (hasGarison) {
+            readCreatureSet(nhi.creatureSet, 7);
+        }
+
+        nhi.creatureSet.formation = reader.readUInt8() != 0;
+        loadArtifactsOfHero(nhi);
+        nhi.patrol.patrolRadius = reader.readUInt8();
+        if (nhi.patrol.patrolRadius == 0xff) {
+            nhi.patrol.patrolling = false;
+        } else {
+            nhi.patrol.patrolling = true;
+            nhi.patrol.initialPos = GHeroInstance.convertPosition(initialPos, false);
+        }
+
+        if ((map.version:Int) > (MapFormat.ROE:Int)) {
+            var hasCustomBiography = reader.readBool();
+            if(hasCustomBiography) {
+                nhi.biography = reader.readString();
+            }
+            nhi.sex = reader.readUInt8();
+
+            // Remove trash
+            if (nhi.sex != 0xFF) {
+                nhi.sex &= 1;
+            }
+        } else {
+            nhi.sex = 0xFF;
+        }
+
+        // Spells
+        if ((map.version:Int) > (MapFormat.AB:Int)) {
+            var hasCustomSpells = reader.readBool();
+            if (nhi.spells.length > 0) {
+                while (nhi.spells.length > 0) {
+                    nhi.spells.pop();
+                }
+                trace('Hero ${nhi.name} subID=${nhi.subID} has spells set twice (in map properties and on adventure map instance). Using the latter set...');
+            }
+
+            if (hasCustomSpells) {
+                nhi.spells.push(SpellId.PRESET); //placeholder "preset spells"
+
+                readSpells(nhi.spells);
+            }
+        } else if(map.version == MapFormat.AB) {
+            //we can read one spell
+            var buff:Int = reader.readUInt8();
+            if(buff != 254) {
+                nhi.spells.push(SpellId.PRESET); //placeholder "preset spells"
+                if(buff < 254) { //255 means no spells
+                    nhi.spells.push((buff:SpellId));
+                }
+            }
+        }
+
+        if ((map.version:Int) > (MapFormat.AB:Int)) {
+            var hasCustomPrimSkills = reader.readBool();
+            if (hasCustomPrimSkills) {
+                var ps = nhi.getAllBonuses(Selector.type(BonusType.PRIMARY_SKILL).And(Selector.sourceType(BonusSource.HERO_BASE_SKILL)), null);
+                if (ps.length > 0) {
+                    trace('Hero ${nhi.name} subID=${nhi.subID} has set primary skills twice (in map properties and on adventure map instance). Using the latter set...');
+                    for (b in ps) {
+                        nhi.removeBonus(b);
+                    }
+                }
+
+
+                for (xx in 0...GameConstants.PRIMARY_SKILLS) {
+                    nhi.pushPrimSkill((xx:PrimarySkill), reader.readUInt8());
+                }
+            }
+        }
+        reader.skip(16);
+        return nhi;
+    }
+
+    private function readSeerHut() {
+        var hut = new GSeerHut();
+
+        if ((map.version:Int) > (MapFormat.ROE:Int)) {
+            readQuest(hut);
+        } else {
+            //RoE
+            var artID:Int = reader.readUInt8();
+            if (artID != 255) {
+                //not none quest
+                hut.quest.m5arts.push(artID);
+                hut.quest.missionType = Mission.MISSION_ART;
+            } else {
+                hut.quest.missionType = Mission.MISSION_NONE;
+            }
+            hut.quest.lastDay = -1; //no timeout
+            hut.quest.isCustomFirst = hut.quest.isCustomNext = hut.quest.isCustomComplete = false;
+        }
+
+        if (hut.quest.missionType != null) {
+            var rewardType:SeerHutRewardType = (reader.readUInt8():SeerHutRewardType);
+            hut.rewardType = rewardType;
+            switch(rewardType) {
+                case SeerHutRewardType.EXPERIENCE:
+                    hut.rVal = reader.readUInt32();
+
+                case SeerHutRewardType.MANA_POINTS:
+                    hut.rVal = reader.readUInt32();
+
+                case SeerHutRewardType.MORALE_BONUS:
+                    hut.rVal = reader.readUInt8();
+
+                case SeerHutRewardType.LUCK_BONUS:
+                    hut.rVal = reader.readUInt8();
+
+                case SeerHutRewardType.RESOURCES:
+                    hut.rID = reader.readUInt8();
+                    // Only the first 3 bytes are used. Skip the 4th.
+                    hut.rVal = reader.readUInt32() & 0x00ffffff;
+
+                case SeerHutRewardType.PRIMARY_SKILL:
+                    hut.rID = reader.readUInt8();
+                    hut.rVal = reader.readUInt8();
+
+                case SeerHutRewardType.SECONDARY_SKILL:
+                    hut.rID = reader.readUInt8();
+                    hut.rVal = reader.readUInt8();
+
+                case SeerHutRewardType.ARTIFACT:
+                    if (map.version == MapFormat.ROE) {
+                        hut.rID = reader.readUInt8();
+                    } else {
+                        hut.rID = reader.readUInt16();
+                    }
+
+                case SeerHutRewardType.SPELL:
+                    hut.rID = reader.readUInt8();
+
+                case SeerHutRewardType.CREATURE:
+                    if ((map.version:Int) > (MapFormat.ROE:Int)) {
+                        hut.rID = reader.readUInt16();
+                        hut.rVal = reader.readUInt16();
+                    } else {
+                        hut.rID = reader.readUInt8();
+                        hut.rVal = reader.readUInt16();
+                    }
+                default:
+            }
+            reader.skip(2);
+        } else {
+            // missionType==255
+            reader.skip(3);
+        }
+
+        return hut;
+    }
+
+    private function readQuest(guard:IQuestObject) {
+        //ToDo
+    }
+
+    private function readTown(castleID:Int):GTownInstance {
+        var townInstance = new GTownInstance();
+        //ToDo
+        return townInstance;
+    }
+
 
     private function readEvents() {
 
