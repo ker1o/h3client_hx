@@ -1,69 +1,72 @@
 package mapping;
 
-import lib.creature.ICreatureSet;
-import lib.mapObjects.town.CreGenLeveledCastleInfo;
-import lib.mapObjects.town.CreGenLeveledInfo;
-import lib.mapObjects.town.CreGenAsCastleInfo;
-import lib.herobonus.selector.Selector.BonusSourceSelector;
-import lib.herobonus.BonusSource;
-import lib.herobonus.selector.Selector.BonusTypeSelector;
-import lib.mapObjects.town.GTownInstance;
-import lib.mapObjects.quest.IQuestObject;
-import lib.mapObjects.quest.Quest;
-import lib.mapObjects.quest.GSeerHut;
-import lib.mapObjects.quest.GSeerHut.SeerHutRewardType;
-import lib.herobonus.BonusType;
-import lib.herobonus.BonusSource;
-import lib.res.ResourceSet;
-import constants.id.SlotId;
-import constants.id.CreatureId;
-import lib.creature.CreatureSet;
-import constants.id.ObjectInstanceId;
-import lib.mapObjects.misc.GLighthouse;
-import lib.mapObjects.Bank;
-import lib.mapObjects.quest.GBorderGuard;
-import lib.mapObjects.quest.GBorderGate;
-import lib.mapObjects.hero.GHeroPlaceholder;
-import lib.mapObjects.misc.GShipyard;
-import lib.mapObjects.quest.GQuestGuard;
-import lib.mapObjects.town.SpecObjInfo;
-import lib.mapObjects.pandorabox.GPandoraBox;
-import lib.mapObjects.misc.GShrine;
-import lib.mapObjects.town.GDwelling;
-import lib.mapObjects.misc.GMine;
-import lib.res.ResType;
-import lib.mapObjects.misc.GResource;
-import lib.mapObjects.misc.GArtifact;
-import lib.mapObjects.misc.GGarrison;
-import lib.mapObjects.misc.GScholar;
-import lib.mapObjects.misc.GWitchHut;
-import lib.mapObjects.misc.GSignBottle;
-import lib.creature.StackInstance;
-import lib.mapObjects.misc.GCreature;
-import lib.mapObjects.pandorabox.GEvent;
-import lib.mapObjects.GObjectInstance;
 import constants.ArtifactId;
 import constants.ArtifactPosition;
 import constants.BuildingID;
 import constants.GameConstants;
-import constants.Obj;
+import constants.id.CreatureId;
+import constants.id.ObjectInstanceId;
 import constants.id.PlayerColor;
+import constants.id.SlotId;
+import constants.Obj;
 import constants.PrimarySkill;
 import constants.SecondarySkill;
 import constants.SpellId;
+import data.ConfigData;
 import filesystem.BinaryReader;
 import haxe.io.Bytes;
+import haxe.Json;
 import lib.artifacts.Artifact;
 import lib.artifacts.ArtifactInstance;
+import lib.creature.ICreatureSet;
+import lib.creature.StackInstance;
+import lib.herobonus.BonusSource;
+import lib.herobonus.BonusType;
+import lib.herobonus.selector.Selector.BonusSourceSelector;
+import lib.herobonus.selector.Selector.BonusTypeSelector;
+import lib.mapObjects.Bank;
+import lib.mapObjects.GObjectInstance;
 import lib.mapObjects.hero.GHeroInstance;
+import lib.mapObjects.hero.GHeroPlaceholder;
+import lib.mapObjects.misc.GArtifact;
+import lib.mapObjects.misc.GCreature;
+import lib.mapObjects.misc.GGarrison;
+import lib.mapObjects.misc.GLighthouse;
+import lib.mapObjects.misc.GMine;
+import lib.mapObjects.misc.GResource;
+import lib.mapObjects.misc.GScholar;
+import lib.mapObjects.misc.GShipyard;
+import lib.mapObjects.misc.GShrine;
+import lib.mapObjects.misc.GSignBottle;
+import lib.mapObjects.misc.GWitchHut;
 import lib.mapObjects.ObjectTemplate;
+import lib.mapObjects.pandorabox.GEvent;
+import lib.mapObjects.pandorabox.GPandoraBox;
+import lib.mapObjects.quest.GBorderGate;
+import lib.mapObjects.quest.GBorderGuard;
+import lib.mapObjects.quest.GQuestGuard;
+import lib.mapObjects.quest.GSeerHut.SeerHutRewardType;
+import lib.mapObjects.quest.GSeerHut;
+import lib.mapObjects.quest.IQuestObject;
+import lib.mapObjects.quest.Quest;
+import lib.mapObjects.town.CreGenAsCastleInfo;
+import lib.mapObjects.town.CreGenLeveledCastleInfo;
+import lib.mapObjects.town.CreGenLeveledInfo;
+import lib.mapObjects.town.GDwelling;
+import lib.mapObjects.town.GTownInstance;
+import lib.mapObjects.town.SpecObjInfo;
+import lib.mapping.CastleEvent;
 import lib.mapping.Rumor;
 import lib.mod.VLC;
 import lib.netpacks.ArtifactLocation;
+import lib.res.ResourceSet;
+import lib.res.ResType;
 import mapping.EventEffect.EventEffectType;
 import utils.Int3;
 import utils.logicalexpression.EventExpression;
 import utils.logicalexpression.Variant;
+
+using Reflect;
 
 class MapLoaderH3M implements IMapLoader {
 
@@ -791,6 +794,7 @@ class MapLoaderH3M implements IMapLoader {
 
     private function readObjects() {
         var howManyObjs:Int = reader.readUInt32();
+        map.objects = [];
 
         for(ww in 0...howManyObjs) {
             var nobj:GObjectInstance = null;
@@ -801,6 +805,7 @@ class MapLoaderH3M implements IMapLoader {
             var idToBeGiven:ObjectInstanceId = new ObjectInstanceId(map.objects.length);
 
             var objTempl:ObjectTemplate = templates[defnum];
+            trace(ww, objPos, defnum, objTempl.id);
             reader.skip(5);
 
             switch(objTempl.id) {
@@ -1313,8 +1318,7 @@ class MapLoaderH3M implements IMapLoader {
             var howMany:Int = reader.readUInt32();
 //            nhi.secSkills.resize(howMany);
             for(yy in 0...howMany) {
-                nhi.secSkills[yy].skill = (reader.readUInt8():SecondarySkill);
-                nhi.secSkills[yy].level = reader.readUInt8();
+                nhi.secSkills[yy] = {skill: (reader.readUInt8():SecondarySkill), level:reader.readUInt8()};
             }
         }
 
@@ -1476,9 +1480,165 @@ class MapLoaderH3M implements IMapLoader {
     }
 
     private function readTown(castleID:Int):GTownInstance {
-        var townInstance = new GTownInstance();
-        //ToDo
-        return townInstance;
+        var nt = new GTownInstance();
+        if (map.version > MapFormat.ROE) {
+            nt.identifier = reader.readUInt32();
+        }
+        nt.tempOwner = new PlayerColor(reader.readUInt8());
+        var hasName:Bool = reader.readBool();
+        if (hasName) {
+            nt.name = reader.readString();
+        }
+
+        var hasGarrison:Bool = reader.readBool();
+        if (hasGarrison) {
+            readCreatureSet(nt, 7);
+        }
+        nt.formation = reader.readUInt8() != 0;
+
+        var hasCustomBuildings:Bool = reader.readBool();
+        if (hasCustomBuildings) {
+            readBitmask(nt.builtBuildings,6,48,false);
+
+            readBitmask(nt.forbiddenBuildings,6,48,false);
+
+            nt.builtBuildings = convertBuildings(nt.builtBuildings, castleID);
+            nt.forbiddenBuildings = convertBuildings(nt.forbiddenBuildings, castleID);
+        }
+        // Standard buildings
+        else {
+            var hasFort = reader.readBool();
+            if (hasFort) {
+                nt.builtBuildings.push(BuildingID.FORT);
+            }
+
+            //means that set of standard building should be included
+            nt.builtBuildings.push(BuildingID.DEFAULT);
+        }
+
+        if (map.version > MapFormat.ROE) {
+            for (i in 0...9) {
+                var c = reader.readUInt8();
+                for (yy in 0...8) {
+                    if (i * 8 + yy < GameConstants.SPELLS_QUANTITY) {
+                        if (c == (c | Std.int(Math.pow(2, yy)))) { //add obligatory spell even if it's banned on a map (?)
+                            nt.obligatorySpells.push(((i * 8 + yy):SpellId));
+                        }
+                    }
+                }
+            }
+        }
+
+        for (i in 0...9) {
+            var c = reader.readUInt8();
+            for (yy in 0...8) {
+                var spellid:Int = i * 8 + yy;
+                if (spellid < GameConstants.SPELLS_QUANTITY) {
+                    if (c != (c | Std.int(Math.pow(2, yy))) && map.allowedSpell[spellid]) { //add random spell only if it's allowed on entire map
+                        nt.possibleSpells.push((spellid:SpellId));
+                    }
+                }
+            }
+        }
+        //add all spells from mods
+        //TODO: allow customize new spells in towns
+        for (i in SpellId.AFTER_LAST...VLC.instance.spellh.objects.length) {
+            nt.possibleSpells.push((i:SpellId));
+        }
+
+        // Read castle events
+        var numberOfEvent = reader.readUInt32();
+
+        for (gh in 0...numberOfEvent) {
+            var nce = new CastleEvent();
+            nce.town = nt;
+            nce.name = reader.readString();
+            nce.message = reader.readString();
+
+            readResourses(nce.resources);
+
+            nce.players = reader.readUInt8();
+            if (map.version > MapFormat.AB) {
+                nce.humanAffected = reader.readUInt8() != 0;
+            } else {
+                nce.humanAffected = true;
+            }
+
+            nce.computerAffected = reader.readUInt8();
+            nce.firstOccurence = reader.readUInt16();
+            nce.nextOccurence =  reader.readUInt8();
+
+            reader.skip(17);
+
+            // New buildings
+
+            readBitmask(nce.buildings,6,48,false);
+
+            nce.buildings = convertBuildings(nce.buildings, castleID, false);
+
+            nce.creatures = [];
+            for (vv in 0...7) {
+                nce.creatures[vv] = reader.readUInt16();
+            }
+            reader.skip(4);
+            nt.events.push(nce);
+        }
+
+        if (map.version > MapFormat.AB) {
+            nt.alignment = reader.readUInt8();
+        }
+        reader.skip(3);
+
+        return nt;
+    }
+
+    private function convertBuildings(h3m:Array<BuildingID>, castleId:Int, addAuxiliary:Bool = true):Array<BuildingID> {
+        var mapa = new Map<Int, BuildingID>();
+        var ret = new Array<BuildingID>();
+
+        // Note: this file is parsed many times.
+        var config:Dynamic = Json.parse(ConfigData.data.get("config/buildings5.json"));
+
+        var table:Array<Dynamic> = config.field("table");
+        for (entry in table) {
+            var town:Int = entry.field("town");
+
+            if (town == castleId || town == -1) {
+                mapa[(entry.field("h3"):Int)] = ((entry.field("vcmi"):BuildingID));
+            }
+        }
+
+        for(elem in h3m) {
+            if((mapa[elem]:Int) >= 0) {
+                ret.push(mapa[elem]);
+            }
+            // horde buildings
+            else if((mapa[elem]:Int) >= (-GameConstants.CREATURES_PER_TOWN)) {
+                var level:Int = (mapa[elem]);
+
+                //(-30)..(-36) - horde buildings (for game loading only), don't see other way to handle hordes in random towns
+                ret.push(((level - 30):BuildingID));
+            } else {
+                trace('[Warning] Conversion warning: unknown building ${elem} in castle $castleId');
+            }
+        }
+
+        if (addAuxiliary) {
+            //village hall is always present
+            ret.push(BuildingID.VILLAGE_HALL);
+        }
+
+        if (ret.indexOf(BuildingID.CITY_HALL) > -1) {
+            ret.push(BuildingID.EXTRA_CITY_HALL);
+        }
+        if (ret.indexOf(BuildingID.TOWN_HALL) > -1) {
+            ret.push(BuildingID.EXTRA_TOWN_HALL);
+        }
+        if (ret.indexOf(BuildingID.CAPITOL) > -1) {
+            ret.push(BuildingID.EXTRA_CAPITOL);
+        }
+
+        return ret;
     }
 
 

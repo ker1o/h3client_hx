@@ -19,7 +19,6 @@ class MapBody extends MapHeader {
     private var _terrain:Array<Array<Array<TerrainTile>>>;
     private var _guardingCreaturePositions:Array<Array<Array<Int>>>;
 
-
     public var checksum:UInt /* UInt32 */;
     public var rumors:Array<Rumor>;
     public var disposedHeroes:Array<DisposedHero>;
@@ -49,7 +48,23 @@ class MapBody extends MapHeader {
     public function new() {
         super();
 
+        rumors = [];
+        disposedHeroes = [];
+        predefinedHeroes = [];
+        allowedSpell = [];
+        allowedArtifact = [];
+        allowedAbilities = [];
+        events = [];
+
+        objects = [];
+        towns = [];
+        artInstances = [];
+        quests = [];
+        allHeroes = [];
+
+        heroesOnMap = [];
         questIdentifierToId = new Map<Int, ObjectInstanceId>();
+        teleportChannels = new Map<TeleportChannelId, TeleportChannel>();
         instanceNames = new Map<String, GObjectInstance>();
     }
 
@@ -82,7 +97,7 @@ class MapBody extends MapHeader {
 
     public function addNewObject(obj:GObjectInstance) {
         var it = instanceNames.get(obj.instanceName);
-        if(it == null)
+        if(it != null)
             throw 'Object instance name duplicated: ${obj.instanceName}';
 
         objects.push(obj);
