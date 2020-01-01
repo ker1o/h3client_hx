@@ -1,5 +1,12 @@
 package mapping;
 
+import lib.creature.ICreatureSet;
+import lib.mapObjects.town.CreGenLeveledCastleInfo;
+import lib.mapObjects.town.CreGenLeveledInfo;
+import lib.mapObjects.town.CreGenAsCastleInfo;
+import lib.herobonus.selector.Selector.BonusSourceSelector;
+import lib.herobonus.BonusSource;
+import lib.herobonus.selector.Selector.BonusTypeSelector;
 import lib.mapObjects.town.GTownInstance;
 import lib.mapObjects.quest.IQuestObject;
 import lib.mapObjects.quest.Quest;
@@ -801,7 +808,7 @@ class MapLoaderH3M implements IMapLoader {
                     var evnt = new GEvent();
                     nobj = evnt;
 
-                    readMessageAndGuards(evnt.message, evnt.creatureSet);
+                    readMessageAndGuards(evnt.message, evnt);
 
                     evnt.gainedExp = reader.readUInt32();
                     evnt.manaDiff = reader.readUInt32();
@@ -862,7 +869,7 @@ class MapLoaderH3M implements IMapLoader {
                     hlp.stackBasicDescriptor.count = reader.readUInt16();
 
                     //type will be set during initialization
-                    cre.creatureSet.putStack(new SlotId(0), hlp);
+                    cre.putStack(new SlotId(0), hlp);
 
                     cre.character = reader.readUInt8();
 
@@ -945,7 +952,7 @@ class MapLoaderH3M implements IMapLoader {
                     nobj = gar;
                     nobj.setOwner(new PlayerColor(reader.readUInt8()));
                     reader.skip(3);
-                    readCreatureSet(gar.creatureSet, 7);
+                    readCreatureSet(gar, 7);
                     if ((map.version:Int) > (MapFormat.ROE:Int)) {
                         gar.removableUnits = reader.readBool();
                     } else {
@@ -959,7 +966,7 @@ class MapLoaderH3M implements IMapLoader {
                     var art = new GArtifact();
                     nobj = art;
 
-                    readMessageAndGuards(art.message, art.creatureSet);
+                    readMessageAndGuards(art.message, art);
 
                     if (objTempl.id == Obj.SPELL_SCROLL) {
                         spellID = reader.readUInt32();
@@ -975,7 +982,7 @@ class MapLoaderH3M implements IMapLoader {
                     var res = new GResource();
                     nobj = res;
 
-                    readMessageAndGuards(res.message, res.creatureSet);
+                    readMessageAndGuards(res.message, res);
 
                     res.amount = reader.readUInt32();
                     if(objTempl.subid == ResType.GOLD) {
@@ -1013,7 +1020,7 @@ class MapLoaderH3M implements IMapLoader {
                 case Obj.PANDORAS_BOX:
                     var box = new GPandoraBox();
                     nobj = box;
-                    readMessageAndGuards(box.message, box.creatureSet);
+                    readMessageAndGuards(box.message, box);
 
                     box.gainedExp = reader.readUInt32();
                     box.manaDiff = reader.readUInt32();
@@ -1100,8 +1107,8 @@ class MapLoaderH3M implements IMapLoader {
                     //216 and 218
                     var lvlSpec:CreGenLeveledInfo = cast spec;
                     if (lvlSpec != null) {
-                        lvlSpec.minLevel = Math.max(reader.readUInt8(), 1);
-                        lvlSpec.maxLevel = Math.min(reader.readUInt8(), 7);
+                        lvlSpec.minLevel = Std.int(Math.max(reader.readUInt8(), 1));
+                        lvlSpec.maxLevel = Std.int(Math.min(reader.readUInt8(), 7));
                     }
                     dwelling.info = spec;
 
@@ -1151,7 +1158,7 @@ class MapLoaderH3M implements IMapLoader {
                     nobj.tempOwner = new PlayerColor(reader.readUInt32());
 
                 default: //any other object
-                    if (VLC.instance.objtypeh.knownSubObjects(objTempl.id).count(objTempl.subid)) {
+                    if (VLC.instance.objtypeh.knownSubObjects(objTempl.id).indexOf(objTempl.subid) > -1) {
                         nobj = VLC.instance.objtypeh.getHandlerFor(objTempl.id, objTempl.subid).create(objTempl);
                     } else {
                         trace('Unrecognized object: ${objTempl.id}:${objTempl.subid} at ${objPos} on map ${map.name}');
@@ -1179,7 +1186,7 @@ class MapLoaderH3M implements IMapLoader {
         });
     }
 
-    private function readMessageAndGuards(message:String, guards:CreatureSet) {
+    private function readMessageAndGuards(message:String, guards:ICreatureSet) {
         var hasMessage = reader.readBool();
         if(hasMessage) {
             message = reader.readString();
@@ -1191,7 +1198,7 @@ class MapLoaderH3M implements IMapLoader {
         }
     }
 
-    private function readCreatureSet(out:CreatureSet, number:Int) {
+    private function readCreatureSet(out:ICreatureSet, number:Int) {
         var version:Bool = ((map.version:Int) > (MapFormat.ROE:Int));
         var maxID:Int = version ? 0xffff : 0xff;
 
@@ -1219,7 +1226,7 @@ class MapLoaderH3M implements IMapLoader {
                 //this will happen when random object has random army
                 hlp.idRand = maxID - creIdInt - 1;
             } else {
-                hlp.setTypeById(creID);
+                hlp.setTypeByCreatureId(creID);
             }
 
             out.putStack(new SlotId(ir), hlp);
@@ -1313,10 +1320,10 @@ class MapLoaderH3M implements IMapLoader {
 
         var hasGarison = reader.readBool();
         if (hasGarison) {
-            readCreatureSet(nhi.creatureSet, 7);
+            readCreatureSet(nhi, 7);
         }
 
-        nhi.creatureSet.formation = reader.readUInt8() != 0;
+        nhi.formation = reader.readUInt8() != 0;
         loadArtifactsOfHero(nhi);
         nhi.patrol.patrolRadius = reader.readUInt8();
         if (nhi.patrol.patrolRadius == 0xff) {
@@ -1370,14 +1377,13 @@ class MapLoaderH3M implements IMapLoader {
         if ((map.version:Int) > (MapFormat.AB:Int)) {
             var hasCustomPrimSkills = reader.readBool();
             if (hasCustomPrimSkills) {
-                var ps = nhi.getAllBonuses(Selector.type(BonusType.PRIMARY_SKILL).And(Selector.sourceType(BonusSource.HERO_BASE_SKILL)), null);
+                var ps = nhi.bonusSystemNode.getAllBonuses(new BonusTypeSelector(BonusType.PRIMARY_SKILL).and(new BonusSourceSelector(BonusSource.HERO_BASE_SKILL)), null);
                 if (ps.length > 0) {
                     trace('Hero ${nhi.name} subID=${nhi.subID} has set primary skills twice (in map properties and on adventure map instance). Using the latter set...');
                     for (b in ps) {
-                        nhi.removeBonus(b);
+                        nhi.bonusSystemNode.removeBonus(b);
                     }
                 }
-
 
                 for (xx in 0...GameConstants.PRIMARY_SKILLS) {
                     nhi.pushPrimSkill((xx:PrimarySkill), reader.readUInt8());
