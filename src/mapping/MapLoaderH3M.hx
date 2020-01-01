@@ -1,5 +1,6 @@
 package mapping;
 
+import lib.mapping.MapEvent;
 import constants.ArtifactId;
 import constants.ArtifactPosition;
 import constants.BuildingID;
@@ -1643,7 +1644,27 @@ class MapLoaderH3M implements IMapLoader {
 
 
     private function readEvents() {
+        var numberOfEvents:Int = reader.readUInt32();
+        for (yyoo in 0...numberOfEvents) {
+            var ne = new MapEvent();
+            ne.name = reader.readString();
+            ne.message = reader.readString();
 
+            readResourses(ne.resources);
+            ne.players = reader.readUInt8();
+            if(map.version > MapFormat.AB) {
+                ne.humanAffected = reader.readUInt8() != 0;
+            } else {
+                ne.humanAffected = true;
+            }
+            ne.computerAffected = reader.readUInt8();
+            ne.firstOccurence = reader.readUInt16();
+            ne.nextOccurence = reader.readUInt8();
+
+            reader.skip(17);
+
+            map.events.push(ne);
+        }
     }
 
     private function readBitmask<T>(dest:Array<T>, byteCount:Int, limit:Int, negate:Bool) {
