@@ -95,6 +95,11 @@ class MapBody extends MapHeader {
         artInstances.push(art);
     }
 
+    public function addNewQuestInstance(quest:Quest) {
+        quest.qid = quests.length;
+        quests.push(quest);
+    }
+
     public function addNewObject(obj:GObjectInstance) {
         var it = instanceNames.get(obj.instanceName);
         if(it != null)
@@ -110,4 +115,5 @@ class MapBody extends MapHeader {
     private function addBlockVisTiles(obj:GObjectInstance) {
         //ToDo
     }
+
 }
