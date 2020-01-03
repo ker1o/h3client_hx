@@ -22,4 +22,11 @@ class Int3 {
     public static function addition(a:Int3, b:Int3) {
         return new Int3(a.x + b.x, a.y + b.y, a.z + b.z);
     }
+
+    public inline function addComponents(xc:Int, yc:Int, zc:Int) {
+        x += xc;
+        y += yc;
+        z += zc;
+    }
+
 }

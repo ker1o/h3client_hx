@@ -90,7 +90,7 @@ class MapLoaderH3M implements IMapLoader {
         map = new MapBody();
         mapHeader = map;
         init();
-        return new MapBody();
+        return map;
     }
 
     public function loadMapHeader():MapHeader {
@@ -123,8 +123,7 @@ class MapLoaderH3M implements IMapLoader {
 
         readEvents();
 
-        //ToDo
-//        map.calculateGuardingGreaturePositions();
+        map.calculateGuardingGreaturePositions();
         afterRead();
     }
 
@@ -143,7 +142,6 @@ class MapLoaderH3M implements IMapLoader {
             mapHeader.levelLimit = 0;
         }
 
-        // TBD
         readPlayerInfo();
         readVictoryLossConditions();
         readTeamInfo();

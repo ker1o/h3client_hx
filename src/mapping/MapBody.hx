@@ -1,5 +1,6 @@
 package mapping;
 
+import constants.Obj;
 import lib.mapping.MapEditManager;
 import constants.id.ObjectInstanceId;
 import lib.mapObjects.misc.TeleportChannel;
@@ -16,9 +17,6 @@ import lib.mapping.Rumor;
 import utils.Int3;
 
 class MapBody extends MapHeader {
-    private var _terrain:Array<Array<Array<TerrainTile>>>;
-    private var _guardingCreaturePositions:Array<Array<Array<Int>>>;
-
     public var checksum:UInt /* UInt32 */;
     public var rumors:Array<Rumor>;
     public var disposedHeroes:Array<DisposedHero>;
@@ -43,7 +41,10 @@ class MapBody extends MapHeader {
 
     public var questIdentifierToId:Map<Int, ObjectInstanceId>;
     public var editManager:MapEditManager;
+    public var guardingCreaturePositions:Array<Array<Array<Int3>>>;
     public var instanceNames:Map<String, GObjectInstance>;
+
+    private var _terrain:Array<Array<Array<TerrainTile>>>;
 
     public function new() {
         super();
@@ -71,16 +72,16 @@ class MapBody extends MapHeader {
     public function initTerrain() {
         var level = twoLevel ? 2 : 1;
         _terrain = [];
-        _guardingCreaturePositions = [];
+        guardingCreaturePositions = [];
         for(i in 0...width) {
             _terrain[i] = [];
-            _guardingCreaturePositions[i] = []; // height
+            guardingCreaturePositions[i] = []; // height
             for(j in 0...height) {
                 _terrain[i][j] = new Array<TerrainTile>(); //level
-                _guardingCreaturePositions[i][j] = new Array<Int>();
+                guardingCreaturePositions[i][j] = new Array<Int3>();
                 for(l in 0...level) {
                     _terrain[i][j][l] = new TerrainTile();
-                    _guardingCreaturePositions[i][j][l] = 0;
+                    guardingCreaturePositions[i][j][l] = new Int3();
                 }
             }
         }
@@ -107,6 +108,78 @@ class MapBody extends MapHeader {
     public function addNewQuestInstance(quest:Quest) {
         quest.qid = quests.length;
         quests.push(quest);
+    }
+
+    public function calculateGuardingGreaturePositions() {
+        var levels:Int = twoLevel ? 2 : 1;
+        for (i in 0...width) {
+            for(j in 0...height) {
+                for (k in 0...levels) {
+                    guardingCreaturePositions[i][j][k] = guardingCreaturePosition(new Int3(i, j, k));
+                }
+            }
+        }
+    }
+
+    public function guardingCreaturePosition(pos:Int3) {
+        var originalPos:Int3 = pos;
+        // Give monster at position priority.
+        if (!isInTheMap(pos)) {
+            return new Int3(-1, -1, -1);
+        }
+        var posTile:TerrainTile = getTileByInt3(pos);
+        if (posTile.visitable) {
+            for (obj in posTile.visitableObjects) {
+                if(obj.blockVisit) {
+                    if (obj.ID == Obj.MONSTER) // Monster
+                        return pos;
+                    else
+                        return new Int3(-1, -1, -1); //blockvis objects are not guarded by neighbouring creatures
+                }
+            }
+        }
+
+        // See if there are any monsters adjacent.
+        var water:Bool = posTile.isWater();
+
+        pos.addComponents(-1, -1, 0); // Start with top left.
+        for (dx in 0...3) {
+            for (dy in 0...3) {
+                if (isInTheMap(pos)) {
+                    var tile = getTileByInt3(pos);
+                    if (tile.visitable && (tile.isWater() == water)) {
+                        for (obj in tile.visitableObjects) {
+                            if (obj.ID == Obj.MONSTER  &&  checkForVisitableDir(pos, posTile, originalPos)) { // Monster being able to attack investigated tile
+                                return pos;
+                            }
+                        }
+                    }
+                }
+
+                pos.y++;
+            }
+            pos.y -= 3;
+            pos.x++;
+        }
+
+        return new Int3(-1, -1, -1);
+    }
+
+    public function checkForVisitableDir(src:Int3, pom:TerrainTile, dst:Int3):Bool {
+        if (!pom.entrableTerrainTile()) { //rock is never accessible
+            return false;
+        }
+
+        for (obj in pom.visitableObjects) { //checking destination tile
+            if (pom.blockingObjects.indexOf(obj) == -1) {//this visitable object is not blocking, ignore
+                continue;
+            }
+
+            if (!obj.appearance.isVisitableFrom(src.x - dst.x, src.y - dst.y)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public function addNewObject(obj:GObjectInstance) {

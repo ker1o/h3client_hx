@@ -31,6 +31,18 @@ class TerrainTile {
 
         visitableObjects = [];
         blockingObjects = [];
-
     }
+
+    public inline function isWater():Bool {
+        return terType == TerrainType.WATER;
+    }
+
+    public function entrableTerrainTile(from:TerrainTile = null):Bool {
+        return entrableTerrain(from != null ? from.terType != TerrainType.WATER : true, from != null ? from.terType == TerrainType.WATER : true);
+    }
+
+    public function entrableTerrain(allowLand:Bool, allowSea:Bool):Bool {
+        return terType != TerrainType.ROCK && ((allowSea && terType == TerrainType.WATER) || (allowLand && terType != TerrainType.WATER));
+    }
+
 }
