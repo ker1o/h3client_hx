@@ -36,6 +36,7 @@ class PlayerInfo {
     public function new() {
         // ToDo: initialize some default as in VCMI
         allowedFactions = [];
+        posOfMainTown = new Int3();
     }
 
     public function canAnyonePlay() {

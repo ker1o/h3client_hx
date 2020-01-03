@@ -1751,7 +1751,6 @@ class MapLoaderH3M implements IMapLoader {
 
     function afterRead() {
         //convert main town positions for all players to actual object position, in H3M it is position of active tile
-
         for (p in map.players) {
             var posOfMainTown:Int3 = p.posOfMainTown;
             if(posOfMainTown.valid() && map.isInTheMap(posOfMainTown)) {
