@@ -39,13 +39,16 @@ class Game {
 
     public function new() {
         var mapName:String = "Vial of Life.h3m";
-        VLC.instance.loadFilesystem();
-        VLC.instance.init();
         #if js
-        FileCache.instance.initMapAsync(mapName).then(function(success:Bool) {
-            var mapService = new MapService();
-            mapService.loadMapHeaderByName(mapName);
-            mapService.loadMapByName(mapName);
+        FileCache.instance.initGraphicsAsync().then(function(files:Array<String>) {
+            VLC.instance.loadFilesystem();
+            VLC.instance.init();
+
+            FileCache.instance.initMapAsync(mapName).then(function(success:Bool) {
+                var mapService = new MapService();
+                mapService.loadMapHeaderByName(mapName);
+                mapService.loadMapByName(mapName);
+            });
         });
         #else
         FileCache.instance.initMap(mapName);
@@ -68,7 +71,7 @@ class Game {
         range = cast Browser.document.getElementById("groups_range");
         range.onchange = onGroupChange;
 
-        // load binnary nodels
+        // load binnary models
         FileCache.instance.initGraphicsAsync().then(function(files:Array<String>) {
             return files.filter(function(filename:String) {
                 return filename.indexOf(".def") > -1;

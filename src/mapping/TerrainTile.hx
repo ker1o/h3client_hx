@@ -1,5 +1,7 @@
 package mapping;
 
+import lib.mapObjects.GObjectInstance;
+
 class TerrainTile {
 
     public var terType:TerrainType;
@@ -13,10 +15,22 @@ class TerrainTile {
     public var visitable:Bool;
     public var blocked:Bool;
 
-    public var visitableObjects:Array<Dynamic>;
-    public var blockingObjects:Array<Dynamic>;
+    public var visitableObjects:Array<GObjectInstance>;
+    public var blockingObjects:Array<GObjectInstance>;
 
     public function new() {
+        terType = TerrainType.BORDER;
+        terView = 0;
+        riverType = RiverType.NO_RIVER;
+        riverDir = 0;
+        roadType = RoadType.NO_ROAD;
+        roadDir = 0;
+        extTileFlags = 0;
+        visitable = false;
+        blocked = false;
+
+        visitableObjects = [];
+        blockingObjects = [];
 
     }
 }

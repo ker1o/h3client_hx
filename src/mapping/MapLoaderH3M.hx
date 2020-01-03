@@ -125,7 +125,7 @@ class MapLoaderH3M implements IMapLoader {
 
         //ToDo
 //        map.calculateGuardingGreaturePositions();
-//        afterRead();
+        afterRead();
     }
 
     private function readHeader() {
@@ -810,6 +810,7 @@ class MapLoaderH3M implements IMapLoader {
             var idToBeGiven:ObjectInstanceId = new ObjectInstanceId(map.objects.length);
 
             var objTempl:ObjectTemplate = templates[defnum];
+//            trace(ww, objTempl.id);
             reader.skip(5);
 
             switch(objTempl.id) {
@@ -1746,7 +1747,32 @@ class MapLoaderH3M implements IMapLoader {
     function readInt3():Int3 {
         var int3 = new Int3(reader.readUInt8(), reader.readUInt8(), reader.readUInt8());
         return int3;
+    }
 
+    function afterRead() {
+        //convert main town positions for all players to actual object position, in H3M it is position of active tile
+
+        for (p in map.players) {
+            var posOfMainTown:Int3 = p.posOfMainTown;
+            if(posOfMainTown.valid() && map.isInTheMap(posOfMainTown)) {
+                var t:TerrainTile = map.getTileByInt3(posOfMainTown);
+
+                var mainTown:GObjectInstance = null;
+
+                for (obj in t.visitableObjects)	{
+                    if(obj.ID == Obj.TOWN || obj.ID == Obj.RANDOM_TOWN) {
+                        mainTown = obj;
+                        break;
+                    }
+                }
+
+                if(mainTown == null) {
+                    continue;
+                }
+
+                p.posOfMainTown = Int3.addition(posOfMainTown, mainTown.getVisitableOffset());
+            }
+        }
     }
 
 }

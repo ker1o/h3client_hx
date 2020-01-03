@@ -19,17 +19,24 @@ class FileCache {
     private var fileBytes:Bytes;
     private var mapBytes:Bytes;
 
+    private var _spriteList:Array<String>;
+
     private function new() {
     }
 
 #if js
     public function initGraphicsAsync():Promise<Array<String>> {
         return new Promise(function (resolve, reject) {
-            loadBinaryByUrl("H3sprite.lod").then(function(bytes:Bytes) {
-                fileBytes = bytes;
-                parseLod(fileBytes);
-                resolve([for (key in bitmaps.keys()) key]);
-            });
+            if (_spriteList != null) {
+                resolve(_spriteList);
+            } else {
+                loadBinaryByUrl("H3sprite.lod").then(function(bytes:Bytes) {
+                    fileBytes = bytes;
+                    parseLod(fileBytes);
+                    _spriteList = [for (key in bitmaps.keys()) key];
+                    resolve(_spriteList);
+                });
+            }
         });
     }
 
@@ -40,6 +47,10 @@ class FileCache {
                 resolve(true);
             });
         });
+    }
+
+    public function existsSpriteResource(name:String) {
+        return _spriteList.indexOf(name) > -1;
     }
 
 #else

@@ -86,8 +86,17 @@ class MapBody extends MapHeader {
         }
     }
 
-    public function getTile(x:Int, y:Int, z:Int):TerrainTile {
+    public inline function isInTheMap(pos:Int3) {
+        // if not out the borders
+        return !(pos.x < 0 || pos.y < 0 || pos.z < 0 || pos.x >= width || pos.y >= height || pos.z > (twoLevel ? 1 : 0));
+    }
+
+    public inline function getTile(x:Int, y:Int, z:Int):TerrainTile {
         return _terrain[x][y][z];
+    }
+
+    public inline function getTileByInt3(pos:Int3):TerrainTile {
+        return _terrain[pos.x][pos.y][pos.z];
     }
 
     public function addNewArtifactInstance(art:ArtifactInstance) {
@@ -113,7 +122,24 @@ class MapBody extends MapHeader {
     }
 
     private function addBlockVisTiles(obj:GObjectInstance) {
-        //ToDo
+        for (fx in 0...obj.getWidth()) {
+            for (fy in 0...obj.getHeight()) {
+                var xVal:Int = obj.pos.x - fx;
+                var yVal:Int = obj.pos.y - fy;
+                var zVal:Int = obj.pos.z;
+                if (xVal >= 0 && xVal < width && yVal >= 0 && yVal < height) {
+                    var curt:TerrainTile = _terrain[xVal][yVal][zVal];
+                    if (obj.visitableAt(xVal, yVal)) {
+                        curt.visitableObjects.push(obj);
+                        curt.visitable = true;
+                    }
+                    if (obj.blockingAt(xVal, yVal)) {
+                        curt.blockingObjects.push(obj);
+                        curt.blocked = true;
+                    }
+                }
+            }
+        }
     }
 
 }
