@@ -17,17 +17,20 @@ class JsLoader {
 		_dataFormat = dataFormat;
 	}
 
-	public function load():Promise<Bytes> {
+	public function load():Promise<Dynamic> {
 		return new Promise(function(resolve, reject) {
 			_oReq = new XMLHttpRequest();
 			_oReq.open("GET", this._url, true);
 			_oReq.responseType = this._dataFormat;
 			_oReq.onload = function(oEvent) {
-				var arrayBuffer = _oReq.response;
-				if (arrayBuffer != null) {
-					var bytes = Bytes.ofData(arrayBuffer);
-					resolve(bytes);
-
+				if (_dataFormat == XMLHttpRequestResponseType.ARRAYBUFFER) {
+					var arrayBuffer = _oReq.response;
+					if (arrayBuffer != null) {
+						var bytes = Bytes.ofData(arrayBuffer);
+						resolve(bytes);
+					}
+				} else {
+					resolve(_oReq.response);
 				}
 			};
 			_oReq.send();

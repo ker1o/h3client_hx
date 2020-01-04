@@ -1,6 +1,8 @@
 package filesystem;
 
 #if js
+import haxe.Json;
+import js.html.XMLHttpRequestResponseType;
 import js.Promise;
 import js.JsLoader;
 #end
@@ -8,8 +10,9 @@ import filesystem.FileInputStream;
 import haxe.io.Bytes;
 import filesystem.ArchiveEntry;
 import filesystem.CompressedStream;
-import filesystem.FileInputStream;
 import filesystem.InputStream;
+
+using Reflect;
 
 class FileCache {
 
@@ -20,8 +23,10 @@ class FileCache {
     private var mapBytes:Bytes;
 
     private var _spriteList:Array<String>;
+    private var _configs:Map<String, Dynamic>;
 
     private function new() {
+        _configs = new Map<String, Dynamic>();
     }
 
 #if js
@@ -51,6 +56,37 @@ class FileCache {
 
     public function existsSpriteResource(name:String) {
         return _spriteList.indexOf(name) > -1;
+    }
+
+    public function loadConfigs():Promise<Bool> {
+        return new Promise(function (resolve, reject) {
+            loadConfig('config.json').then(function(success:Bool) {
+                loadConfig('h3mconfig.json').then(function(success:Bool) {
+                    loadConfig('modData.json').then(function(success:Bool) {
+                        resolve(true);
+                    });
+                });
+            });
+        });
+    }
+
+    public function loadConfig(url:String):Promise<Bool> {
+        return new Promise(function (resolve, reject) {
+            loadTextByUrl(url).then(function(json:String) {
+                _configs[url] = Json.parse(json);
+                resolve(true);
+            });
+        });
+    }
+
+    public function getConfig(configName:String):Dynamic {
+        var configBase:String = configName.split("/")[0].toLowerCase();
+        return switch (configBase) {
+            case "config": _configs["config.json"].field(configName);
+            case "data": _configs["h3mconfig.json"].field(configName);
+            case "mod": _configs['modData.json'];
+            case _: null;
+        }
     }
 
 #else
@@ -83,6 +119,16 @@ class FileCache {
             });
         });
     }
+
+    private function loadTextByUrl(url:String):Promise<String> {
+        return new Promise(function (resolve, reject) {
+            var jsLoader = new JsLoader(url, XMLHttpRequestResponseType.TEXT);
+            jsLoader.load().then(function(text:String) {
+                resolve(text);
+            });
+        });
+    }
+
 #else
     private function loadBinary(url:String):Bytes {
         trace('load $url, exists: ${sys.FileSystem.exists(url)}');

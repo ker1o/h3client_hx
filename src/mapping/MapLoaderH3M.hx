@@ -1,6 +1,6 @@
 package mapping;
 
-import lib.mapping.MapEvent;
+import filesystem.FileCache;
 import constants.ArtifactId;
 import constants.ArtifactPosition;
 import constants.BuildingID;
@@ -13,10 +13,8 @@ import constants.Obj;
 import constants.PrimarySkill;
 import constants.SecondarySkill;
 import constants.SpellId;
-import data.ConfigData;
 import filesystem.BinaryReader;
 import haxe.io.Bytes;
-import haxe.Json;
 import lib.artifacts.Artifact;
 import lib.artifacts.ArtifactInstance;
 import lib.creature.ICreatureSet;
@@ -57,6 +55,7 @@ import lib.mapObjects.town.GDwelling;
 import lib.mapObjects.town.GTownInstance;
 import lib.mapObjects.town.SpecObjInfo;
 import lib.mapping.CastleEvent;
+import lib.mapping.MapEvent;
 import lib.mapping.Rumor;
 import lib.mod.VLC;
 import lib.netpacks.ArtifactLocation;
@@ -1647,7 +1646,7 @@ class MapLoaderH3M implements IMapLoader {
         var ret = new Array<BuildingID>();
 
         // Note: this file is parsed many times.
-        var config:Dynamic = Json.parse(ConfigData.data.get("config/buildings5.json"));
+        var config:Dynamic = FileCache.instance.getConfig("config/buildings5.json");
 
         var table:Array<Dynamic> = config.field("table");
         for (entry in table) {

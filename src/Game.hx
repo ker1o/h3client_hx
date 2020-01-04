@@ -41,13 +41,15 @@ class Game {
         var mapName:String = "Vial of Life.h3m";
         #if js
         FileCache.instance.initGraphicsAsync().then(function(files:Array<String>) {
-            VLC.instance.loadFilesystem();
-            VLC.instance.init();
+            FileCache.instance.loadConfigs().then(function(success:Bool) {
+                VLC.instance.loadFilesystem();
+                VLC.instance.init();
 
-            FileCache.instance.initMapAsync(mapName).then(function(success:Bool) {
-                var mapService = new MapService();
-                mapService.loadMapHeaderByName(mapName);
-                mapService.loadMapByName(mapName);
+                FileCache.instance.initMapAsync(mapName).then(function(success:Bool) {
+                    var mapService = new MapService();
+                    mapService.loadMapHeaderByName(mapName);
+                    mapService.loadMapByName(mapName);
+                });
             });
         });
         #else
