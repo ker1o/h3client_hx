@@ -1,6 +1,6 @@
 package gui;
 
-import lib.filesystem.FileCache;
+import filesystem.FileCache;
 import gui.animation.ImageLoader;
 import gui.geometries.Point;
 import haxe.io.Bytes;

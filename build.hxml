@@ -1,6 +1,10 @@
 -cp src
+
+-lib h3lib 
+
 -D analyzer-optimize
 -D js-source-map
+
 -main Main
 -dce full
 
