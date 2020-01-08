@@ -2,8 +2,8 @@ package ;
 
 import lib.mod.VLC;
 import haxe.io.Bytes;
-import mapping.MapService;
-import filesystem.FileCache;
+import lib.mapping.MapService;
+import lib.filesystem.FileCache;
 import gui.animation.IImage;
 import gui.Animation;
 #if js
