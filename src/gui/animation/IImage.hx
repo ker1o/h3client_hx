@@ -13,6 +13,12 @@ interface IImage {
     var fullsize:Point;
     var margins:Point;
     var size:Point;
+
+    var width(get, set):Int;
+    var height(get, set):Int;
+
+    function horizontalFlip():Void;
+    function verticalFlip():Void;
 #if js
     function drawToPos(where:CanvasRenderingContext2D, posX:Int, posY:Int, src:Rect, alpha:Int = 255):Void;
     function drawToRect(where:CanvasRenderingContext2D, dest:Rect, src:Rect, alpha:Int = 255):Void;

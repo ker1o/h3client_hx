@@ -12,9 +12,9 @@ class Animation {
     private var source:Map<Int, Array<String>>;
     private var preloaded:Bool = false;
 
-    public function new(name:String) {
+    public function new(name:String = "") {
         this.name = name;
-        defFile = new DefFile(name);
+        defFile = name != "" ? new DefFile(name) : null;
         source = new Map<Int, Array<String>>();
         images = new Map<Int, Array<IImage>>();
 
@@ -76,7 +76,7 @@ class Animation {
         return false;
     }
 
-    public function getImage(frame:Int, group:Int, verbose:Bool):IImage {
+    public function getImage(frame:Int, group:Int = 0, verbose:Bool = true):IImage {
         if (images.exists(group)) {
             var groupObj:Array<IImage> = images.get(group);
             if (groupObj[frame] != null) {
@@ -85,6 +85,10 @@ class Animation {
         }
 
         return null;
+    }
+
+    public function size(group:Int):Int {
+        return source.exists(group) ? source[group].length : 0;
     }
 
     // tech

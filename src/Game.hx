@@ -1,5 +1,9 @@
 package ;
 
+import mapping.MapBody;
+import client.maphandler.MapHandler;
+import client.GameInfo;
+import client.ClientState;
 import mod.VLC;
 import haxe.io.Bytes;
 import mapping.MapService;
@@ -34,21 +38,31 @@ class Game {
     private var iFrame:Int = 0;
     #end
 
+    private var clientState:ClientState;
+    private var gameInfo:GameInfo;
+
     private var anim:Animation;
     private var group:Int = 0;
 
     public function new() {
         var mapName:String = "Vial of Life.h3m";
+
+        clientState = new ClientState();
+        gameInfo = new GameInfo();
+
         #if js
         FileCache.instance.initGraphicsAsync().then(function(files:Array<String>) {
             FileCache.instance.loadConfigs().then(function(success:Bool) {
                 VLC.instance.loadFilesystem();
                 VLC.instance.init();
+                gameInfo.setFromLib();
 
                 FileCache.instance.initMapAsync(mapName).then(function(success:Bool) {
                     var mapService = new MapService();
                     mapService.loadMapHeaderByName(mapName);
-                    mapService.loadMapByName(mapName);
+                    var map = mapService.loadMapByName(mapName);
+
+                    initMapHandler(map);
                 });
             });
         });
@@ -89,6 +103,12 @@ class Game {
         anim.preload();
         #end
 */
+    }
+
+    private function initMapHandler(map:MapBody) {
+        gameInfo.mh = new MapHandler();
+        gameInfo.mh.map = map;
+        gameInfo.mh.init();
     }
 
     #if js
