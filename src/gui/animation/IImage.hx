@@ -1,6 +1,7 @@
 package gui.animation;
 
 #if js
+import constants.id.PlayerColor;
 import js.html.CanvasRenderingContext2D;
 #end
 import gui.geometries.Point;
@@ -19,8 +20,10 @@ interface IImage {
 
     function horizontalFlip():Void;
     function verticalFlip():Void;
+    function clone():IImage;
 #if js
     function drawToPos(where:CanvasRenderingContext2D, posX:Int, posY:Int, src:Rect, alpha:Int = 255):Void;
     function drawToRect(where:CanvasRenderingContext2D, dest:Rect, src:Rect, alpha:Int = 255):Void;
+    function setFlagColor(player:PlayerColor):Void;
 #end
 }

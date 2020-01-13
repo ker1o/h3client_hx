@@ -1,5 +1,6 @@
 package gui.animation;
 
+import constants.id.PlayerColor;
 import gui.animation.IImage.BufferType;
 import gui.geometries.Point;
 import gui.geometries.Rect;
@@ -17,9 +18,11 @@ class SdlImage implements IImage {
     public var height(get, set):Int;
     public var size:Point;
 
-    public function new(defFile:DefFile, frame:Int, group:Int) {
-        var imageLoader = new SdlImageLoader(this);
-        defFile.loadFrame(frame, group, imageLoader);
+    public function new(defFile:DefFile = null, frame:Int = 0, group:Int = 0) {
+        if (defFile != null) {
+            var imageLoader = new SdlImageLoader(this);
+            defFile.loadFrame(frame, group, imageLoader);
+        }
     }
 
     public function horizontalFlip() {
@@ -52,6 +55,17 @@ class SdlImage implements IImage {
         surf = tmpSurf;
     }
 
+    public function clone():IImage {
+        var img = new SdlImage();
+        img.surf = surf.subarray(0);
+        img.margins = new Point(margins.x, margins.y);
+        img.fullsize = new Point(fullsize.x, fullsize.y);
+
+        img.size = new Point(size.x, size.y);
+
+        return img;
+    }
+
     public function get_width():Int {
         return fullsize.x;
     }
@@ -71,11 +85,16 @@ class SdlImage implements IImage {
     #if js
     public function drawToPos(where:CanvasRenderingContext2D, posX:Int, posY:Int, src:Rect, alpha:Int = 255):Void {
         var imgData = new ImageData(surf, size.x, size.y);
-        where.putImageData(imgData, posX, posY);
+        where.putImageData(imgData, posX + margins.x, posY + margins.y);
     }
 
     public function drawToRect(where:CanvasRenderingContext2D, dest:Rect, src:Rect, alpha:Int = 255):Void {
-        trace('SdlImage.drawToRect($dest, $src, $alpha) STUB');
+        var imgData = new ImageData(surf, size.x, size.y);
+        where.putImageData(imgData, dest.x + margins.x, dest.y + margins.y);
+    }
+
+    public function setFlagColor(player:PlayerColor):Void {
+        //ToDo
     }
     #end
 

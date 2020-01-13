@@ -1,5 +1,6 @@
 package client.maphandler;
 
+import js.html.CanvasRenderingContext2D;
 import mapObjects.misc.GBoat;
 import mapObjects.hero.GHeroInstance;
 import constants.Obj;
@@ -15,7 +16,7 @@ typedef TFlippedAnimations = Array<Array<Animation>>; //[type, rotation]
 typedef TFlippedCache = Array<Array<Array<IImage>>>; //[type, view type, rotation]
 
 class MapHandler {
-    var ttiles:PseudoV<PseudoV<PseudoV<TerrainTile2>>>; //informations about map tiles
+    public var ttiles:PseudoV<PseudoV<PseudoV<TerrainTile2>>>; //informations about map tiles
 
     public var sizes:Int3; //map size (x = width, y = height, z = number of levels)
     public var map:MapBody;
@@ -44,22 +45,38 @@ class MapHandler {
     public var riverAnimations:TFlippedAnimations; //[river type, rotation]
     public var riverImages:TFlippedCache; //[river type, view type, rotation]
 
+    //Fog of War cache (not owned)
+    public var fowFullHide:Array<IImage>;
+    public var hideBitmap:Array<Array<Array<Int>>>; //frame indexes (in FoWfullHide) of graphic that should be used to fully hide a tile
+
+    public var fowPartialHide:Array<IImage>;
+
+    public var animationPhase:Map<GObjectInstance, Int>;
+
+
     private var fadeAnimCounter:Int;
+
+    private var normalBlitter:MapBlitter;
+    private var worldViewBlitter:MapBlitter;
+    private var puzzleViewBlitter:MapBlitter;
+
 
     public function new() {
         frameW = frameH = 0;
+        normalBlitter = new MapNormalBlitter(this);
         fadeAnimCounter = 0;
         map = null;
         tilesW = tilesH = 0;
         offsetX = offsetY = 0;
 
         ttiles = new PseudoV<PseudoV<PseudoV<TerrainTile2>>>();
+        animationPhase = new Map<GObjectInstance, Int>();
     }
 
     public function init() {
         // Size of visible terrain.
-        var mapW:Int = 10; /*conf.go().ac.advmapW*/
-        var mapH:Int = 10; /*conf.go().ac.advmapH*/
+        var mapW:Int = 594; /*conf.go().ac.advmapW*/
+        var mapH:Int = 546; /*conf.go().ac.advmapH*/
 
         //sizes of terrain
         sizes = new Int3();
@@ -89,10 +106,37 @@ class MapHandler {
         offsetY = Std.int((mapH - (2 * frameH + 1) * 32) / 2);
 
 
-//        prepareFOWDefs();
+        prepareFowDefs();
         initTerrainGraphics();
 //        initBorderGraphics();
         initObjectRects();
+    }
+
+    private function prepareFowDefs() {
+        //assume all frames in group 0
+        var size:Int = Graphics.instance.fogOfWarFullHide.size(0);
+        fowFullHide = [];
+        for(frame in 0...size) {
+            fowFullHide[frame] = Graphics.instance.fogOfWarFullHide.getImage(frame);
+        }
+
+        //initialization of type of full-hide image
+        hideBitmap = [];
+        for (i in 0...sizes.x) {
+            hideBitmap[i] = [];
+            for (j in 0...sizes.y) {
+                hideBitmap[i][j] = [];
+                for (k in 0...sizes.z) {
+                    hideBitmap[i][j][k] = Std.random(size - 1);
+                }
+            }
+        }
+
+        size = Graphics.instance.fogOfWarPartialHide.size(0);
+        fowPartialHide = [];
+        for(frame in 0...size) {
+            fowPartialHide[frame] = Graphics.instance.fogOfWarPartialHide.getImage(frame);
+        }
     }
 
     private function initTerrainGraphics() {
@@ -271,6 +315,9 @@ class MapHandler {
                 }
             }
         }
+    }
 
+    public function drawTerrainRectNew(targetSurface:CanvasRenderingContext2D, info:MapDrawingInfo, redrawOnlyAnim:Bool = false) {
+        normalBlitter.blit(targetSurface, info);
     }
 }

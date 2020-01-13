@@ -1,11 +1,14 @@
 package ;
 
+import gui.geometries.Rect;
+import client.maphandler.MapDrawingInfo;
+import utils.Int3;
+import client.Graphics;
 import mapping.MapBody;
 import client.maphandler.MapHandler;
 import client.GameInfo;
 import client.ClientState;
 import mod.VLC;
-import haxe.io.Bytes;
 import mapping.MapService;
 import filesystem.FileCache;
 import gui.animation.IImage;
@@ -51,11 +54,17 @@ class Game {
         gameInfo = new GameInfo();
 
         #if js
+        // init html objects
+        canvas = cast Browser.document.getElementById("gameview");
+        ctx = canvas.getContext2d();
+
         FileCache.instance.initGraphicsAsync().then(function(files:Array<String>) {
             FileCache.instance.loadConfigs().then(function(success:Bool) {
                 VLC.instance.loadFilesystem();
                 VLC.instance.init();
                 gameInfo.setFromLib();
+
+                Graphics.instance.load();
 
                 FileCache.instance.initMapAsync(mapName).then(function(success:Bool) {
                     var mapService = new MapService();
@@ -63,6 +72,8 @@ class Game {
                     var map = mapService.loadMapByName(mapName);
 
                     initMapHandler(map);
+
+                    startRendering();
                 });
             });
         });
@@ -109,9 +120,39 @@ class Game {
         gameInfo.mh = new MapHandler();
         gameInfo.mh.map = map;
         gameInfo.mh.init();
+        trace('initMapHandler completed');
+    }
+
+    private function startRendering() {
+        Browser.window.requestAnimationFrame(drawFrame);
+    }
+
+    private function drawFrame(timestamp:Float) {
+        delta += (timestamp - oldTimestamp);
+
+        if (delta > 100) {
+            delta = delta % 100;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            renderMap();
+        }
+
+        oldTimestamp = timestamp;
+
+        Browser.window.requestAnimationFrame(drawFrame);
+    }
+
+    private function renderMap() {
+        var info = new MapDrawingInfo(new Int3(14, 76, 0), [[[]]], new Rect(7, 7, 594, 546));
+        info.otherheroAnim = true;
+        info.anim = 0;
+        info.heroAnim = 6;
+
+        gameInfo.mh.drawTerrainRectNew(ctx, info);
     }
 
     #if js
+    // animation rendering
     private function selectAnimation(name:String) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -156,39 +197,21 @@ class Game {
         untyped selectAnimation(select.options[select.selectedIndex].value);
     }
 
-    private function startRendering() {
-        Browser.window.requestAnimationFrame(drawFrame);
-    }
+    private function renderAnim() {
+        if (anim != null && anim.images.exists(group)) {
+            var image:IImage = anim.images[group][iFrame];
+            if(image != null) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                image.drawToPos(ctx, image.margins.x, image.margins.y, null);
+            }
 
-    private function drawFrame(timestamp:Float) {
-        delta += (timestamp - oldTimestamp);
-
-        if (delta > 100) {
-            delta = delta % 100;
-
-            if (anim != null && anim.images.exists(group)) {
-                var image:IImage = anim.images[group][iFrame];
-                if(image != null) {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    image.drawToPos(ctx, image.margins.x, image.margins.y, null);
-                }
-
-                iFrame++;
-                if (iFrame == anim.images[group].length) {
-                    iFrame = 0;
-                }
+            iFrame++;
+            if (iFrame == anim.images[group].length) {
+                iFrame = 0;
             }
         }
-
-        oldTimestamp = timestamp;
-
-        Browser.window.requestAnimationFrame(drawFrame);
     }
 
-    private inline function createImageData(arr:Uint8ClampedArray, w:Int, h:Int):ImageData {
-        var imageData = new ImageData(arr, w, h);
-        return imageData;
-    }
     #end
 
 }
