@@ -34,6 +34,7 @@ class SdlImage implements IImage {
             tmpSurf.set(surf.subarray(srcOffset - offset, srcOffset), j * offset);
         }
         surf = tmpSurf;
+        margins.y = fullsize.y - (margins.y + size.y);
     }
 
     public function verticalFlip() {
@@ -53,6 +54,7 @@ class SdlImage implements IImage {
             }
         }
         surf = tmpSurf;
+        margins.x = fullsize.x - (margins.x + size.x);
     }
 
     public function clone():IImage {
@@ -90,7 +92,22 @@ class SdlImage implements IImage {
 
     public function drawToRect(where:CanvasRenderingContext2D, dest:Rect, src:Rect, alpha:Int = 255):Void {
         var imgData = new ImageData(surf, size.x, size.y);
-        where.putImageData(imgData, dest.x + margins.x, dest.y + margins.y);
+        var dx = 0.0;
+        var dy = 0.0;
+        var dw:Float = size.x;
+        var dh:Float = size.y;
+        var px:Float = margins.x;
+        var py:Float = margins.y;
+
+        if (src != null) {
+            dx = Math.max(src.x - margins.x, 0);
+            dy = Math.max(src.y - margins.y, 0);
+            dw = Math.max(src.x + src.w - margins.x, 0);
+            dh = Math.max(src.y + src.h - margins.y, 0);
+            px = margins.x - src.x;
+            py = margins.y - src.y;
+        }
+        where.putImageData(imgData, dest.x + px, dest.y + py, dx, dy, dw, dh);
     }
 
     public function setFlagColor(player:PlayerColor):Void {
