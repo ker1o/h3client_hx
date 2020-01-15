@@ -102,8 +102,8 @@ class SdlImage implements IImage {
         if (src != null) {
             dx = Math.max(src.x - margins.x, 0);
             dy = Math.max(src.y - margins.y, 0);
-            dw = Math.max(src.x + src.w - margins.x, 0);
-            dh = Math.max(src.y + src.h - margins.y, 0);
+            dw = Math.min(Math.max(src.x + src.w - margins.x, 0), src.w);
+            dh = Math.min(Math.max(src.y + src.h - margins.y, 0), src.h);
             px = margins.x - src.x;
             py = margins.y - src.y;
         }

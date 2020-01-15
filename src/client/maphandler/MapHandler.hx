@@ -293,7 +293,7 @@ class MapHandler {
             for(fx in 0...obj.getWidth()) {
                 for(fy in 0...obj.getHeight()) {
                     var currTile = new Int3(obj.pos.x - fx, obj.pos.y - fy, obj.pos.z);
-                    var cr:Rect = new Rect(32, 32, image.width - fx * 32 - 32, image.height - fy * 32 - 32);
+                    var cr:Rect = new Rect(image.width - fx * 32 - 32, image.height - fy * 32 - 32, 32, 32);
                     var toAdd = new TerrainTileObject(obj, cr, obj.visitableAt(currTile.x, currTile.y));
 
                     if (map.isInTheMap(currTile) && // within map
