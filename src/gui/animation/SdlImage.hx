@@ -86,7 +86,20 @@ class SdlImage implements IImage {
 
     #if js
     public function drawToPos(where:CanvasRenderingContext2D, posX:Int, posY:Int, src:Rect, alpha:Int = 255):Void {
-        var imgData = new ImageData(surf, size.x, size.y);
+        var ctxData = where.getImageData(posX + margins.x, posY + margins.y, size.x, size.y).data;
+
+        // ignore transparent pixels
+        var componentsCount = size.x * size.y * 4;
+        var p = 0;
+        while (p < componentsCount) {
+            if (surf[p + 3] != 0) {
+                ctxData[p] = surf[p];
+                ctxData[p + 1] = surf[p + 1];
+                ctxData[p + 2] = surf[p + 2];
+            }
+            p += 4;
+        }
+        var imgData = new ImageData(ctxData, size.x, size.y);
         where.putImageData(imgData, posX + margins.x, posY + margins.y);
     }
 
@@ -107,6 +120,7 @@ class SdlImage implements IImage {
             px = margins.x - src.x;
             py = margins.y - src.y;
         }
+
         where.putImageData(imgData, dest.x + px, dest.y + py, dx, dy, dw, dh);
     }
 
