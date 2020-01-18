@@ -104,24 +104,53 @@ class SdlImage implements IImage {
     }
 
     public function drawToRect(where:CanvasRenderingContext2D, dest:Rect, src:Rect, alpha:Int = 255):Void {
-        var imgData = new ImageData(surf, size.x, size.y);
-        var dx = 0.0;
-        var dy = 0.0;
-        var dw:Float = size.x;
-        var dh:Float = size.y;
-        var px:Float = margins.x;
-        var py:Float = margins.y;
+        var dx1 = 0;
+        var dy1 = 0;
+        var dx2:Int = dest.w;
+        var dy2:Int = dest.h;
+        var dw = dx2 - dx1;
+        var dh = dy2 - dy1;
+        var px:Int = margins.x;
+        var py:Int = margins.y;
 
         if (src != null) {
-            dx = Math.max(src.x - margins.x, 0);
-            dy = Math.max(src.y - margins.y, 0);
-            dw = Math.min(Math.max(src.x + src.w - margins.x, 0), src.w);
-            dh = Math.min(Math.max(src.y + src.h - margins.y, 0), src.h);
-            px = margins.x - src.x;
-            py = margins.y - src.y;
+            // count coordintaes related to the original image
+            dx1 = Std.int(Math.max(src.x - margins.x, 0));
+            dy1 = Std.int(Math.max(src.y - margins.y, 0));
+            dx2 = Std.int(Math.max(Math.min(src.x + src.w - margins.x, size.x), 0));
+            dy2 = Std.int(Math.max(Math.min(src.y + src.h - margins.y, size.y), 0));
+
+            // size of the printed area
+            dw = dx2 - dx1;
+            dh = dy2 - dy1;
+
+            // coorinates correction in case of margins
+            px = Std.int(Math.max(margins.x - src.x, 0));
+            py = Std.int(Math.max(margins.y - src.y, 0));
         }
 
-        where.putImageData(imgData, dest.x + px, dest.y + py, dx, dy, dw, dh);
+        if (dw == 0 || dh == 0) return;
+
+        var ctxData = where.getImageData(dest.x + px, dest.y + py, dw, dh).data;
+        var p = 0;
+        for (j in 0...dh) {
+            for (i in 0...dw) {
+                var pixelIndex = ((dy1 + j) * size.x + dx1 + i) * 4;
+                if (surf[pixelIndex + 3] == 255) {
+                    ctxData[p] = surf[pixelIndex];
+                    ctxData[p + 1] = surf[pixelIndex + 1];
+                    ctxData[p + 2] = surf[pixelIndex + 2];
+                    ctxData[p + 3] = surf[pixelIndex + 3];
+                }
+
+                p += 4;
+            }
+
+        }
+
+        //
+        var imgData = new ImageData(ctxData, dw, dh);
+        where.putImageData(imgData, dest.x + px, dest.y + py);
     }
 
     public function setFlagColor(player:PlayerColor):Void {

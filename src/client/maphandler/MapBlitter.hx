@@ -1,19 +1,18 @@
 package client.maphandler;
 
-import gui.animation.SdlImage;
 import constants.id.PlayerColor;
-import gui.Animation;
-import mapObjects.misc.GBoat;
-import mapObjects.hero.GHeroInstance;
 import constants.Obj;
-import mapObjects.GObjectInstance;
-import mapping.RoadType;
 import gui.animation.IImage;
-import mapping.RiverType;
-import mapping.TerrainTile;
-import js.html.CanvasRenderingContext2D;
-import utils.Int3;
+import gui.Animation;
 import gui.geometries.Rect;
+import js.html.CanvasRenderingContext2D;
+import mapObjects.GObjectInstance;
+import mapObjects.hero.GHeroInstance;
+import mapObjects.misc.GBoat;
+import mapping.RiverType;
+import mapping.RoadType;
+import mapping.TerrainTile;
+import utils.Int3;
 
 using Reflect;
 
@@ -101,7 +100,7 @@ class MapBlitter {
                     if (tinfo.riverType != RiverType.NO_RIVER) {
                         drawRiver(targetSurf, tinfo);
                     }
-                    drawRoad(targetSurf, tinfo, tinfoUpper);
+                    drawRoad(targetSurf, tinfo, tinfoUpper, i, j);
                 }
 
                 if (isVisible) {
@@ -203,7 +202,6 @@ class MapBlitter {
 
         postProcessing(targetSurf);
 
-        trace("SDL_SetClipRect");
 //        SDL_SetClipRect(targetSurf, &prevClip);
     }
 
@@ -249,22 +247,22 @@ class MapBlitter {
     public function drawRiver(targetSurf:CanvasRenderingContext2D, tinfo:TerrainTile) {
         var destRect = Rect.fromRect(realTileRect);
         var rotation = (tinfo.extTileFlags >> 2) % 4;
-        
+
         drawElement(parent.riverImages[tinfo.riverType-1][tinfo.riverDir][rotation], null, targetSurf, destRect);
     }
 
-    public function drawRoad(targetSurf:CanvasRenderingContext2D, tinfo:TerrainTile, tinfoUpper:TerrainTile) {
+    public function drawRoad(targetSurf:CanvasRenderingContext2D, tinfo:TerrainTile, tinfoUpper:TerrainTile, i:Int, j:Int) {
         if (tinfoUpper != null && tinfoUpper.roadType != RoadType.NO_ROAD) {
             var rotation:Int = (tinfoUpper.extTileFlags >> 4) % 4;
-            var source = new Rect(0, Std.int(tileSize / 2), tileSize, Std.int(tileSize / 2));
-            var dest = new Rect(realPos.x, realPos.y, tileSize, Std.int(tileSize / 2));
+            var source = new Rect(0, halfTileSizeCeil, tileSize, halfTileSizeCeil);
+            var dest = new Rect(realPos.x, realPos.y, tileSize, halfTileSizeCeil);
             drawElement(parent.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir][rotation], source, targetSurf, dest);
         }
 
         if(tinfo.roadType != RoadType.NO_ROAD) {//print road from this tile
             var rotation:Int = (tinfo.extTileFlags >> 4) % 4;
             var source = new Rect(0, 0, tileSize, halfTileSizeCeil);
-            var dest = new Rect(realPos.x, Std.int(realPos.y + tileSize / 2), tileSize, Std.int(tileSize / 2));
+            var dest = new Rect(realPos.x, realPos.y + halfTileSizeCeil, tileSize, halfTileSizeCeil);
             drawElement(parent.roadImages[tinfo.roadType - 1][tinfo.roadDir][rotation], source, targetSurf, dest);
         }
     }
@@ -450,7 +448,7 @@ class MapBlitter {
 
     public function getPhaseShift(object:GObjectInstance):Int {
         if(!parent.animationPhase.exists(object)) {
-            var ret = Std.int(Math.random() * 254);
+            var ret = Std.random(254);
             parent.animationPhase[object] = ret;
             return ret;
         }

@@ -240,32 +240,33 @@ class MapHandler {
     }
 
     function initObjectRects() {
+        // values are inverted from original
         var objectBlitOrderSorter = function(aa:TerrainTileObject, bb:TerrainTileObject):Int {
             var a = aa.obj;
             var b = bb.obj;
 
             if (a == null)
-                return 1;
-            if (b == null)
                 return -1;
+            if (b == null)
+                return 1;
             if (a.appearance.printPriority != b.appearance.printPriority)
-                return a.appearance.printPriority > b.appearance.printPriority ? 1 : -1;
+                return a.appearance.printPriority > b.appearance.printPriority ? -1 : 1;
 
             if(a.pos.y != b.pos.y)
-                return a.pos.y < b.pos.y ? 1 : -1;
+                return a.pos.y < b.pos.y ? -1 : 1;
 
             if(b.ID == Obj.HERO && a.ID != Obj.HERO)
-                return 1;
-            if(b.ID != Obj.HERO && a.ID == Obj.HERO)
                 return -1;
+            if(b.ID != Obj.HERO && a.ID == Obj.HERO)
+                return 1;
 
             if(!a.isVisitable() && b.isVisitable())
-                return 1;
-            if(!b.isVisitable() && a.isVisitable())
                 return -1;
-            if(a.pos.x < b.pos.x)
+            if(!b.isVisitable() && a.isVisitable())
                 return 1;
-            return -1;
+            if(a.pos.x < b.pos.x)
+                return -1;
+            return 1;
         }
 
         //initializing objects / rects
