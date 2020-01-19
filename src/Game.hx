@@ -49,6 +49,8 @@ class Game {
     private var topTile:Int3;
     private var map:MapBody;
 
+    private var animFrame:Int = 0;
+
     private var anim:Animation;
     private var group:Int = 0;
 
@@ -152,8 +154,8 @@ class Game {
     private function drawFrame(timestamp:Float) {
         delta += (timestamp - oldTimestamp);
 
-        if (delta > 100) {
-            delta = delta % 100;
+        if (delta > 20) {
+            delta = delta % 20;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             renderMap();
@@ -165,9 +167,17 @@ class Game {
         Browser.window.requestAnimationFrame(drawFrame);
     }
 
+    var animValHitCount = 0;
     private function renderMap() {
+        animValHitCount++;
+        if(animValHitCount == 4) {
+            animFrame++;
+            animValHitCount = 0;
+        }
+
+
         info.otherheroAnim = true;
-        info.anim = 0;
+        info.anim = animFrame;
         info.heroAnim = 6;
 
         gameInfo.mh.drawTerrainRectNew(ctx, info);
