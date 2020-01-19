@@ -17,16 +17,18 @@ import gui.Animation;
 import js.Browser;
 import js.html.CanvasElement;
 import js.html.CanvasRenderingContext2D;
-import js.html.ImageData;
 import js.html.InputElement;
+import js.html.KeyboardEvent;
 import js.html.OptionElement;
 import js.html.SelectElement;
-import js.html.Uint8ClampedArray;
 #end
 
 using StringTools;
 
 class Game {
+
+    public static var MAP_SCREEN_TILED_WIDTH = 22;
+    public static var MAP_SCREEN_TILED_HEIGHT = 22;
 
     #if js
     private var canvas(default, null):CanvasElement;
@@ -43,6 +45,9 @@ class Game {
 
     private var clientState:ClientState;
     private var gameInfo:GameInfo;
+    private var info:MapDrawingInfo;
+    private var topTile:Int3;
+    private var map:MapBody;
 
     private var anim:Animation;
     private var group:Int = 0;
@@ -52,11 +57,12 @@ class Game {
 
         clientState = new ClientState();
         gameInfo = new GameInfo();
+        topTile = new Int3(14, 76, 0);
+        info = new MapDrawingInfo(topTile, [[[]]], new Rect(0, 0, 594, 546));
 
         #if js
         // init html objects
-        canvas = cast Browser.document.getElementById("gameview");
-        ctx = canvas.getContext2d();
+        initControls();
 
         FileCache.instance.initGraphicsAsync().then(function(files:Array<String>) {
             FileCache.instance.loadConfigs().then(function(success:Bool) {
@@ -69,7 +75,7 @@ class Game {
                 FileCache.instance.initMapAsync(mapName).then(function(success:Bool) {
                     var mapService = new MapService();
                     mapService.loadMapHeaderByName(mapName);
-                    var map = mapService.loadMapByName(mapName);
+                    map = mapService.loadMapByName(mapName);
 
                     initMapHandler(map);
 
@@ -88,15 +94,7 @@ class Game {
         var defaultFilename:String = "zm196z.def";
 
         #if js
-        // init html objects
-        canvas = cast Browser.document.getElementById("gameview");
-        ctx = canvas.getContext2d();
-
-        select = cast Browser.document.getElementById("def_select");
-        select.onchange = onAnimChange;
-
-        range = cast Browser.document.getElementById("groups_range");
-        range.onchange = onGroupChange;
+        initControls();
 
         // load binnary models
         FileCache.instance.initGraphicsAsync().then(function(files:Array<String>) {
@@ -123,6 +121,30 @@ class Game {
         trace('initMapHandler completed');
     }
 
+    #if js
+    private function initControls() {
+        canvas = cast Browser.document.getElementById("gameview");
+        ctx = canvas.getContext2d();
+
+        Browser.document.onkeydown = function(e:KeyboardEvent) {
+            switch (e.keyCode) {
+                case KeyboardEvent.DOM_VK_UP:
+                    if (topTile.y > 0) topTile.y--;
+                case KeyboardEvent.DOM_VK_DOWN:
+                    if (topTile.y + MAP_SCREEN_TILED_WIDTH < map.height) topTile.y++;
+                case KeyboardEvent.DOM_VK_LEFT:
+                    if (topTile.x > 0) topTile.x--;
+                case KeyboardEvent.DOM_VK_RIGHT:
+                    if (topTile.x + MAP_SCREEN_TILED_WIDTH < map.width) topTile.x++;
+            }
+        }
+
+//        select = cast Browser.document.getElementById("def_select");
+//        select.onchange = onAnimChange;
+//        range = cast Browser.document.getElementById("groups_range");
+//        range.onchange = onGroupChange;
+    }
+
     private function startRendering() {
         Browser.window.requestAnimationFrame(drawFrame);
     }
@@ -135,6 +157,7 @@ class Game {
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             renderMap();
+//            renderAnim();
         }
 
         oldTimestamp = timestamp;
@@ -143,7 +166,6 @@ class Game {
     }
 
     private function renderMap() {
-        var info = new MapDrawingInfo(new Int3(14, 76, 0), [[[]]], new Rect(7, 7, 594, 546));
         info.otherheroAnim = true;
         info.anim = 0;
         info.heroAnim = 6;
@@ -151,7 +173,6 @@ class Game {
         gameInfo.mh.drawTerrainRectNew(ctx, info);
     }
 
-    #if js
     // animation rendering
     private function selectAnimation(name:String) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -201,8 +222,9 @@ class Game {
         if (anim != null && anim.images.exists(group)) {
             var image:IImage = anim.images[group][iFrame];
             if(image != null) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                image.drawToPos(ctx, image.margins.x, image.margins.y, null);
+                ctx.fillStyle = "blue";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                image.drawToPos(ctx, 0, 0, null);
             }
 
             iFrame++;

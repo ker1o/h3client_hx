@@ -75,8 +75,8 @@ class MapHandler {
 
     public function init() {
         // Size of visible terrain.
-        var mapW:Int = 594; /*conf.go().ac.advmapW*/
-        var mapH:Int = 546; /*conf.go().ac.advmapH*/
+        var mapW:Int = Game.MAP_SCREEN_TILED_WIDTH * 32; /*conf.go().ac.advmapW*/
+        var mapH:Int = Game.MAP_SCREEN_TILED_HEIGHT * 32; /*conf.go().ac.advmapH*/
 
         //sizes of terrain
         sizes = new Int3();
