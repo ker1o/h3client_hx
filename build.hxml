@@ -1,4 +1,5 @@
 -cp src
+-cp kha/Sources
 
 -lib h3lib 
 

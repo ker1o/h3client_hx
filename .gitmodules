@@ -1,3 +1,6 @@
 [submodule "h3lib"]
 	path = h3lib
 	url = git@github.com:nautilusnsk/h3lib_hx.git
+[submodule "Kha"]
+	path = Kha
+	url = git@github.com:Kode/Kha.git

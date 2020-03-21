@@ -1,5 +1,6 @@
 package ;
 
+import kha.Framebuffer;
 import gui.geometries.Rect;
 import client.maphandler.MapDrawingInfo;
 import utils.Int3;
@@ -32,10 +33,10 @@ class Game {
     private var animFrame:Int = 0;
 
     public function new() {
-        super();
+        init();
     }
 
-    override private function init() {
+    private function init() {
         var mapName:String = "Vial of Life.h3m";
 
         gameInfo = new GameInfo();
@@ -96,11 +97,14 @@ class Game {
     }
 
     var animValHitCount = 0;
-    override function update(dt:Float) {
+    public function update() {
+
+    }
+
+    public function render(framebuffer: Framebuffer) {
         if (gameInfo.mh != null) {
             renderMap();
         }
-
     }
 
     var pp = 0;
@@ -117,7 +121,7 @@ class Game {
 
         if (pp == 0) {
             pp = 1;
-            gameInfo.mh.drawTerrainRectNew(info);
+//            gameInfo.mh.drawTerrainRectNew(info);
 
         }
     }

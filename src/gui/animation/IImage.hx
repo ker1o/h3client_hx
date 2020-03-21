@@ -7,7 +7,7 @@ import js.html.CanvasRenderingContext2D;
 import gui.geometries.Point;
 import gui.geometries.Rect;
 
-typedef BufferType = #if js js.html.Uint8ClampedArray #else haxe.io.UInt8Array #end;
+typedef BufferType = #if js js.lib.Uint8ClampedArray #else haxe.io.UInt8Array #end;
 
 interface IImage {
     var surf:BufferType;
