@@ -8,7 +8,7 @@ class Main {
     static var game:Game;
 
     static public function main() {
-        System.start({ title: "KhaShmup", width: 800, height: 600 }, init);
+        System.start({ title: "KhaShmup", width: 640, height: 480 }, init);
     }
 
     private static function init(window:Window) {

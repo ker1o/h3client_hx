@@ -6,8 +6,8 @@ import constants.Obj;
 import gui.Animation;
 import mapObjects.GObjectInstance;
 
-class Graphics {
-    public static var instance(default, null) = new Graphics();
+class H3mGraphics {
+    public static var instance(default, null) = new H3mGraphics();
 
 
     public var heroMoveArrows:Animation;
@@ -100,12 +100,14 @@ class Graphics {
         var anim:Animation = new Animation(name);
         anim.preload();
 
-        for(iRotation in 0...(Std.int(rotations.length / 2))) {
-            var sourceGroup:Int = rotations[iRotation * 2];
-            var targetGroup:Int = rotations[iRotation * 2 + 1];
+        // ToDo: should we do simething with animations?
 
-            anim.createFlippedGroup(sourceGroup, targetGroup);
-        }
+//        for(iRotation in 0...(Std.int(rotations.length / 2))) {
+//            var sourceGroup:Int = rotations[iRotation * 2];
+//            var targetGroup:Int = rotations[iRotation * 2 + 1];
+//
+//            anim.createFlippedGroup(sourceGroup, targetGroup);
+//        }
 
         return anim;
     }
@@ -159,12 +161,13 @@ class Graphics {
 
         var size = fogOfWarPartialHide.size(0);//group size after next rotation
 
-        for (rotation in rotations) {
-            fogOfWarPartialHide.duplicateImage(0, rotation, 0);
-            var image = fogOfWarPartialHide.getImage(size, 0);
-            image.verticalFlip();
-            size++;
-        }
+        // ToDo: what to do with rotations?
+//        for (rotation in rotations) {
+//            fogOfWarPartialHide.duplicateImage(0, rotation, 0);
+//            var image = fogOfWarPartialHide.getImage(size, 0);
+//            image.verticalFlip();
+//            size++;
+//        }
     }
 
 }

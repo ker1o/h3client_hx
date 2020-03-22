@@ -1,10 +1,14 @@
 package ;
 
+import kha.math.FastMatrix3;
+import kha.graphics2.Graphics;
+import kha.Color;
 import kha.Framebuffer;
+import kha.System;
 import gui.geometries.Rect;
 import client.maphandler.MapDrawingInfo;
 import utils.Int3;
-import client.Graphics;
+import client.H3mGraphics;
 import mapping.MapBody;
 import client.maphandler.MapHandler;
 import client.GameInfo;
@@ -13,8 +17,6 @@ import mapping.MapService;
 import filesystem.FileCache;
 #if js
 import js.Browser;
-import js.html.CanvasElement;
-import js.html.CanvasRenderingContext2D;
 import js.html.KeyboardEvent;
 #end
 
@@ -24,6 +26,9 @@ class Game {
 
     public static var MAP_SCREEN_TILED_WIDTH = 22;
     public static var MAP_SCREEN_TILED_HEIGHT = 22;
+
+    public static inline var WIDTH = 640;
+    public static inline var HEIGHT = 480;
 
     private var gameInfo:GameInfo;
     private var info:MapDrawingInfo;
@@ -53,7 +58,7 @@ class Game {
                 VLC.instance.init();
                 gameInfo.setFromLib();
 
-                Graphics.instance.load();
+                H3mGraphics.instance.load();
 
                 FileCache.instance.initMapAsync(mapName).then(function(success:Bool) {
                     var mapService = new MapService();
@@ -101,14 +106,23 @@ class Game {
 
     }
 
-    public function render(framebuffer: Framebuffer) {
+    public function render(framebuffer:Framebuffer) {
+        var g = framebuffer.g2;
         if (gameInfo.mh != null) {
-            renderMap();
+            var transform = FastMatrix3.scale(
+                System.windowWidth(0) / WIDTH,
+                System.windowHeight(0) / HEIGHT);
+
+            g.begin();
+            g.clear(Color.Black);
+            g.pushTransformation(transform);
+            renderMap(g);
+            g.end();
         }
     }
 
-    var pp = 0;
-    private function renderMap() {
+//    var pp = 0;
+    private function renderMap(g:Graphics) {
         animValHitCount++;
         if(animValHitCount == 4) {
             animFrame++;
@@ -119,11 +133,10 @@ class Game {
         info.anim = animFrame;
         info.heroAnim = 6;
 
-        if (pp == 0) {
-            pp = 1;
-//            gameInfo.mh.drawTerrainRectNew(info);
-
-        }
+//        if (pp == 0) {
+//            pp = 1;
+            gameInfo.mh.drawTerrainRectNew(g, info);
+//        }
     }
     #end
 

@@ -1,11 +1,11 @@
 package client.maphandler;
 
+import kha.graphics2.Graphics;
 import constants.id.PlayerColor;
 import constants.Obj;
 import gui.animation.IImage;
 import gui.Animation;
 import gui.geometries.Rect;
-import js.html.CanvasRenderingContext2D;
 import mapObjects.GObjectInstance;
 import mapObjects.hero.GHeroInstance;
 import mapObjects.misc.GBoat;
@@ -66,7 +66,7 @@ class MapBlitter {
     }
 
     #if js
-    public function blit(targetSurf:CanvasRenderingContext2D, info:MapDrawingInfo) {
+    public function blit(targetSurf:Graphics, info:MapDrawingInfo) {
         init(info);
         var prevClip = clip(targetSurf);
 
@@ -205,27 +205,27 @@ class MapBlitter {
 //        SDL_SetClipRect(targetSurf, &prevClip);
     }
 
-    public function clip(targetSurf:CanvasRenderingContext2D):Rect {
+    public function clip(targetSurf:Graphics):Rect {
         throw 'MapBlitter.clip()';
     }
 
-    public function drawOverlayEx(targetSurf:CanvasRenderingContext2D) {
+    public function drawOverlayEx(targetSurf:Graphics) {
         //nothing
     }
 
-    public function postProcessing(targetSurf:CanvasRenderingContext2D) {
+    public function postProcessing(targetSurf:Graphics) {
         throw 'MapBlitter.postProcessing()';
     }
 
-    public function drawTileOverlay(targetSurf:CanvasRenderingContext2D, tile:TerrainTile2) {
+    public function drawTileOverlay(targetSurf:Graphics, tile:TerrainTile2) {
         throw 'MapBlitter.drawTileOverlay()';
     }
 
-    public function drawFrame(targetSurf:CanvasRenderingContext2D) {
+    public function drawFrame(targetSurf:Graphics) {
         // ToDo: avoid redwawing frame for now
     }
 
-    public function drawElement(source:IImage, sourceRect:Rect, tarfetSurf:CanvasRenderingContext2D, destRect:Rect) {
+    public function drawElement(source:IImage, rotation:Int, sourceRect:Rect, tarfetSurf:Graphics, destRect:Rect) {
         throw 'MapBlitter.drawElement()';
     }
 
@@ -237,37 +237,37 @@ class MapBlitter {
         return !neighbors.areAllHidden();
     }
 
-    public function drawTileTerrain(targetSurf:CanvasRenderingContext2D, tinfo:TerrainTile, tile:TerrainTile2) {
+    public function drawTileTerrain(targetSurf:Graphics, tinfo:TerrainTile, tile:TerrainTile2) {
         var destRect = new Rect(realTileRect.x, realTileRect.y, realTileRect.w, realTileRect.h);
         var rotation:Int = tinfo.extTileFlags % 4;
 
-        drawElement(parent.terrainImages[tinfo.terType][tinfo.terView][rotation], null, targetSurf, destRect);
+        drawElement(parent.terrainImages[tinfo.terType][tinfo.terView], rotation, null, targetSurf, destRect);
     }
 
-    public function drawRiver(targetSurf:CanvasRenderingContext2D, tinfo:TerrainTile) {
+    public function drawRiver(targetSurf:Graphics, tinfo:TerrainTile) {
         var destRect = Rect.fromRect(realTileRect);
         var rotation = (tinfo.extTileFlags >> 2) % 4;
 
-        drawElement(parent.riverImages[tinfo.riverType-1][tinfo.riverDir][rotation], null, targetSurf, destRect);
+        drawElement(parent.riverImages[tinfo.riverType-1][tinfo.riverDir], rotation, null, targetSurf, destRect);
     }
 
-    public function drawRoad(targetSurf:CanvasRenderingContext2D, tinfo:TerrainTile, tinfoUpper:TerrainTile, i:Int, j:Int) {
+    public function drawRoad(targetSurf:Graphics, tinfo:TerrainTile, tinfoUpper:TerrainTile, i:Int, j:Int) {
         if (tinfoUpper != null && tinfoUpper.roadType != RoadType.NO_ROAD) {
             var rotation:Int = (tinfoUpper.extTileFlags >> 4) % 4;
             var source = new Rect(0, halfTileSizeCeil, tileSize, halfTileSizeCeil);
             var dest = new Rect(realPos.x, realPos.y, tileSize, halfTileSizeCeil);
-            drawElement(parent.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir][rotation], source, targetSurf, dest);
+            drawElement(parent.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir], rotation, source, targetSurf, dest);
         }
 
         if(tinfo.roadType != RoadType.NO_ROAD) {//print road from this tile
             var rotation:Int = (tinfo.extTileFlags >> 4) % 4;
             var source = new Rect(0, 0, tileSize, halfTileSizeCeil);
             var dest = new Rect(realPos.x, realPos.y + halfTileSizeCeil, tileSize, halfTileSizeCeil);
-            drawElement(parent.roadImages[tinfo.roadType - 1][tinfo.roadDir][rotation], source, targetSurf, dest);
+            drawElement(parent.roadImages[tinfo.roadType - 1][tinfo.roadDir], rotation, source, targetSurf, dest);
         }
     }
 
-    public function drawObjects(targetSurf:CanvasRenderingContext2D, tile:TerrainTile2) {
+    public function drawObjects(targetSurf:Graphics, tile:TerrainTile2) {
         var objects = tile.objects;
         for(object in objects) {
             if (object.fadeAnimKey >= 0) {
@@ -319,13 +319,13 @@ class MapBlitter {
         return obj.ID == Obj.HERO || obj.coveringAt(pos.x, pos.y);
     }
 
-    public function drawObject(targetSurf:CanvasRenderingContext2D, source:IImage, sourceRect:Rect, moving:Bool) {
+    public function drawObject(targetSurf:Graphics, source:IImage, sourceRect:Rect, moving:Bool) {
         var dstRect = Rect.fromRect(realTileRect);
-        drawElement(source, sourceRect, targetSurf, dstRect);
+        drawElement(source, 0, sourceRect, targetSurf, dstRect);
     }
 
-    public function drawHeroFlag(targetSurf:CanvasRenderingContext2D, source:IImage, sourceRect:Rect, destRect:Rect, moving:Bool) {
-        drawElement(source, sourceRect, targetSurf, destRect);
+    public function drawHeroFlag(targetSurf:Graphics, source:IImage, sourceRect:Rect, destRect:Rect, moving:Bool) {
+        drawElement(source, 0, sourceRect, targetSurf, destRect);
     }
 
     public function findObjectBitmap(obj:GObjectInstance, anim:Int):AnimBitmapHolder {
@@ -340,7 +340,7 @@ class MapBlitter {
         }
 
         // normal object
-        var animation:Animation = Graphics.instance.getAnimation(obj);
+        var animation:Animation = H3mGraphics.instance.getAnimation(obj);
         var groupSize:Int = animation.size();
         if (groupSize == 0) {
             return new AnimBitmapHolder();
@@ -367,9 +367,9 @@ class MapBlitter {
             //pick graphics of hero (or boat if hero is sailing)
             var animation:Animation;
             if (hero.boat != null) {
-                animation = Graphics.instance.boatAnimations[hero.boat.subID];
+                animation = H3mGraphics.instance.boatAnimations[hero.boat.subID];
             } else {
-                animation = Graphics.instance.heroAnimations[hero.appearance.animationFile];
+                animation = H3mGraphics.instance.heroAnimations[hero.appearance.animationFile];
             }
 
             var moving = !hero.isStanding;
@@ -401,7 +401,7 @@ class MapBlitter {
     }
 
     public function findBoatBitmap(boat:GBoat, anim:Int):AnimBitmapHolder {
-        var animation = Graphics.instance.boatAnimations[boat.subID];
+        var animation = H3mGraphics.instance.boatAnimations[boat.subID];
         var group:Int = getHeroFrameGroup(boat.direction, false);
         if (animation.size(group) > 0) {
             return new AnimBitmapHolder(animation.getImage(anim % animation.size(group), group));
@@ -411,17 +411,17 @@ class MapBlitter {
     }
 
     private function findHeroFlagBitmap(hero:GHeroInstance, anim:Int, color:PlayerColor, group:Int):IImage {
-        return findFlagBitmapInternal(Graphics.instance.heroFlagAnimations[color.getNum()], anim, group, hero.moveDir, !hero.isStanding);
+        return findFlagBitmapInternal(H3mGraphics.instance.heroFlagAnimations[color.getNum()], anim, group, hero.moveDir, !hero.isStanding);
     }
 
     private function findBoatFlagBitmap(boat:GBoat, anim:Int, color:PlayerColor, group:Int, dir:Int):IImage {
         var boatType:Int = boat.subID;
-        if (boatType < 0 || boatType >= Graphics.instance.boatFlagAnimations.length) {
+        if (boatType < 0 || boatType >= H3mGraphics.instance.boatFlagAnimations.length) {
             trace('Not supported boat subtype: ${boat.subID}');
             return null;
         }
 
-        var subtypeFlags = Graphics.instance.boatFlagAnimations[boatType];
+        var subtypeFlags = H3mGraphics.instance.boatFlagAnimations[boatType];
 
         var colorIndex:Int = color.getNum();
 
@@ -465,7 +465,7 @@ class MapBlitter {
         }
     }
 
-    public function drawFow(targetSurf:CanvasRenderingContext2D) {
+    public function drawFow(targetSurf:Graphics) {
         var neighborInfo = new NeighborTilesInfo(pos, parent.sizes, info.visibilityMap, (settings.field("session").field("spectate"):Bool));
 
         var retBitmapID:Int = neighborInfo.getBitmapID();// >=0 . partial hide, <0 - full hide
@@ -482,7 +482,7 @@ class MapBlitter {
         }
 
         var destRect = Rect.fromRect(realTileRect);
-        drawElement(image, null, targetSurf, destRect);
+        drawElement(image, 0, null, targetSurf, destRect);
     }
     #end
 }

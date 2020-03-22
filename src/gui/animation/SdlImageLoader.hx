@@ -1,6 +1,5 @@
 package gui.animation;
 
-import gui.animation.IImage.BufferType;
 import gui.geometries.Point;
 import haxe.io.Bytes;
 
@@ -11,7 +10,7 @@ class SdlImageLoader implements ImageLoader {
     public var position:Int;
 
     private var palete:Array<Int>;
-    private var arr:BufferType;
+    private var arr:Bytes;
 
     public function new(img:SdlImage) {
         image = img;
@@ -20,7 +19,7 @@ class SdlImageLoader implements ImageLoader {
     }
 
     public function init(spriteSize:Point, margins:Point, fullSize:Point, palette:Array<Int>):Void {
-        arr = new BufferType(spriteSize.x * spriteSize.y * 4);
+        arr = Bytes.alloc(spriteSize.x * spriteSize.y * 4);
 
         image.surf = arr;
         image.size = spriteSize;
@@ -49,10 +48,10 @@ class SdlImageLoader implements ImageLoader {
         var g = (bitColor & 0x0000FF00) >> 8;
         var r = (bitColor & 0x000000FF);
 
-        arr[position] = r; position++;
-        arr[position] = g; position++;
-        arr[position] = b; position++;
-        arr[position] = a; position++;
+        arr.set(position, r); position++;
+        arr.set(position, g); position++;
+        arr.set(position, b); position++;
+        arr.set(position, a); position++;
     }
 
     public function endLine():Void {

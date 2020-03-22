@@ -1,7 +1,7 @@
 package client.maphandler;
 
+import kha.graphics2.Graphics;
 import gui.animation.IImage;
-import js.html.CanvasRenderingContext2D;
 import gui.geometries.Rect;
 
 class MapNormalBlitter extends MapBlitter {
@@ -63,25 +63,25 @@ class MapNormalBlitter extends MapBlitter {
         }
     }
 
-    override public function clip(targetSurf:CanvasRenderingContext2D):Rect {
+    override public function clip(targetSurf:Graphics):Rect {
         var prevClip:Rect = new Rect(0, 0, 0, 0);
         //ToDo
         return prevClip;
     }
 
-    override public function drawOverlayEx(targetSurf:CanvasRenderingContext2D) {
+    override public function drawOverlayEx(targetSurf:Graphics) {
         //ToDo
     }
 
-    override public function drawTileOverlay(targetSurf:CanvasRenderingContext2D, tile:TerrainTile2) {
+    override public function drawTileOverlay(targetSurf:Graphics, tile:TerrainTile2) {
         //ToDo
     }
 
-    override public function drawElement(source:IImage, sourceRect:Rect, targetSurf:CanvasRenderingContext2D, destRect:Rect) {
-        source.drawToRect(targetSurf, destRect, sourceRect);
+    override public function drawElement(source:IImage, rotation:Int, sourceRect:Rect, targetSurf:Graphics, destRect:Rect) {
+        source.drawToRect(targetSurf, rotation, destRect, sourceRect);
     }
 
-    override public function postProcessing(targetSurf:CanvasRenderingContext2D) {
+    override public function postProcessing(targetSurf:Graphics) {
         //ToDo
     }
 }

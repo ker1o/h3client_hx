@@ -1,6 +1,6 @@
 package client.maphandler;
 
-import js.html.CanvasRenderingContext2D;
+import kha.graphics2.Graphics;
 import mapObjects.misc.GBoat;
 import mapObjects.hero.GHeroInstance;
 import constants.Obj;
@@ -12,8 +12,8 @@ import gui.geometries.Rect;
 import mapping.MapBody;
 import utils.Int3;
 
-typedef TFlippedAnimations = Array<Array<Animation>>; //[type, rotation]
-typedef TFlippedCache = Array<Array<Array<IImage>>>; //[type, view type, rotation]
+typedef TFlippedAnimations = Array<Animation>; //[type]
+typedef TFlippedCache = Array<Array<IImage>>; //[type, view type]
 
 class MapHandler {
     public var ttiles:PseudoV<PseudoV<PseudoV<TerrainTile2>>>; //informations about map tiles
@@ -36,14 +36,14 @@ class MapHandler {
     public var offsetX:Int;
     public var offsetY:Int;
 
-    public var terrainAnimations:TFlippedAnimations; //[terrain type, rotation]
-    public var terrainImages:TFlippedCache; //[terrain type, view type, rotation]
+    public var terrainAnimations:TFlippedAnimations; //[terrain type]
+    public var terrainImages:TFlippedCache; //[terrain type, view type]
 
-    public var roadAnimations:TFlippedAnimations; //[road type, rotation]
-    public var roadImages:TFlippedCache; //[road type, view type, rotation]
+    public var roadAnimations:TFlippedAnimations; //[road type]
+    public var roadImages:TFlippedCache; //[road type, view type]
 
-    public var riverAnimations:TFlippedAnimations; //[river type, rotation]
-    public var riverImages:TFlippedCache; //[river type, view type, rotation]
+    public var riverAnimations:TFlippedAnimations; //[river type]
+    public var riverImages:TFlippedCache; //[river type, view type]
 
     //Fog of War cache (not owned)
     public var fowFullHide:Array<IImage>;
@@ -52,7 +52,6 @@ class MapHandler {
     public var fowPartialHide:Array<IImage>;
 
     public var animationPhase:Map<GObjectInstance, Int>;
-
 
     private var fadeAnimCounter:Int;
 
@@ -114,10 +113,10 @@ class MapHandler {
 
     private function prepareFowDefs() {
         //assume all frames in group 0
-        var size:Int = Graphics.instance.fogOfWarFullHide.size(0);
+        var size:Int = H3mGraphics.instance.fogOfWarFullHide.size(0);
         fowFullHide = [];
         for(frame in 0...size) {
-            fowFullHide[frame] = Graphics.instance.fogOfWarFullHide.getImage(frame);
+            fowFullHide[frame] = H3mGraphics.instance.fogOfWarFullHide.getImage(frame);
         }
 
         //initialization of type of full-hide image
@@ -132,10 +131,10 @@ class MapHandler {
             }
         }
 
-        size = Graphics.instance.fogOfWarPartialHide.size(0);
+        size = H3mGraphics.instance.fogOfWarPartialHide.size(0);
         fowPartialHide = [];
         for(frame in 0...size) {
-            fowPartialHide[frame] = Graphics.instance.fogOfWarPartialHide.getImage(frame);
+            fowPartialHide[frame] = H3mGraphics.instance.fogOfWarPartialHide.getImage(frame);
         }
     }
 
@@ -177,37 +176,14 @@ class MapHandler {
 
             //no rotation and basic setup
             for (i in 0...types) {
-                animation[i] = [];
-                animation[i][0] = new Animation(files[i]);
-                animation[i][0].preload();
-                var views = animation[i][0].size(0);
+                animation[i] = new Animation(files[i]);
+                animation[i].preload();
+                var views = animation[i].size(0);
                 //cache[i].resize(views);
                 cache[i] = [];
 
                 for(j in 0...views) {
-                    cache[i][j] = [];
-                    cache[i][j][0] = animation[i][0].getImage(j);
-                }
-            }
-
-            for (rotation in 1...4) {
-                for (i in 0...types) {
-                    animation[i][rotation] = new Animation(files[i]);
-                    animation[i][rotation].preload();
-                    var views:Int = animation[i][rotation].size(0);
-
-                    for (j in 0...views) {
-                        var image = animation[i][rotation].getImage(j);
-
-                        if (rotation == 2 || rotation == 3) {
-                            image.horizontalFlip();
-                        }
-                        if (rotation == 1 || rotation == 3) {
-                            image.verticalFlip();
-                        }
-
-                        cache[i][j][rotation] = image;
-                    }
+                    cache[i][j] = animation[i].getImage(j);
                 }
             }
 
@@ -279,7 +255,7 @@ class MapHandler {
                 continue;
             }
 
-            var animation:Animation = Graphics.instance.getAnimation(obj);
+            var animation:Animation = H3mGraphics.instance.getAnimation(obj);
 
             //no animation at all
             if (animation == null)
@@ -318,7 +294,7 @@ class MapHandler {
         }
     }
 
-    public function drawTerrainRectNew(targetSurface:CanvasRenderingContext2D, info:MapDrawingInfo, redrawOnlyAnim:Bool = false) {
+    public function drawTerrainRectNew(targetSurface:Graphics, info:MapDrawingInfo, redrawOnlyAnim:Bool = false) {
         normalBlitter.blit(targetSurface, info);
     }
 }
