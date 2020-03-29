@@ -46,8 +46,6 @@ class Animation {
             }
 //            break;
         }
-
-        saveAnimation();
     }
 
     public function loadFrame(frame:Int, group:Int):Bool {
@@ -91,56 +89,4 @@ class Animation {
         return source.exists(group) ? source[group].length : 0;
     }
 
-//    public function createFlippedGroup(sourceGroup:Int, targetGroup:Int):Void {
-//        for (frame in 0...size(sourceGroup)) {
-//            duplicateImage(sourceGroup, frame, targetGroup);
-//
-//            var image = getImage(frame, targetGroup);
-//            image.verticalFlip();
-//        }
-//    }
-
-//    public function duplicateImage(sourceGroup:Int, sourceFrame:Int, targetGroup:Int):Void {
-//        if (!source.exists(sourceGroup)) {
-//            trace('[Error] Group ${sourceGroup} missing in ${name}');
-//            return;
-//        }
-//
-//        if (source[sourceGroup].length <= sourceFrame) {
-//            trace('[Error] Frame [${sourceGroup}, ${sourceFrame} missing in ${name}');
-//            return;
-//        }
-//
-//
-//        var temp = '$name:$sourceGroup:$sourceFrame';
-//        if (!source.exists(targetGroup)) {
-//            source[targetGroup] = [];
-//            images[targetGroup] = [];
-//        }
-//        source[targetGroup].push(temp);
-//
-//        var clonedImg = images[sourceGroup][sourceFrame].clone();
-//        var index = source[targetGroup].length - 1;
-//
-//        images[targetGroup][index] = clonedImg;
-//    }
-
-    // tech
-
-    private function saveAnimation() {
-//        var s:String = "";
-//        var strArr = [];
-//
-//        for (sdlImage in images[0]) {
-//            var strSurf = sdlImage.surf.join(',');
-//            strArr.unshift('[$strSurf]');
-//        }
-//
-//        s = 'var defImgData = [${strArr.join(", ")}];\n';
-//        var size = images[0][0].fullsize;
-//        s += 'var defImgWidth = ${size.x};\nvar defImgHeight = ${size.y};';
-//
-//        var path = 'www/out_images/${name}.js';
-//        sys.io.File.saveContent(path, s);
-    }
 }

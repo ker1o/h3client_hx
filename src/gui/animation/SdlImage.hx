@@ -26,50 +26,7 @@ class SdlImage implements IImage {
             khaImage = Image.fromBytes(surf, size.x, size.y);
         }
     }
-/*
-    public function horizontalFlip() {
-        var tmpSurf = new BufferType(surf.length);
 
-        var offset = size.x * 4;
-        for (j in 0...size.y) {
-            var srcOffset:Int = (size.y - j) * offset;
-            tmpSurf.set(surf.subarray(srcOffset - offset, srcOffset), j * offset);
-        }
-        surf = tmpSurf;
-        margins.y = fullsize.y - (margins.y + size.y);
-    }
-
-    public function verticalFlip() {
-        var tmpSurf = new BufferType(surf.length);
-
-        var destPixelIndex = 0;
-        var offset = size.x * 4;
-        for (j in 0...size.y) {
-            for (i in 0...size.x) {
-                var srcPixelIndex = j * offset + (size.x - 1 - i) * 4;
-
-                // copy each color component
-                tmpSurf[destPixelIndex] = surf[srcPixelIndex]; destPixelIndex++;
-                tmpSurf[destPixelIndex] = surf[srcPixelIndex + 1]; destPixelIndex++;
-                tmpSurf[destPixelIndex] = surf[srcPixelIndex + 2]; destPixelIndex++;
-                tmpSurf[destPixelIndex] = surf[srcPixelIndex + 3]; destPixelIndex++;
-            }
-        }
-        surf = tmpSurf;
-        margins.x = fullsize.x - (margins.x + size.x);
-    }
-
-    public function clone():IImage {
-        var img = new SdlImage();
-        img.surf = surf.subarray(0);
-        img.margins = new Point(margins.x, margins.y);
-        img.fullsize = new Point(fullsize.x, fullsize.y);
-
-        img.size = new Point(size.x, size.y);
-
-        return img;
-    }
-*/
     public function get_width():Int {
         return fullsize.x;
     }
@@ -89,34 +46,42 @@ class SdlImage implements IImage {
     public function drawToPos(where:Graphics, rotation:Int, posX:Int, posY:Int, src:Rect, alpha:Int = 255):Void {
         var x = posX + margins.x;
         var y = posY + margins.y;
-//        where.begin();
         where.drawImage(khaImage, x, y);
-//        where.end();
     }
 
     public function drawToRect(where:Graphics, rotation:Int, dest:Rect, src:Rect, alpha:Int = 255):Void {
-        var x = dest.x + margins.x;
-        var y = dest.y + margins.y;
+        var x:FastFloat;
+        var y:FastFloat;
         var sx:FastFloat;
         var sy:FastFloat;
         var sw:FastFloat;
         var sh:FastFloat;
 
+        var flipH = rotation == 2 || rotation == 3;
+        var flipV = rotation == 1 || rotation == 3;
+
         if (src != null) {
-            sx = src.x;
-            sy = src.y;
-            sw = src.w;
-            sh = src.h;
+            var marginX:FastFloat = flipV ? fullsize.x - (margins.x + size.x) : margins.x;
+            var marginY:FastFloat = flipH ? fullsize.y - (margins.y + size.y) : margins.y;
+            var srcX:FastFloat = flipV ? fullsize.x - (src.x + src.w) : src.x;
+            var srcY:FastFloat = flipH ? fullsize.y - (src.y + src.h) : src.y;
+
+            x = dest.x + Math.max(marginX - srcX, 0);
+            y = dest.y + Math.max(marginY - srcY, 0);
+            sx = Math.max(srcX - margins.x, 0);
+            sy = Math.max(srcY - margins.y, 0);
+            sw = Math.min(src.w, Math.min(margins.x + size.x, srcX + src.w) - Math.max(srcX, margins.x));
+            sh = Math.min(src.h, Math.min(margins.y + size.y, srcY + src.h) - Math.max(srcY, margins.y));
         } else {
+            x = dest.x + margins.x;
+            y = dest.y + margins.y;
             sx = 0;
             sy = 0;
-            sw = dest.w;
-            sh = dest.h;
+            sw = size.x;
+            sh = size.y;
         }
 
-//        where.begin();
-        where.drawImage(khaImage, x, y);
-//        where.end();
+        where.drawScaledSubImage(khaImage, sx, sy, sw, sh, x + sw * (flipV ? 1 : 0), y + sh * (flipH ? 1 : 0), sw * (flipV ? -1 : 1), sh * (flipH ? -1 : 1));
     }
 
     public function setFlagColor(player:PlayerColor):Void {

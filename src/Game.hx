@@ -1,34 +1,32 @@
 package ;
 
-import kha.math.FastMatrix3;
-import kha.graphics2.Graphics;
+import client.GameInfo;
+import client.H3mGraphics;
+import client.maphandler.MapDrawingInfo;
+import client.maphandler.MapHandler;
+import filesystem.FileCache;
+import gui.geometries.Rect;
 import kha.Color;
 import kha.Framebuffer;
+import kha.graphics2.Graphics;
+import kha.input.Keyboard;
+import kha.input.KeyCode;
+import kha.math.FastMatrix3;
 import kha.System;
-import gui.geometries.Rect;
-import client.maphandler.MapDrawingInfo;
-import utils.Int3;
-import client.H3mGraphics;
 import mapping.MapBody;
-import client.maphandler.MapHandler;
-import client.GameInfo;
-import mod.VLC;
 import mapping.MapService;
-import filesystem.FileCache;
-#if js
-import js.Browser;
-import js.html.KeyboardEvent;
-#end
+import mod.VLC;
+import utils.Int3;
 
 using StringTools;
 
 class Game {
 
-    public static var MAP_SCREEN_TILED_WIDTH = 22;
-    public static var MAP_SCREEN_TILED_HEIGHT = 22;
+    public static inline var WIDTH = 800;
+    public static inline var HEIGHT = 600;
 
-    public static inline var WIDTH = 640;
-    public static inline var HEIGHT = 480;
+    public static var MAP_SCREEN_TILED_WIDTH = Math.ceil(WIDTH / 32);
+    public static var MAP_SCREEN_TILED_HEIGHT = Math.ceil(HEIGHT / 32);
 
     private var gameInfo:GameInfo;
     private var info:MapDrawingInfo;
@@ -49,8 +47,7 @@ class Game {
         info = new MapDrawingInfo(topTile, [[[]]], new Rect(0, 0, 594, 546));
 
         #if js
-        // init html objects
-        initControls();
+        Keyboard.get().notify(keyDown, keyUp);
 
         FileCache.instance.initGraphicsAsync().then(function(files:Array<String>) {
             FileCache.instance.loadConfigs().then(function(success:Bool) {
@@ -85,25 +82,35 @@ class Game {
         trace('initMapHandler completed');
     }
 
-    #if js
-    private function initControls() {
-        Browser.document.onkeydown = function(e:KeyboardEvent) {
-            switch (e.keyCode) {
-                case KeyboardEvent.DOM_VK_UP:
-                    if (topTile.y > 0) topTile.y--;
-                case KeyboardEvent.DOM_VK_DOWN:
-                    if (topTile.y + MAP_SCREEN_TILED_WIDTH < map.height) topTile.y++;
-                case KeyboardEvent.DOM_VK_LEFT:
-                    if (topTile.x > 0) topTile.x--;
-                case KeyboardEvent.DOM_VK_RIGHT:
-                    if (topTile.x + MAP_SCREEN_TILED_WIDTH < map.width) topTile.x++;
-            }
+    private function keyDown(keyCode:KeyCode) {
+        switch (keyCode) {
+            case Up:
+                if (topTile.y > 0) topTile.y--;
+            case Down:
+                if (topTile.y + MAP_SCREEN_TILED_WIDTH < map.height) topTile.y++;
+            case Left:
+                if (topTile.x > 0) topTile.x--;
+            case Right:
+                if (topTile.x + MAP_SCREEN_TILED_WIDTH < map.width) topTile.x++;
+            default:
         }
+    }
+
+    private function keyUp(keyCode:KeyCode) {
+
     }
 
     var animValHitCount = 0;
     public function update() {
+        animValHitCount++;
+        if(animValHitCount == 8) {
+            animFrame++;
+            animValHitCount = 0;
+        }
 
+        info.otherheroAnim = true;
+        info.anim = animFrame;
+        info.heroAnim = 6;
     }
 
     public function render(framebuffer:Framebuffer) {
@@ -115,29 +122,14 @@ class Game {
 
             g.begin();
             g.clear(Color.Black);
-            g.pushTransformation(transform);
+//            g.pushTransformation(transform);
             renderMap(g);
             g.end();
         }
     }
 
-//    var pp = 0;
     private function renderMap(g:Graphics) {
-        animValHitCount++;
-        if(animValHitCount == 4) {
-            animFrame++;
-            animValHitCount = 0;
-        }
-
-        info.otherheroAnim = true;
-        info.anim = animFrame;
-        info.heroAnim = 6;
-
-//        if (pp == 0) {
-//            pp = 1;
-            gameInfo.mh.drawTerrainRectNew(g, info);
-//        }
+        gameInfo.mh.drawTerrainRectNew(g, info);
     }
-    #end
 
 }
