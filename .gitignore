@@ -2,4 +2,8 @@
 .idea
 *.n
 out/
-bin/
+bin/h3bin
+bin/maps
+bin/*.js
+bin/*.js.map
+build
