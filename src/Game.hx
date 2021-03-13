@@ -94,7 +94,7 @@ class Game {
 
     #if js
     private function initControls() {
-        canvas = cast Browser.document.getElementById("gameview");
+        canvas = cast Browser.document.getElementById("webgl");
         ctx = canvas.getContext2d();
 
         Browser.document.onkeydown = function(e:KeyboardEvent) {
