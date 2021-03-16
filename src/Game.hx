@@ -58,23 +58,23 @@ class Game {
         initControls();
 
         FileCache.instance.initGraphicsAsync().then(function(files:Array<String>) {
-            FileCache.instance.loadConfigs().then(function(success:Bool) {
-                VLC.instance.loadFilesystem();
-                VLC.instance.init();
-                gameInfo.setFromLib();
+            return FileCache.instance.loadConfigs();
+        }).then(function(success:Bool) {
+            VLC.instance.loadFilesystem();
+            VLC.instance.init();
+            gameInfo.setFromLib();
 
-                Graphics.instance.load();
+            Graphics.instance.load();
 
-                FileCache.instance.initMapAsync(mapName).then(function(success:Bool) {
-                    var mapService = new MapService();
-                    mapService.loadMapHeaderByName(mapName);
-                    map = mapService.loadMapByName(mapName);
+            return FileCache.instance.initMapAsync(mapName);
+        }).then(function(success:Bool) {
+            var mapService = new MapService();
+            mapService.loadMapHeaderByName(mapName);
+            map = mapService.loadMapByName(mapName);
 
-                    initMapHandler(map);
+            initMapHandler(map);
 
-                    startRendering();
-                });
-            });
+            startRendering();
         });
         #else
         FileCache.instance.initMap(mapName);
