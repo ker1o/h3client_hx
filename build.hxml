@@ -1,6 +1,7 @@
 -cp src
 
 -lib h3lib 
+-lib pixijs
 
 -D analyzer-optimize
 -D js-source-map

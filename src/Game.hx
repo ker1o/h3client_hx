@@ -1,5 +1,6 @@
 package ;
 
+import pixi.core.Application;
 import gui.geometries.Rect;
 import client.maphandler.MapDrawingInfo;
 import utils.Int3;
@@ -30,10 +31,9 @@ class Game {
     public static var MAP_SCREEN_TILED_WIDTH = 22;
     public static var MAP_SCREEN_TILED_HEIGHT = 22;
 
-    #if js
-    private var canvas(default, null):CanvasElement;
-    private var ctx(default, null):CanvasRenderingContext2D;
+    public var app:Application;
 
+    #if js
     private var oldTimestamp:Float = 0;
     private var delta:Float = 0;
     private var iFrame:Int = 0;
@@ -94,8 +94,8 @@ class Game {
 
     #if js
     private function initControls() {
-        canvas = cast Browser.document.getElementById("webgl");
-        ctx = canvas.getContext2d();
+        var app = new Application({width: 704, height: 704});
+        Browser.document.body.appendChild(app.view);
 
         Browser.document.onkeydown = function(e:KeyboardEvent) {
             switch (e.keyCode) {
@@ -121,7 +121,6 @@ class Game {
         if (delta > 20) {
             delta = delta % 20;
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             renderMap();
         }
 

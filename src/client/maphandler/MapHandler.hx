@@ -309,8 +309,8 @@ class MapHandler {
             }
         }
 
-        for(ix in 0...(ttiles.size()-frameW)) {
-            for(iy in 0...(ttiles.get(0).size()-frameH)) {
+        for(ix in 0...(ttiles.size() - frameW)) {
+            for(iy in 0...(ttiles.get(0).size() - frameH)) {
                 for(iz in 0...ttiles.get(0).get(0).size()) {
                     ttiles.get(ix).get(iy).get(iz).objects.sort(objectBlitOrderSorter);
                 }
