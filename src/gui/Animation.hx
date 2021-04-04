@@ -46,14 +46,12 @@ class Animation {
             }
 //            break;
         }
-
-        saveAnimation();
     }
 
-    public function loadFrame(frame:Int, group:Int):Bool {
+    private function loadFrame(frame:Int, group:Int):Bool {
 //        trace('Animation.loadFrame($frame, $group)');
 
-        var image = getImage(frame, group, false);
+        var image = getImage(frame, group);
         if (image != null) {
             return true;
         }
@@ -76,7 +74,7 @@ class Animation {
         return false;
     }
 
-    public function getImage(frame:Int, group:Int = 0, verbose:Bool = true):IImage {
+    public function getImage(frame:Int, group:Int = 0):IImage {
         if (images.exists(group)) {
             var groupObj:Array<IImage> = images.get(group);
             if (groupObj[frame] != null) {
@@ -123,24 +121,5 @@ class Animation {
         var index = source[targetGroup].length - 1;
 
         images[targetGroup][index] = clonedImg;
-    }
-
-    // tech
-
-    private function saveAnimation() {
-//        var s:String = "";
-//        var strArr = [];
-//
-//        for (sdlImage in images[0]) {
-//            var strSurf = sdlImage.surf.join(',');
-//            strArr.unshift('[$strSurf]');
-//        }
-//
-//        s = 'var defImgData = [${strArr.join(", ")}];\n';
-//        var size = images[0][0].fullsize;
-//        s += 'var defImgWidth = ${size.x};\nvar defImgHeight = ${size.y};';
-//
-//        var path = 'www/out_images/${name}.js';
-//        sys.io.File.saveContent(path, s);
     }
 }

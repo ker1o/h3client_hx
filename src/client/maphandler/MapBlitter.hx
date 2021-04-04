@@ -1,5 +1,6 @@
 package client.maphandler;
 
+import gui.IDrawer;
 import constants.id.PlayerColor;
 import constants.Obj;
 import gui.animation.IImage;
@@ -35,6 +36,8 @@ class MapBlitter {
 
     private var settings:Dynamic;
 
+    private var drawer:IDrawer;
+
     public function new(p:MapHandler) {
         parent = p;
         tileSize = 0;
@@ -66,9 +69,9 @@ class MapBlitter {
     }
 
     #if js
-    public function blit(targetSurf:CanvasRenderingContext2D, info:MapDrawingInfo) {
+    public function blit(info:MapDrawingInfo) {
         init(info);
-        var prevClip = clip(targetSurf);
+        var prevClip = clip();
 
         pos = new Int3(0, 0, topTile.z);
 
@@ -96,15 +99,15 @@ class MapBlitter {
                 var tinfoUpper:TerrainTile = pos.y > 0 ? parent.map.getTile(pos.x, pos.y - 1, pos.z) : null;
 
                 if (isVisible || info.showAllTerrain) {
-                    drawTileTerrain(targetSurf, tinfo, tile);
+                    drawTileTerrain(tinfo, tile);
                     if (tinfo.riverType != RiverType.NO_RIVER) {
-                        drawRiver(targetSurf, tinfo);
+                        drawRiver(tinfo);
                     }
-                    drawRoad(targetSurf, tinfo, tinfoUpper, i, j);
+                    drawRoad(tinfo, tinfoUpper, i, j);
                 }
 
                 if (isVisible) {
-                    drawObjects(targetSurf, tile);
+                    drawObjects(tile);
                 }
 
                 pos.y++;
@@ -125,16 +128,16 @@ class MapBlitter {
                 realTileRect.y = realPos.y;
 
                 if (pos.x < 0 || pos.x >= parent.sizes.x || pos.y < 0 || pos.y >= parent.sizes.y) {
-                    drawFrame(targetSurf);
+                    drawFrame();
                 } else {
                     var tile:TerrainTile2 = parent.ttiles.get(pos.x).get(pos.y).get(pos.z);
 
                     if(!(settings.field("session").field("spectate"):Bool) && !info.visibilityMap[pos.x][pos.y][topTile.z] && !info.showAllTerrain) {
-                        drawFow(targetSurf);
+                        drawFow();
                     }
 
                     // overlay needs to be drawn over fow, because of artifacts-aura-like spells
-                    drawTileOverlay(targetSurf, tile);
+                    drawTileOverlay(tile);
 
                     // drawDebugVisitables()
                     if ((settings.field("session").field("showBlock"):Bool)) {
@@ -144,7 +147,7 @@ class MapBlitter {
 //                                block = BitmapHandler.loadBitmap("blocked");
                             }
 
-//                            CSDL_Ext.blitSurface(block, null, targetSurf, &realTileRect);
+//                            CSDL_Ext.blitSurface(block, null, &realTileRect);
                         }
                     }
                     if ((settings.field("session").field("showVisit"):Bool)) {
@@ -154,7 +157,7 @@ class MapBlitter {
 //                                visit = BitmapHandler.loadBitmap("visitable");
                             }
 
-//                            CSDL_Ext.blitSurface(visit, null, targetSurf, &realTileRect);
+//                            CSDL_Ext.blitSurface(visit, null, &realTileRect);
                         }
                     }
                 }
@@ -165,7 +168,7 @@ class MapBlitter {
             realPos.x += tileSize;
         }
 
-        drawOverlayEx(targetSurf);
+        drawOverlayEx();
 
         // drawDebugGrid()
         if ((settings.field("session").field("showGrid"):Bool)) {
@@ -180,7 +183,7 @@ class MapBlitter {
                     if ((realPos.y >= info.drawBounds.y) && (realPos.y < info.drawBounds.y + info.drawBounds.h)) {
                         for (i in 0...tileSize) {
                             if ((realPos.x + i >= info.drawBounds.x) && (realPos.x + i < info.drawBounds.x + info.drawBounds.w)) {
-//                                CSDL_Ext.SDL_PutPixelWithoutRefresh(targetSurf, realPos.x + i, realPos.y, color.x, color.y, color.z);
+//                                CSDL_Ext.SDL_PutPixelWithoutRefresh(realPos.x + i, realPos.y, color.x, color.y, color.z);
                             }
                         }
                     }
@@ -188,7 +191,7 @@ class MapBlitter {
                     if ((realPos.x >= info.drawBounds.x) && (realPos.x < info.drawBounds.x + info.drawBounds.w)) {
                         for (i in 0...tileSize) {
                             if ((realPos.y + i >= info.drawBounds.y) && (realPos.y + i < info.drawBounds.y + info.drawBounds.h)) {
-//                                CSDL_Ext.SDL_PutPixelWithoutRefresh(targetSurf, realPos.x, realPos.y + i, color.x, color.y, color.z);
+//                                CSDL_Ext.SDL_PutPixelWithoutRefresh(realPos.x, realPos.y + i, color.x, color.y, color.z);
                             }
                         }
                     }
@@ -200,32 +203,32 @@ class MapBlitter {
             }
         }
 
-        postProcessing(targetSurf);
+        postProcessing();
 
-//        SDL_SetClipRect(targetSurf, &prevClip);
+//        SDL_SetClipRect(&prevClip);
     }
 
-    public function clip(targetSurf:CanvasRenderingContext2D):Rect {
+    public function clip():Rect {
         throw 'MapBlitter.clip()';
     }
 
-    public function drawOverlayEx(targetSurf:CanvasRenderingContext2D) {
+    public function drawOverlayEx() {
         //nothing
     }
 
-    public function postProcessing(targetSurf:CanvasRenderingContext2D) {
+    public function postProcessing() {
         throw 'MapBlitter.postProcessing()';
     }
 
-    public function drawTileOverlay(targetSurf:CanvasRenderingContext2D, tile:TerrainTile2) {
+    public function drawTileOverlay(tile:TerrainTile2) {
         throw 'MapBlitter.drawTileOverlay()';
     }
 
-    public function drawFrame(targetSurf:CanvasRenderingContext2D) {
+    public function drawFrame() {
         // ToDo: avoid redwawing frame for now
     }
 
-    public function drawElement(source:IImage, sourceRect:Rect, tarfetSurf:CanvasRenderingContext2D, destRect:Rect) {
+    public function drawElement(source:IImage, sourceRect:Rect, destRect:Rect) {
         throw 'MapBlitter.drawElement()';
     }
 
@@ -237,37 +240,37 @@ class MapBlitter {
         return !neighbors.areAllHidden();
     }
 
-    public function drawTileTerrain(targetSurf:CanvasRenderingContext2D, tinfo:TerrainTile, tile:TerrainTile2) {
+    public function drawTileTerrain(tinfo:TerrainTile, tile:TerrainTile2) {
         var destRect = new Rect(realTileRect.x, realTileRect.y, realTileRect.w, realTileRect.h);
         var rotation:Int = tinfo.extTileFlags % 4;
 
-        drawElement(parent.terrainImages[tinfo.terType][tinfo.terView][rotation], null, targetSurf, destRect);
+        drawElement(parent.terrainImages[tinfo.terType][tinfo.terView][rotation], null, destRect);
     }
 
-    public function drawRiver(targetSurf:CanvasRenderingContext2D, tinfo:TerrainTile) {
+    public function drawRiver(tinfo:TerrainTile) {
         var destRect = Rect.fromRect(realTileRect);
         var rotation = (tinfo.extTileFlags >> 2) % 4;
 
-        drawElement(parent.riverImages[tinfo.riverType-1][tinfo.riverDir][rotation], null, targetSurf, destRect);
+        drawElement(parent.riverImages[tinfo.riverType-1][tinfo.riverDir][rotation], null, destRect);
     }
 
-    public function drawRoad(targetSurf:CanvasRenderingContext2D, tinfo:TerrainTile, tinfoUpper:TerrainTile, i:Int, j:Int) {
+    public function drawRoad(tinfo:TerrainTile, tinfoUpper:TerrainTile, i:Int, j:Int) {
         if (tinfoUpper != null && tinfoUpper.roadType != RoadType.NO_ROAD) {
             var rotation:Int = (tinfoUpper.extTileFlags >> 4) % 4;
             var source = new Rect(0, halfTileSizeCeil, tileSize, halfTileSizeCeil);
             var dest = new Rect(realPos.x, realPos.y, tileSize, halfTileSizeCeil);
-            drawElement(parent.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir][rotation], source, targetSurf, dest);
+            drawElement(parent.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir][rotation], source, dest);
         }
 
         if(tinfo.roadType != RoadType.NO_ROAD) {//print road from this tile
             var rotation:Int = (tinfo.extTileFlags >> 4) % 4;
             var source = new Rect(0, 0, tileSize, halfTileSizeCeil);
             var dest = new Rect(realPos.x, realPos.y + halfTileSizeCeil, tileSize, halfTileSizeCeil);
-            drawElement(parent.roadImages[tinfo.roadType - 1][tinfo.roadDir][rotation], source, targetSurf, dest);
+            drawElement(parent.roadImages[tinfo.roadType - 1][tinfo.roadDir][rotation], source, dest);
         }
     }
 
-    public function drawObjects(targetSurf:CanvasRenderingContext2D, tile:TerrainTile2) {
+    public function drawObjects(tile:TerrainTile2) {
         var objects = tile.objects;
         for(object in objects) {
             if (object.fadeAnimKey >= 0) {
@@ -278,7 +281,7 @@ class MapBlitter {
                     // this object is currently fading, so skip normal drawing
                     var r2 = Rect.fromRect(realTileRect);
                     var fade:FadeAnimation = fade.second.second;
-                    fade.draw(targetSurf, null, r2);
+                    fade.draw(null, r2);
                     continue;
                 }
                 trace('Fading map object with missing fade anim : ${object.fadeAnimKey}');
@@ -299,15 +302,15 @@ class MapBlitter {
             if (objData.objBitmap != null) {
                 var srcRect = new Rect(object.rect.x, object.rect.y, tileSize, tileSize);
 
-                drawObject(targetSurf, objData.objBitmap, srcRect, objData.isMoving);
+                drawObject(objData.objBitmap, srcRect, objData.isMoving);
                 if (objData.flagBitmap != null) {
                     if (objData.isMoving) {
                         srcRect.y += FRAMES_PER_MOVE_ANIM_GROUP * 2 - tileSize;
                         var dstRect = new Rect(realPos.x, Std.int(realPos.y - tileSize / 2), tileSize, tileSize);
-                        drawHeroFlag(targetSurf, objData.flagBitmap, srcRect, dstRect, true);
+                        drawHeroFlag(objData.flagBitmap, srcRect, dstRect, true);
                     } else if (obj.pos.x == pos.x && obj.pos.y == pos.y) {
                         var dstRect = new Rect(realPos.x - 2 * tileSize, realPos.y - tileSize, 3 * tileSize, 2 * tileSize);
-                        drawHeroFlag(targetSurf, objData.flagBitmap, null, dstRect, false);
+                        drawHeroFlag(objData.flagBitmap, null, dstRect, false);
                     }
                 }
             }
@@ -319,13 +322,13 @@ class MapBlitter {
         return obj.ID == Obj.HERO || obj.coveringAt(pos.x, pos.y);
     }
 
-    public function drawObject(targetSurf:CanvasRenderingContext2D, source:IImage, sourceRect:Rect, moving:Bool) {
+    public function drawObject(source:IImage, sourceRect:Rect, moving:Bool) {
         var dstRect = Rect.fromRect(realTileRect);
-        drawElement(source, sourceRect, targetSurf, dstRect);
+        drawElement(source, sourceRect, dstRect);
     }
 
-    public function drawHeroFlag(targetSurf:CanvasRenderingContext2D, source:IImage, sourceRect:Rect, destRect:Rect, moving:Bool) {
-        drawElement(source, sourceRect, targetSurf, destRect);
+    public function drawHeroFlag(source:IImage, sourceRect:Rect, destRect:Rect, moving:Bool) {
+        drawElement(source, sourceRect, destRect);
     }
 
     public function findObjectBitmap(obj:GObjectInstance, anim:Int):AnimBitmapHolder {
@@ -465,7 +468,7 @@ class MapBlitter {
         }
     }
 
-    public function drawFow(targetSurf:CanvasRenderingContext2D) {
+    public function drawFow() {
         var neighborInfo = new NeighborTilesInfo(pos, parent.sizes, info.visibilityMap, (settings.field("session").field("spectate"):Bool));
 
         var retBitmapID:Int = neighborInfo.getBitmapID();// >=0 . partial hide, <0 - full hide
@@ -482,7 +485,7 @@ class MapBlitter {
         }
 
         var destRect = Rect.fromRect(realTileRect);
-        drawElement(image, null, targetSurf, destRect);
+        drawElement(image, null, destRect);
     }
     #end
 }

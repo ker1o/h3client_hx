@@ -318,7 +318,7 @@ class MapHandler {
         }
     }
 
-    public function drawTerrainRectNew(targetSurface:CanvasRenderingContext2D, info:MapDrawingInfo, redrawOnlyAnim:Bool = false) {
-        normalBlitter.blit(targetSurface, info);
+    public function drawTerrainRectNew(info:MapDrawingInfo, redrawOnlyAnim:Bool = false) {
+        normalBlitter.blit(info);
     }
 }

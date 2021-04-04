@@ -63,25 +63,25 @@ class MapNormalBlitter extends MapBlitter {
         }
     }
 
-    override public function clip(targetSurf:CanvasRenderingContext2D):Rect {
+    override public function clip():Rect {
         var prevClip:Rect = new Rect(0, 0, 0, 0);
         //ToDo
         return prevClip;
     }
 
-    override public function drawOverlayEx(targetSurf:CanvasRenderingContext2D) {
+    override public function drawOverlayEx() {
         //ToDo
     }
 
-    override public function drawTileOverlay(targetSurf:CanvasRenderingContext2D, tile:TerrainTile2) {
+    override public function drawTileOverlay(tile:TerrainTile2) {
         //ToDo
     }
 
-    override public function drawElement(source:IImage, sourceRect:Rect, targetSurf:CanvasRenderingContext2D, destRect:Rect) {
-        source.drawToRect(targetSurf, destRect, sourceRect);
+    override public function drawElement(source:IImage, sourceRect:Rect, destRect:Rect) {
+        drawer.draw(source, destRect, sourceRect);
     }
 
-    override public function postProcessing(targetSurf:CanvasRenderingContext2D) {
+    override public function postProcessing() {
         //ToDo
     }
 }

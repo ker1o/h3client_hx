@@ -8,20 +8,14 @@ import client.Graphics;
 import mapping.MapBody;
 import client.maphandler.MapHandler;
 import client.GameInfo;
-import client.ClientState;
 import mod.VLC;
 import mapping.MapService;
 import filesystem.FileCache;
-import gui.animation.IImage;
-import gui.Animation;
 #if js
 import js.Browser;
 import js.html.CanvasElement;
 import js.html.CanvasRenderingContext2D;
-import js.html.InputElement;
 import js.html.KeyboardEvent;
-import js.html.OptionElement;
-import js.html.SelectElement;
 #end
 
 using StringTools;
@@ -137,12 +131,11 @@ class Game {
             animValHitCount = 0;
         }
 
-
         info.otherheroAnim = true;
         info.anim = animFrame;
         info.heroAnim = 6;
 
-        gameInfo.mh.drawTerrainRectNew(ctx, info);
+        gameInfo.mh.drawTerrainRectNew(info);
     }
     #end
 
