@@ -1,5 +1,10 @@
 package ;
 
+import pixi.core.textures.Texture;
+import pixi.core.sprites.Sprite;
+import pixi.core.textures.BaseTexture;
+import gui.Animation;
+import utils.AtlasBuilder;
 import pixi.core.Application;
 import gui.geometries.Rect;
 import client.maphandler.MapDrawingInfo;
@@ -11,12 +16,10 @@ import client.GameInfo;
 import mod.VLC;
 import mapping.MapService;
 import filesystem.FileCache;
-#if js
 import js.Browser;
 import js.html.CanvasElement;
 import js.html.CanvasRenderingContext2D;
 import js.html.KeyboardEvent;
-#end
 
 using StringTools;
 
@@ -27,11 +30,9 @@ class Game {
 
     public var app:Application;
 
-    #if js
     private var oldTimestamp:Float = 0;
     private var delta:Float = 0;
     private var iFrame:Int = 0;
-    #end
 
     private var gameInfo:GameInfo;
     private var info:MapDrawingInfo;
@@ -40,6 +41,8 @@ class Game {
 
     private var animFrame:Int = 0;
 
+    private var atlasBuilder = new AtlasBuilder();
+
     public function new() {
         var mapName:String = "Vial of Life.h3m";
 
@@ -47,7 +50,6 @@ class Game {
         topTile = new Int3(14, 76, 0);
         info = new MapDrawingInfo(topTile, [[[]]], new Rect(0, 0, 594, 546));
 
-        #if js
         // init html objects
         initControls();
 
@@ -59,24 +61,30 @@ class Game {
             gameInfo.setFromLib();
 
             Graphics.instance.load();
-
-            return FileCache.instance.initMapAsync(mapName);
-        }).then(function(success:Bool) {
-            var mapService = new MapService();
-            mapService.loadMapHeaderByName(mapName);
-            map = mapService.loadMapByName(mapName);
-
-            initMapHandler(map);
-
-            startRendering();
+            testAtlasBuilder();
+//
+//            return FileCache.instance.initMapAsync(mapName);
         });
-        #else
-        FileCache.instance.initMap(mapName);
+//        }).then(function(success:Bool) {
+//            var mapService = new MapService();
+//            mapService.loadMapHeaderByName(mapName);
+//            map = mapService.loadMapByName(mapName);
+//
+//            initMapHandler(map);
+//
+//            startRendering();
+//        });
+    }
 
-        var mapService = new MapService();
-        mapService.loadMapHeaderByName(mapName);
-        mapService.loadMapByName(mapName);
-        #end
+    private function testAtlasBuilder() {
+        var animation = new Animation("CROC");
+        atlasBuilder.addAnim(animation);
+        var atlas = atlasBuilder.build();
+
+        var base = BaseTexture.fromBuffer(atlas.bytes, atlas.w, atlas.h, {});
+        var texture = new Texture(base);
+        var sprite = new Sprite(texture);
+        app.stage.addChild(sprite);
     }
 
     private function initMapHandler(map:MapBody) {
@@ -86,9 +94,8 @@ class Game {
         trace('initMapHandler completed');
     }
 
-    #if js
     private function initControls() {
-        var app = new Application({width: 704, height: 704});
+        app = new Application({width: 704, height: 704});
         Browser.document.body.appendChild(app.view);
 
         Browser.document.onkeydown = function(e:KeyboardEvent) {
@@ -110,15 +117,17 @@ class Game {
     }
 
     private function drawFrame(timestamp:Float) {
-        delta += (timestamp - oldTimestamp);
+//        delta += (timestamp - oldTimestamp);
+//
+//        if (delta > 20) {
+//            delta = delta % 20;
+//
+//            renderMap();
+//        }
+//
+//        oldTimestamp = timestamp;
 
-        if (delta > 20) {
-            delta = delta % 20;
 
-            renderMap();
-        }
-
-        oldTimestamp = timestamp;
 
         Browser.window.requestAnimationFrame(drawFrame);
     }
@@ -135,8 +144,7 @@ class Game {
         info.anim = animFrame;
         info.heroAnim = 6;
 
-        gameInfo.mh.drawTerrainRectNew(info);
+//        gameInfo.mh.drawTerrainRectNew(info);
     }
-    #end
 
 }

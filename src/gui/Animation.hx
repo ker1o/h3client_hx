@@ -6,8 +6,8 @@ import gui.animation.IImage;
 class Animation {
 
     public var images(default, null):Map<Int, Array<IImage>>;
+    public var name(default, null):String;
 
-    private var name:String;
     private var defFile:DefFile;
     private var source:Map<Int, Array<String>>;
     private var preloaded:Bool = false;
