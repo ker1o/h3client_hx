@@ -1,7 +1,7 @@
 package ;
 
-import pixi.core.textures.Texture;
-import pixi.core.sprites.Sprite;
+import pixi.extras.AnimatedSprite;
+import pixi.core.textures.Spritesheet;
 import pixi.core.textures.BaseTexture;
 import gui.Animation;
 import utils.AtlasBuilder;
@@ -22,6 +22,7 @@ import js.html.CanvasRenderingContext2D;
 import js.html.KeyboardEvent;
 
 using StringTools;
+using Reflect;
 
 class Game {
 
@@ -42,6 +43,7 @@ class Game {
     private var animFrame:Int = 0;
 
     private var atlasBuilder = new AtlasBuilder();
+    private var sprite:AnimatedSprite;
 
     public function new() {
         var mapName:String = "Vial of Life.h3m";
@@ -62,6 +64,7 @@ class Game {
 
             Graphics.instance.load();
             testAtlasBuilder();
+            startRendering();
 //
 //            return FileCache.instance.initMapAsync(mapName);
         });
@@ -78,13 +81,20 @@ class Game {
 
     private function testAtlasBuilder() {
         var animation = new Animation("CROC");
+        animation.preload();
         atlasBuilder.addAnim(animation);
         var atlas = atlasBuilder.build();
 
         var base = BaseTexture.fromBuffer(atlas.bytes, atlas.w, atlas.h, {});
-        var texture = new Texture(base);
-        var sprite = new Sprite(texture);
-        app.stage.addChild(sprite);
+
+        var spriteSheet = new Spritesheet(base, atlas.description, animation.name);
+        spriteSheet.parse(function() {
+            trace("done!");
+            sprite = new AnimatedSprite(spriteSheet.animations.field("CROC_2"), false);
+            sprite.play();
+            app.stage.addChild(sprite);
+        });
+
     }
 
     private function initMapHandler(map:MapBody) {
@@ -117,17 +127,13 @@ class Game {
     }
 
     private function drawFrame(timestamp:Float) {
-//        delta += (timestamp - oldTimestamp);
-//
-//        if (delta > 20) {
-//            delta = delta % 20;
-//
-//            renderMap();
-//        }
-//
-//        oldTimestamp = timestamp;
+        var delta = (timestamp - oldTimestamp);
 
+        if(sprite != null) {
+            sprite.update(delta / 100);
+        }
 
+        oldTimestamp = timestamp;
 
         Browser.window.requestAnimationFrame(drawFrame);
     }

@@ -1,11 +1,11 @@
 package utils;
 
 import js.lib.Uint8Array;
-import haxe.Json;
 import utils.binpacking.MaxRectsPacker;
 import gui.animation.IImage;
 import gui.Animation;
-import haxe.io.Bytes;
+
+using Reflect;
 
 class AtlasBuilder {
     private static var MAX_SIZE:Int = 2048;
@@ -40,7 +40,7 @@ class AtlasBuilder {
         }
     }
 
-    public function build():{bytes:Uint8Array, w:Float, h:Float, json:String} {
+    public function build():{bytes:Uint8Array, w:Float, h:Float, description:Dynamic} {
         _atlasImages = [];
         var sum:Int = 0;
 
@@ -98,7 +98,7 @@ class AtlasBuilder {
 
         var bytes = buildAtlas();
         var description = buildDescription();
-        return {bytes: bytes, w: _binPacker.binWidth, h: _binPacker.binHeight, json: description};
+        return {bytes: bytes, w: _binPacker.binWidth, h: _binPacker.binHeight, description: description};
     }
 
     private function buildAtlas():Uint8Array {
@@ -120,9 +120,9 @@ class AtlasBuilder {
         return bytes;
     }
 
-    private function buildDescription():String {
-        var frames = new Map<String, Frame>();
-        var animations = new Map<String, Array<String>>();
+    private function buildDescription():Dynamic {
+        var frames:Dynamic = {};
+        var animations:Dynamic = {};
 
         for (atlasImg in _atlasImages) {
             var rect:utils.binpacking.Rect = atlasImg.rect;
@@ -135,13 +135,22 @@ class AtlasBuilder {
             desc.sourceSize = new Frame.Size(img.fullsize.x, img.fullsize.y);
             desc.anchor = new Frame.Point(0, 0);
 
-            var spriteName = '${atlasImg.animationName}_${atlasImg.groupIndex}_${atlasImg.frameIndex}';
-            frames.set(spriteName, desc);
+            var spriteName = '${atlasImg.animationName}_${atlasImg.groupIndex}_${get2digitString(atlasImg.frameIndex)}';
+            frames.setField(spriteName, desc);
 
-            if (!animations.exists(atlasImg.animationName)) {
-                animations.set(atlasImg.animationName, []);
+            var animationName = atlasImg.animationName + "_" + atlasImg.groupIndex;
+
+            if (!animations.hasField(animationName)) {
+                animations.setField(animationName, []);
             }
-            animations.get(atlasImg.animationName).push(spriteName);
+            animations.field(animationName).push(spriteName);
+        }
+
+        for (key in animations.fields()) {
+            var arr:Array<String> = animations.field(key);
+            arr.sort(function(a:String, b:String) {
+                return a > b ? 1 : (a < b ? -1 : 0);
+            });
         }
 
         var meta = {
@@ -154,11 +163,16 @@ class AtlasBuilder {
         };
 
         var description = {frames: frames, animations: animations, meta: meta};
-        return Json.stringify(description);
+        return description;
     }
 
     public function reset() {
         _anims = [];
+        _atlasImages = [];
+    }
+
+    private inline function get2digitString(n:Int) {
+        return n < 10 ? "0" + n : "" + n;
     }
 }
 
