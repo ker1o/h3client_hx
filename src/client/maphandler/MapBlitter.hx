@@ -6,7 +6,6 @@ import constants.Obj;
 import gui.animation.IImage;
 import gui.Animation;
 import gui.geometries.Rect;
-import js.html.CanvasRenderingContext2D;
 import mapObjects.GObjectInstance;
 import mapObjects.hero.GHeroInstance;
 import mapObjects.misc.GBoat;
@@ -38,8 +37,9 @@ class MapBlitter {
 
     private var drawer:IDrawer;
 
-    public function new(p:MapHandler) {
+    public function new(p:MapHandler, d:IDrawer) {
         parent = p;
+        drawer = d;
         tileSize = 0;
         halfTileSizeCeil = 0;
         info = null;

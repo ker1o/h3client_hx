@@ -1,5 +1,8 @@
 package ;
 
+import gui.TextureDrawer;
+import client.maphandler.MapNormalBlitter;
+import client.maphandler.MapBlitter;
 import pixi.extras.AnimatedSprite;
 import pixi.core.textures.Spritesheet;
 import pixi.core.textures.BaseTexture;
@@ -42,8 +45,10 @@ class Game {
 
     private var animFrame:Int = 0;
 
-    private var atlasBuilder = new AtlasBuilder();
-    private var sprite:AnimatedSprite;
+    private var normalBlitter:MapNormalBlitter;
+
+//    private var atlasBuilder = new AtlasBuilder();
+//    private var sprite:AnimatedSprite;
 
     public function new() {
         var mapName:String = "Vial of Life.h3m";
@@ -80,21 +85,19 @@ class Game {
     }
 
     private function testAtlasBuilder() {
-        var animation = new Animation("CROC");
-        animation.preload();
-        atlasBuilder.addAnim(animation);
-        var atlas = atlasBuilder.build();
-
-        var base = BaseTexture.fromBuffer(atlas.bytes, atlas.w, atlas.h, {});
-
-        var spriteSheet = new Spritesheet(base, atlas.description, animation.name);
-        spriteSheet.parse(function() {
-            trace("done!");
-            sprite = new AnimatedSprite(spriteSheet.animations.field("CROC_2"), false);
-            sprite.play();
-            app.stage.addChild(sprite);
-        });
-
+//        var animation = new Animation("CROC");
+//        animation.preload();
+//        atlasBuilder.addAnim(animation);
+//        var atlas = atlasBuilder.build();
+//
+//        var base = BaseTexture.fromBuffer(atlas.bytes, atlas.w, atlas.h, {});
+//
+//        var spriteSheet = new Spritesheet(base, atlas.description, animation.name);
+//        spriteSheet.parse(function() {
+//            sprite = new AnimatedSprite(spriteSheet.animations.field("CROC_2"), false);
+//            sprite.play();
+//            app.stage.addChild(sprite);
+//        });
     }
 
     private function initMapHandler(map:MapBody) {
@@ -102,6 +105,10 @@ class Game {
         gameInfo.mh.map = map;
         gameInfo.mh.init();
         trace('initMapHandler completed');
+
+        var textureDrawer = new TextureDrawer();
+
+        normalBlitter = new MapNormalBlitter(gameInfo.mh, );
     }
 
     private function initControls() {
@@ -150,7 +157,7 @@ class Game {
         info.anim = animFrame;
         info.heroAnim = 6;
 
-//        gameInfo.mh.drawTerrainRectNew(info);
+        normalBlitter.blit(info);
     }
 
 }

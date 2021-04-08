@@ -1,12 +1,13 @@
 package client.maphandler;
 
+import gui.IDrawer;
 import gui.animation.IImage;
 import js.html.CanvasRenderingContext2D;
 import gui.geometries.Rect;
 
 class MapNormalBlitter extends MapBlitter {
-    public function new(p:MapHandler) {
-        super(p);
+    public function new(p:MapHandler, d:IDrawer) {
+        super(p, d);
 
         tileSize = 32;
         halfTileSizeCeil = 16;
@@ -78,7 +79,8 @@ class MapNormalBlitter extends MapBlitter {
     }
 
     override public function drawElement(source:IImage, sourceRect:Rect, destRect:Rect) {
-        drawer.draw(source, destRect, sourceRect);
+        // что здесь должно быть, дровер рисовать сорс. Либо сорсу говорить нарисуйся на дровере?
+//        source.(drawer, destRect, sourceRect);
     }
 
     override public function postProcessing() {

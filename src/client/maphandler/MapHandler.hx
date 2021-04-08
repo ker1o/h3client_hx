@@ -56,14 +56,8 @@ class MapHandler {
 
     private var fadeAnimCounter:Int;
 
-    private var normalBlitter:MapBlitter;
-    private var worldViewBlitter:MapBlitter;
-    private var puzzleViewBlitter:MapBlitter;
-
-
     public function new() {
         frameW = frameH = 0;
-        normalBlitter = new MapNormalBlitter(this);
         fadeAnimCounter = 0;
         map = null;
         tilesW = tilesH = 0;
@@ -316,9 +310,5 @@ class MapHandler {
                 }
             }
         }
-    }
-
-    public function drawTerrainRectNew(info:MapDrawingInfo, redrawOnlyAnim:Bool = false) {
-        normalBlitter.blit(info);
     }
 }

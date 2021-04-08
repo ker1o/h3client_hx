@@ -1,5 +1,6 @@
 package utils;
 
+import gui.animation.SdlImage;
 import js.lib.Uint8Array;
 import utils.binpacking.MaxRectsPacker;
 import gui.animation.IImage;
@@ -48,7 +49,7 @@ class AtlasBuilder {
             for (group in anim.images.keys()) {
                 var frameImgs = anim.images[group];
                 for (i in 0...frameImgs.length) {
-                    var sdlImage:IImage = frameImgs[i];
+                    var sdlImage:SdlImage = frameImgs[i];
                     var atlasImg = new AtlasImage(sdlImage);
                     atlasImg.animationName = anim.name;
                     atlasImg.groupIndex = group;
@@ -126,7 +127,7 @@ class AtlasBuilder {
 
         for (atlasImg in _atlasImages) {
             var rect:utils.binpacking.Rect = atlasImg.rect;
-            var img:IImage = atlasImg.image;
+            var img:SdlImage = atlasImg.image;
             var desc = new Frame();
             desc.frame = new Frame.Rect(rect.x, rect.y, rect.width, rect.height);
             desc.rotated = atlasImg.rect.flipped;
