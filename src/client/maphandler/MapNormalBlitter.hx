@@ -5,17 +5,17 @@ import gui.geometries.Rect;
 
 class MapNormalBlitter extends MapBlitter {
 
-    var targetSurf:CanvasRenderingContext2D;
+    var context2D:CanvasRenderingContext2D;
 
-    public function new(data:MapData, targetSurf:CanvasRenderingContext2D) {
+    public function new(data:MapData, context2D:CanvasRenderingContext2D) {
         super(data);
-        this.targetSurf = targetSurf;
+        this.context2D = context2D;
         tileSize = 32;
         halfTileSizeCeil = 16;
         defaultTileRect = new Rect(0, 0, tileSize, tileSize);
     }
 
-    override public function init(drawingInfo:MapDrawingInfo):Void {
+    override function preDraw(drawingInfo:MapDrawingInfo):Void {
         info = drawingInfo;
         // Width and height of the portion of the map to process. Units in tiles.
         tileCount.x = data.tilesW;
@@ -65,25 +65,25 @@ class MapNormalBlitter extends MapBlitter {
         }
     }
 
-    override public function clip():Rect {
+    override function clip():Rect {
         var prevClip:Rect = new Rect(0, 0, 0, 0);
         //ToDo
         return prevClip;
     }
 
-    override public function drawOverlayEx() {
+    override function drawOverlayEx() {
         //ToDo
     }
 
-    override public function drawTileOverlay(tile:TerrainTile2) {
+    override function drawTileOverlay(tile:TerrainTile2) {
         //ToDo
     }
 
-    override public function drawElement(source:IImage, sourceRect:Rect, destRect:Rect) {
-        source.drawToRect(targetSurf, destRect, sourceRect);
+    override function drawElement(source:IImage, sourceRect:Rect, destRect:Rect) {
+        source.drawToRect(context2D, destRect, sourceRect);
     }
 
-    override public function postProcessing() {
+    override function postProcessing() {
         //ToDo
     }
 }

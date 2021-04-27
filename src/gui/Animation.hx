@@ -13,7 +13,6 @@ class Animation {
     public var images(default, null):Map<Int, Array<SdlImage>>;
     public var name(default, null):String;
 
-//    private var textures:Map<Int, Array<TextureImage>>;
     private var defFile:DefFile;
     private var source:Map<Int, Array<String>>;
     private var preloaded:Bool = false;
@@ -23,10 +22,7 @@ class Animation {
         defFile = name != "" ? new DefFile(name) : null;
         source = new Map<Int, Array<String>>();
         images = new Map<Int, Array<SdlImage>>();
-//        textures = new Map<Int, Array<TextureImage>>();
-
         initSource();
-        preload();
     }
 
     private function initSource() {
@@ -92,20 +88,13 @@ class Animation {
         if (image != null) {
             return true;
         }
-        if (source.get(group)[frame] == null) {
-            if (defFile != null) {
-                var frameList = defFile.getEntries();
-                if (true) {
-                    if (!images.exists(group)) {
-                        images.set(group, new Array<SdlImage>());
-                    }
-                    var img = new SdlImage(defFile, frame, group);
-                    images.get(group)[frame] = img;
-                    return true;
-                }
+        if (defFile != null && source.get(group)[frame] == null) {
+            if (!images.exists(group)) {
+                images.set(group, new Array<SdlImage>());
             }
+            images.get(group)[frame] = new SdlImage(defFile, frame, group);
+            return true;
         }
-
         return false;
     }
 

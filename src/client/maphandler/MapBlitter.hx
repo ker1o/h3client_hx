@@ -15,7 +15,7 @@ import utils.Int3;
 
 using Reflect;
 
-class MapBlitter {
+class MapBlitter implements IMapDrawer {
     private static var movingHeroFrameGroup:Array<Int> = [0xff, 10, 5, 6, 7, 8, 9, 12, 11];
     private static var heroFrameGroup:Array<Int> = [0xff, 10, 5, 6, 7, 8, 9, 12, 11];
 
@@ -60,13 +60,11 @@ class MapBlitter {
     }
 
     /// initializes frame-drawing (called at the start of every redraw)
-    public function init(drawingInfo:MapDrawingInfo):Void {
-        throw 'MapBlitter.init()';
-    }
+    public function preDraw(drawingInfo:MapDrawingInfo) throw 'MapBlitter.init()';
 
     #if js
-    public function blit(info:MapDrawingInfo) {
-        init(info);
+    public function draw(info:MapDrawingInfo) {
+        preDraw(info);
         var prevClip = clip();
 
         pos = new Int3(0, 0, topTile.z);

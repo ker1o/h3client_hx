@@ -9,7 +9,6 @@ import mapObjects.GObjectInstance;
 class Graphics {
     public static var instance(default, null) = new Graphics();
 
-
     public var heroMoveArrows:Animation;
     // [hero class def name]  //added group 10: up - left, 11 - left and 12 - left down // 13 - up-left standing; 14 - left standing; 15 - left down standing
     public var heroAnimations:Map<String, Animation>;

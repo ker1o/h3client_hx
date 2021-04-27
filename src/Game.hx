@@ -1,4 +1,5 @@
 package ;
+import client.view.pixijs.PixiBlitter;
 import js.html.CanvasRenderingContext2D;
 import js.html.CanvasElement;
 import mapping.MapService;
@@ -26,18 +27,18 @@ class Game {
 
     public var app:Application;
 
-    private var oldTimestamp:Float = 0;
-    private var delta:Float = 0;
-    private var iFrame:Int = 0;
-    private var gameInfo:GameInfo;
-    private var info:MapDrawingInfo;
-    private var topTile:Int3;
-    private var map:MapBody;
-    private var animFrame:Int = 0;
-    private var normalBlitter:MapNormalBlitter;
-
-    private var canvas(default, null):CanvasElement;
-    private var ctx(default, null):CanvasRenderingContext2D;
+    var oldTimestamp:Float = 0;
+    var delta:Float = 0;
+    var iFrame:Int = 0;
+    var gameInfo:GameInfo;
+    var info:MapDrawingInfo;
+    var topTile:Int3;
+    var map:MapBody;
+    var animFrame:Int = 0;
+    var normalBlitter:MapNormalBlitter;
+    var pixiBlitter:PixiBlitter;
+    var canvas(default, null):CanvasElement;
+    var ctx(default, null):CanvasRenderingContext2D;
 
     public function new() {
         var mapName:String = "Vial of Life.h3m";
@@ -67,13 +68,7 @@ class Game {
             });
     }
 
-    private function initControls() {
-        canvas = cast Browser.document.getElementById("webgl");
-        ctx = canvas.getContext2d();
-//        app = new Application({width: 704, height: 704});
-//        Browser.document.body.appendChild(app.view);
-
-
+    function initControls() {
         Browser.document.onkeydown = function(e:KeyboardEvent) {
             switch (e.keyCode) {
                 case KeyboardEvent.DOM_VK_UP:
@@ -88,18 +83,26 @@ class Game {
         }
     }
 
-    private function initMapData(data:MapBody) {
+    function initMapData(data:MapBody) {
         gameInfo.mh = new MapData();
         gameInfo.mh.map = data;
         gameInfo.mh.init();
+
+        canvas = cast Browser.document.getElementById("webgl");
+        ctx = canvas.getContext2d();
         normalBlitter = new MapNormalBlitter(gameInfo.mh, ctx);
+
+
+        app = new Application({width: 704, height: 704});
+        Browser.document.body.appendChild(app.view);
+        pixiBlitter = new PixiBlitter(gameInfo.mh, app.view);
     }
 
-    private function startRendering() {
+    function startRendering() {
         Browser.window.requestAnimationFrame(drawFrame);
     }
 
-    private function drawFrame(timestamp:Float) {
+    function drawFrame(timestamp:Float) {
         delta += (timestamp - oldTimestamp);
         if(delta > 20) {
             delta = delta % 20;
@@ -112,7 +115,7 @@ class Game {
 
     var animValHitCount = 0;
 
-    private function renderMap() {
+    function renderMap() {
         animValHitCount++;
         if(animValHitCount == 4) {
             animFrame++;
@@ -121,6 +124,7 @@ class Game {
         info.otherheroAnim = true;
         info.anim = animFrame;
         info.heroAnim = 6;
-        normalBlitter.blit(info);
+        normalBlitter.draw(info);
+        pixiBlitter.draw(info);
     }
 }

@@ -15,56 +15,41 @@ typedef TFlippedAnimations = Array<Array<Animation>>; //[type, rotation]
 typedef TFlippedCache = Array<Array<Array<IImage>>>; //[type, view type, rotation]
 
 class MapData {
-    public var ttiles:PseudoV<PseudoV<PseudoV<TerrainTile2>>>; //informations about map tiles
+    public var ttiles:PseudoV<PseudoV<PseudoV<TerrainTile2>>> = new PseudoV<PseudoV<PseudoV<TerrainTile2>>>(); //informations about map tiles
 
     public var sizes:Int3; //map size (x = width, y = height, z = number of levels)
     public var map:MapBody;
 
     // Max number of tiles that will fit in the map screen. Tiles
     // can be partial on each edges.
-    public var tilesW:Int;
-    public var tilesH:Int;
+    public var tilesW:Int = 0;
+    public var tilesH:Int = 0;
 
     // size of each side of the frame around the whole map, in tiles
-    public var frameH:Int;
-    public var frameW:Int;
+    public var frameH:Int = 0;
+    public var frameW:Int = 0;
 
     // Coord in pixels of the top left corner of the top left tile to
     // draw. Values range is [-31..0]. A negative value
     // implies that part of the tile won't be displayed.
-    public var offsetX:Int;
-    public var offsetY:Int;
-
+    public var offsetX:Int = 0;
+    public var offsetY:Int = 0;
     public var terrainAnimations:TFlippedAnimations; //[terrain type, rotation]
     public var terrainImages:TFlippedCache; //[terrain type, view type, rotation]
-
     public var roadAnimations:TFlippedAnimations; //[road type, rotation]
     public var roadImages:TFlippedCache; //[road type, view type, rotation]
-
     public var riverAnimations:TFlippedAnimations; //[river type, rotation]
     public var riverImages:TFlippedCache; //[river type, view type, rotation]
 
     //Fog of War cache (not owned)
     public var fowFullHide:Array<IImage>;
     public var hideBitmap:Array<Array<Array<Int>>>; //frame indexes (in FoWfullHide) of graphic that should be used to fully hide a tile
-
     public var fowPartialHide:Array<IImage>;
+    public var animationPhase:Map<GObjectInstance, Int> = new Map<GObjectInstance, Int>();
 
-    public var animationPhase:Map<GObjectInstance, Int>;
+    private var fadeAnimCounter:Int = 0;
 
-
-    private var fadeAnimCounter:Int;
-
-    public function new() {
-        frameW = frameH = 0;
-        fadeAnimCounter = 0;
-        map = null;
-        tilesW = tilesH = 0;
-        offsetX = offsetY = 0;
-
-        ttiles = new PseudoV<PseudoV<PseudoV<TerrainTile2>>>();
-        animationPhase = new Map<GObjectInstance, Int>();
-    }
+    public function new() {}
 
     public function init() {
         // Size of visible terrain.
@@ -98,14 +83,13 @@ class MapData {
         offsetX = Std.int((mapW - (2 * frameW + 1) * 32) / 2);
         offsetY = Std.int((mapH - (2 * frameH + 1) * 32) / 2);
 
-
         prepareFowDefs();
         initTerrainGraphics();
 //        initBorderGraphics();
         initObjectRects();
     }
 
-    private function prepareFowDefs() {
+    function prepareFowDefs() {
         //assume all frames in group 0
         var size:Int = Graphics.instance.fogOfWarFullHide.size(0);
         fowFullHide = [];
@@ -132,7 +116,7 @@ class MapData {
         }
     }
 
-    private function initTerrainGraphics() {
+    function initTerrainGraphics() {
         var TERRAIN_FILES:Array<String> = [
             "DIRTTL.def",
             "SANDTL.def",
@@ -162,7 +146,7 @@ class MapData {
             "lavrvr.def"
         ];
 
-        function loadFlipped (types:Int, files:Array<String>):{animation:TFlippedAnimations, cache:TFlippedCache} {
+        function loadFlipped(types:Int, files:Array<String>):{animation:TFlippedAnimations, cache:TFlippedCache} {
             //animation.resize(types);
             var animation:TFlippedAnimations = [];
             //cache.resize(types);
