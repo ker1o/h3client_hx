@@ -1,5 +1,7 @@
 package client;
 
+import gui.Animation;
+import pixi.core.sprites.Sprite;
 import js.lib.Promise;
 import mapObjects.GObjectInstance;
 import pixi.core.textures.Spritesheet;
@@ -8,6 +10,9 @@ import utils.AtlasBuilder;
 import pixi.extras.AnimatedSprite;
 
 using Reflect;
+
+typedef TFlippedAnimations = Array<AnimatedSprite>; //[type, rotation]
+typedef TFlippedCache = Array<Array<Sprite>>; //[type, view type, rotation]
 
 class TextureGraphics {
     public static var instance(default, null) = new TextureGraphics();
@@ -26,13 +31,20 @@ class TextureGraphics {
     public var fogOfWarFullHide:AnimatedSprite;
     public var fogOfWarPartialHide:AnimatedSprite;
 
+    public var terrainAnimations:TFlippedAnimations; //[terrain type, rotation]
+    public var terrainImages:TFlippedCache; //[terrain type, view type, rotation]
+    public var roadAnimations:TFlippedAnimations; //[road type, rotation]
+    public var roadImages:TFlippedCache; //[road type, view type, rotation]
+    public var riverAnimations:TFlippedAnimations; //[river type, rotation]
+    public var riverImages:TFlippedCache; //[river type, view type, rotation]
+
     public function new() {
         boatAnimations = new Array<AnimatedSprite>();
         mapObjectAnimations = new Map<String, AnimatedSprite>();
     }
 
     public function load() {
-
+        initTerrainGraphics();
     }
 
     public function getAnimation(obj:GObjectInstance):Promise<AnimatedSprite> {
@@ -40,16 +52,16 @@ class TextureGraphics {
         if (mapObjectAnimations.exists(animationName)) {
             return Promise.resolve(mapObjectAnimations.get(animationName));
         } else {
-            return getAnimatedSprite(obj).then(function(animatedSprite:AnimatedSprite) {
+            var animation = Graphics.instance.getAnimation(obj);
+            return getAnimatedSprite(animation).then(function(animatedSprite:AnimatedSprite) {
                 mapObjectAnimations.set(animationName, animatedSprite);
                 return animatedSprite;
             });
         }
     }
 
-    private function getAnimatedSprite(obj:GObjectInstance):Promise<AnimatedSprite> {
+    private function getAnimatedSprite(animation:Animation):Promise<AnimatedSprite> {
         return new Promise(function (resolve, reject) {
-            var animation = Graphics.instance.getAnimation(obj);
             var atlasBuilder = new AtlasBuilder();
             atlasBuilder.addAnim(animation);
             var atlas = atlasBuilder.build();
@@ -62,5 +74,56 @@ class TextureGraphics {
                 resolve(new AnimatedSprite(spriteSheet.animations.field(name + "_0"), false));
             });
         });
+    }
+
+    private function initTerrainGraphics():Promise<Dynamic> {
+        var graphics = Graphics.instance;
+
+        terrainAnimations = []; //[terrain type]
+        terrainImages = []; //[terrain type, view type]
+        roadAnimations = []; //[road type]
+        roadImages = []; //[road type, view type]
+        riverAnimations = []; //[river type]
+        riverImages = []; //[river type, view type]
+
+        var promises = [];
+        for(i in 0...graphics.terrainAnimations.length) {
+            var animation = graphics.terrainAnimations[i][0];
+            promises.push(getAnimatedSprite(animation));
+        }
+
+//        for(i in 0...graphics.terrainImages.length) {
+//            for(j in 0...graphics.terrainImages[i].length){
+//                var animation = graphics.terrainImages[i][j][0];
+//                promises.push(getAnimatedSprite(animation));
+//            }
+//        }
+
+        for(i in 0...graphics.roadAnimations.length) {
+            var animation = graphics.roadAnimations[i][0];
+            promises.push(getAnimatedSprite(animation));
+        }
+
+//        for(i in 0...graphics.roadImages.length) {
+//            for(j in 0...graphics.roadImages[i].length){
+//                var animation = graphics.roadImages[i][j][0];
+//                promises.push(getAnimatedSprite(animation));
+//            }
+//        }
+
+        for(i in 0...graphics.riverAnimations.length) {
+            var animation = graphics.riverAnimations[i][0];
+            promises.push(getAnimatedSprite(animation));
+        }
+
+//        for(i in 0...graphics.riverImages.length) {
+//            for(j in 0...graphics.riverImages[i].length){
+//                var animation = graphics.riverImages[i][j][0];
+//                promises.push(getAnimatedSprite(animation));
+//            }
+//        }
+
+        // todo: combine all this terrain tiles to one texture and set images to local vars
+        return Promise.all(promises);
     }
 }

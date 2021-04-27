@@ -8,8 +8,8 @@ import mapObjects.GObjectInstance;
 import mapObjects.ObjectTemplate;
 import mod.VLC;
 
-typedef TFlippedAnimations = Array<Array<Animation>>; //[type, rotation]
-typedef TFlippedCache = Array<Array<Array<IImage>>>; //[type, view type, rotation]
+typedef FlippedAnimations = Array<Array<Animation>>; //[type, rotation]
+typedef FlippedCache = Array<Array<Array<IImage>>>; //[type, view type, rotation]
 
 class Graphics {
     public static var instance(default, null) = new Graphics();
@@ -28,12 +28,12 @@ class Graphics {
     public var fogOfWarFullHide:Animation;
     public var fogOfWarPartialHide:Animation;
 
-    public var terrainAnimations:TFlippedAnimations; //[terrain type, rotation]
-    public var terrainImages:TFlippedCache; //[terrain type, view type, rotation]
-    public var roadAnimations:TFlippedAnimations; //[road type, rotation]
-    public var roadImages:TFlippedCache; //[road type, view type, rotation]
-    public var riverAnimations:TFlippedAnimations; //[river type, rotation]
-    public var riverImages:TFlippedCache; //[river type, view type, rotation]
+    public var terrainAnimations:FlippedAnimations; //[terrain type, rotation]
+    public var terrainImages:FlippedCache; //[terrain type, view type, rotation]
+    public var roadAnimations:FlippedAnimations; //[road type, rotation]
+    public var roadImages:FlippedCache; //[road type, view type, rotation]
+    public var riverAnimations:FlippedAnimations; //[river type, rotation]
+    public var riverImages:FlippedCache; //[river type, view type, rotation]
 
     private function new() {
         boatAnimations = new Array<Animation>();
@@ -110,11 +110,11 @@ class Graphics {
             "lavrvr.def"
         ];
 
-        function loadFlipped(types:Int, files:Array<String>):{animation:TFlippedAnimations, cache:TFlippedCache} {
+        function loadFlipped(types:Int, files:Array<String>):{animation:FlippedAnimations, cache:FlippedCache} {
             //animation.resize(types);
-            var animation:TFlippedAnimations = [];
+            var animation:FlippedAnimations = [];
             //cache.resize(types);
-            var cache:TFlippedCache = new TFlippedCache();
+            var cache:FlippedCache = new FlippedCache();
 
             //no rotation and basic setup
             for (i in 0...types) {
@@ -155,7 +155,7 @@ class Graphics {
             return {animation:animation, cache:cache};
         };
 
-        var temp:{animation:TFlippedAnimations, cache:TFlippedCache};
+        var temp:{animation:FlippedAnimations, cache:FlippedCache};
         temp = loadFlipped(GameConstants.TERRAIN_TYPES, TERRAIN_FILES);
         terrainAnimations = temp.animation;
         terrainImages = temp.cache;

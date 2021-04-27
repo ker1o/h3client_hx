@@ -1,4 +1,5 @@
 package ;
+import client.TextureGraphics;
 import js.lib.Promise;
 import client.view.pixijs.PixiBlitter;
 import js.html.CanvasRenderingContext2D;
@@ -58,6 +59,9 @@ class Game {
                 VLC.instance.init();
                 gameInfo.setFromLib();
                 Graphics.instance.load();
+                return TextureGraphics.instance.load();
+            })
+            .then(function(_) {
                 return FileCache.instance.initMapAsync(mapName);
             })
             .then(function(_) {
