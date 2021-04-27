@@ -26,8 +26,6 @@ class TextureGraphics {
     public var fogOfWarFullHide:AnimatedSprite;
     public var fogOfWarPartialHide:AnimatedSprite;
 
-    var atlasBuilder = new AtlasBuilder();
-
     public function new() {
         boatAnimations = new Array<AnimatedSprite>();
         mapObjectAnimations = new Map<String, AnimatedSprite>();
@@ -42,13 +40,17 @@ class TextureGraphics {
         if (mapObjectAnimations.exists(animationName)) {
             return Promise.resolve(mapObjectAnimations.get(animationName));
         } else {
-            return getAnimatedSprite(animationName);
+            return getAnimatedSprite(obj).then(function(animatedSprite:AnimatedSprite) {
+                mapObjectAnimations.set(animationName, animatedSprite);
+                return animatedSprite;
+            });
         }
     }
 
-    private function getAnimatedSprite(name:String):Promise<AnimatedSprite> {
+    private function getAnimatedSprite(obj:GObjectInstance):Promise<AnimatedSprite> {
         return new Promise(function (resolve, reject) {
-            var animation = Graphics.instance.getAnimation(name);
+            var animation = Graphics.instance.getAnimation(obj);
+            var atlasBuilder = new AtlasBuilder();
             atlasBuilder.addAnim(animation);
             var atlas = atlasBuilder.build();
 

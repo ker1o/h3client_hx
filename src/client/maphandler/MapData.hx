@@ -11,9 +11,6 @@ import gui.geometries.Rect;
 import mapping.MapBody;
 import utils.Int3;
 
-typedef TFlippedAnimations = Array<Array<Animation>>; //[type, rotation]
-typedef TFlippedCache = Array<Array<Array<IImage>>>; //[type, view type, rotation]
-
 class MapData {
     public var ttiles:PseudoV<PseudoV<PseudoV<TerrainTile2>>> = new PseudoV<PseudoV<PseudoV<TerrainTile2>>>(); //informations about map tiles
 
@@ -34,12 +31,6 @@ class MapData {
     // implies that part of the tile won't be displayed.
     public var offsetX:Int = 0;
     public var offsetY:Int = 0;
-    public var terrainAnimations:TFlippedAnimations; //[terrain type, rotation]
-    public var terrainImages:TFlippedCache; //[terrain type, view type, rotation]
-    public var roadAnimations:TFlippedAnimations; //[road type, rotation]
-    public var roadImages:TFlippedCache; //[road type, view type, rotation]
-    public var riverAnimations:TFlippedAnimations; //[river type, rotation]
-    public var riverImages:TFlippedCache; //[river type, view type, rotation]
 
     //Fog of War cache (not owned)
     public var fowFullHide:Array<IImage>;
@@ -84,7 +75,7 @@ class MapData {
         offsetY = Std.int((mapH - (2 * frameH + 1) * 32) / 2);
 
         prepareFowDefs();
-        initTerrainGraphics();
+        initMapTiles();
 //        initBorderGraphics();
         initObjectRects();
     }
@@ -116,94 +107,7 @@ class MapData {
         }
     }
 
-    function initTerrainGraphics() {
-        var TERRAIN_FILES:Array<String> = [
-            "DIRTTL.def",
-            "SANDTL.def",
-            "GRASTL.def",
-            "SNOWTL.def",
-            "SWMPTL.def",
-
-            "ROUGTL.def",
-            "SUBBTL.def",
-            "LAVATL.def",
-            "WATRTL.def",
-            "ROCKTL.def"
-        ];
-
-        var ROAD_FILES:Array<String> =
-        [
-            "dirtrd.def",
-            "gravrd.def",
-            "cobbrd.def"
-        ];
-
-        var RIVER_FILES:Array<String> =
-        [
-            "clrrvr.def",
-            "icyrvr.def",
-            "mudrvr.def",
-            "lavrvr.def"
-        ];
-
-        function loadFlipped(types:Int, files:Array<String>):{animation:TFlippedAnimations, cache:TFlippedCache} {
-            //animation.resize(types);
-            var animation:TFlippedAnimations = [];
-            //cache.resize(types);
-            var cache:TFlippedCache = new TFlippedCache();
-
-            //no rotation and basic setup
-            for (i in 0...types) {
-                animation[i] = [];
-                animation[i][0] = new Animation(files[i]);
-                animation[i][0].preload();
-                var views = animation[i][0].size(0);
-                //cache[i].resize(views);
-                cache[i] = [];
-
-                for(j in 0...views) {
-                    cache[i][j] = [];
-                    cache[i][j][0] = animation[i][0].getImage(j);
-                }
-            }
-
-            for (rotation in 1...4) {
-                for (i in 0...types) {
-                    animation[i][rotation] = new Animation(files[i]);
-                    animation[i][rotation].preload();
-                    var views:Int = animation[i][rotation].size(0);
-
-                    for (j in 0...views) {
-                        var image = animation[i][rotation].getImage(j);
-
-                        if (rotation == 2 || rotation == 3) {
-                            image.horizontalFlip();
-                        }
-                        if (rotation == 1 || rotation == 3) {
-                            image.verticalFlip();
-                        }
-
-                        cache[i][j][rotation] = image;
-                    }
-                }
-            }
-
-            return {animation:animation, cache:cache};
-        };
-
-        var temp:{animation:TFlippedAnimations, cache:TFlippedCache};
-        temp = loadFlipped(GameConstants.TERRAIN_TYPES, TERRAIN_FILES);
-        terrainAnimations = temp.animation;
-        terrainImages = temp.cache;
-
-        temp = loadFlipped(3, ROAD_FILES);
-        roadAnimations = temp.animation;
-        roadImages = temp.cache;
-
-        temp = loadFlipped(4, RIVER_FILES);
-        riverAnimations = temp.animation;
-        riverImages = temp.cache;
-
+    function initMapTiles() {
         // Create enough room for the whole map and its frame
         ttiles.resize(sizes.x, frameW, frameW, PseudoV);
         for (i in (0 - frameW)...(ttiles.size() - frameW)) {

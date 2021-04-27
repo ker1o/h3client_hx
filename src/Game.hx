@@ -1,4 +1,5 @@
 package ;
+import js.lib.Promise;
 import client.view.pixijs.PixiBlitter;
 import js.html.CanvasRenderingContext2D;
 import js.html.CanvasElement;
@@ -64,6 +65,10 @@ class Game {
                 mapService.loadMapHeaderByName(mapName);
                 map = mapService.loadMapByName(mapName);
                 initMapData(map);
+
+                return initPixiRendering();
+            })
+            .then(function(_) {
                 startRendering();
             });
     }
@@ -83,19 +88,21 @@ class Game {
         }
     }
 
+    function initPixiRendering():Promise<Dynamic> {
+        app = new Application({width: 704, height: 704});
+        Browser.document.body.appendChild(app.view);
+        pixiBlitter = new PixiBlitter(gameInfo.mapData, app.view);
+        return pixiBlitter.initAtlases();
+    }
+
     function initMapData(data:MapBody) {
-        gameInfo.mh = new MapData();
-        gameInfo.mh.map = data;
-        gameInfo.mh.init();
+        gameInfo.mapData = new MapData();
+        gameInfo.mapData.map = data;
+        gameInfo.mapData.init();
 
         canvas = cast Browser.document.getElementById("webgl");
         ctx = canvas.getContext2d();
-        normalBlitter = new MapNormalBlitter(gameInfo.mh, ctx);
-
-
-        app = new Application({width: 704, height: 704});
-        Browser.document.body.appendChild(app.view);
-        pixiBlitter = new PixiBlitter(gameInfo.mh, app.view);
+        normalBlitter = new MapNormalBlitter(gameInfo.mapData, ctx);
     }
 
     function startRendering() {

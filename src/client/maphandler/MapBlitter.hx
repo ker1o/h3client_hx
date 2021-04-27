@@ -1,5 +1,5 @@
 package client.maphandler;
-import js.html.CanvasRenderingContext2D;
+
 import constants.id.PlayerColor;
 import constants.Obj;
 import gui.animation.IImage;
@@ -34,8 +34,12 @@ class MapBlitter implements IMapDrawer {
 
     private var settings:Dynamic;
 
+    var graphics:Graphics;
+
     public function new(data:MapData) {
         this.data = data;
+        graphics = Graphics.instance;
+
         tileSize = 0;
         halfTileSizeCeil = 0;
         info = null;
@@ -238,14 +242,14 @@ class MapBlitter implements IMapDrawer {
         var destRect = new Rect(realTileRect.x, realTileRect.y, realTileRect.w, realTileRect.h);
         var rotation:Int = tinfo.extTileFlags % 4;
 
-        drawElement(data.terrainImages[tinfo.terType][tinfo.terView][rotation], null, destRect);
+        drawElement(graphics.terrainImages[tinfo.terType][tinfo.terView][rotation], null, destRect);
     }
 
     public function drawRiver(tinfo:TerrainTile) {
         var destRect = Rect.fromRect(realTileRect);
         var rotation = (tinfo.extTileFlags >> 2) % 4;
 
-        drawElement(data.riverImages[tinfo.riverType-1][tinfo.riverDir][rotation], null, destRect);
+        drawElement(graphics.riverImages[tinfo.riverType-1][tinfo.riverDir][rotation], null, destRect);
     }
 
     public function drawRoad(tinfo:TerrainTile, tinfoUpper:TerrainTile, i:Int, j:Int) {
@@ -253,14 +257,14 @@ class MapBlitter implements IMapDrawer {
             var rotation:Int = (tinfoUpper.extTileFlags >> 4) % 4;
             var source = new Rect(0, halfTileSizeCeil, tileSize, halfTileSizeCeil);
             var dest = new Rect(realPos.x, realPos.y, tileSize, halfTileSizeCeil);
-            drawElement(data.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir][rotation], source, dest);
+            drawElement(graphics.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir][rotation], source, dest);
         }
 
         if(tinfo.roadType != RoadType.NO_ROAD) {//print road from this tile
             var rotation:Int = (tinfo.extTileFlags >> 4) % 4;
             var source = new Rect(0, 0, tileSize, halfTileSizeCeil);
             var dest = new Rect(realPos.x, realPos.y + halfTileSizeCeil, tileSize, halfTileSizeCeil);
-            drawElement(data.roadImages[tinfo.roadType - 1][tinfo.roadDir][rotation], source, dest);
+            drawElement(graphics.roadImages[tinfo.roadType - 1][tinfo.roadDir][rotation], source, dest);
         }
     }
 

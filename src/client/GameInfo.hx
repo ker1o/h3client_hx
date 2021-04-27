@@ -25,12 +25,12 @@ class GameInfo {
     public var objh:ObjectsHandler;
     public var objtypeh:ObjectClassesHandler;
     public var generaltexth:GeneralTextHandler;
-    public var mh:MapData;
+    public var mapData:MapData;
     public var townh:TownHandler;
 
     public function new() {
         generaltexth = null;
-        mh = null;
+        mapData = null;
         townh = null;
     }
 
