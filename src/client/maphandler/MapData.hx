@@ -1,6 +1,5 @@
 package client.maphandler;
 
-import js.html.CanvasRenderingContext2D;
 import mapObjects.misc.GBoat;
 import mapObjects.hero.GHeroInstance;
 import constants.Obj;
@@ -15,7 +14,7 @@ import utils.Int3;
 typedef TFlippedAnimations = Array<Array<Animation>>; //[type, rotation]
 typedef TFlippedCache = Array<Array<Array<IImage>>>; //[type, view type, rotation]
 
-class MapHandler {
+class MapData {
     public var ttiles:PseudoV<PseudoV<PseudoV<TerrainTile2>>>; //informations about map tiles
 
     public var sizes:Int3; //map size (x = width, y = height, z = number of levels)

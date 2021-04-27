@@ -1,6 +1,5 @@
 package client.maphandler;
-
-import gui.IDrawer;
+import js.html.CanvasRenderingContext2D;
 import constants.id.PlayerColor;
 import constants.Obj;
 import gui.animation.IImage;
@@ -21,7 +20,7 @@ class MapBlitter {
     private static var heroFrameGroup:Array<Int> = [0xff, 10, 5, 6, 7, 8, 9, 12, 11];
 
     private var FRAMES_PER_MOVE_ANIM_GROUP:Int = 8;
-    private var parent:MapHandler; // ptr to enclosing private var handler:map; generally for legacy reasons, probably could/should be refactored out of here
+    private var data:MapData; // ptr to enclosing private var handler:map; generally for legacy reasons, probably could/should be refactored out of here
     private var tileSize:Int; // size of a tile drawn on map [in pixels]
     private var halfTileSizeCeil:Int; // half of the tile size, rounded up
     private var tileCount:Int3; // number of tiles in current viewport
@@ -35,11 +34,8 @@ class MapBlitter {
 
     private var settings:Dynamic;
 
-    private var drawer:IDrawer;
-
-    public function new(p:MapHandler, d:IDrawer) {
-        parent = p;
-        drawer = d;
+    public function new(data:MapData) {
+        this.data = data;
         tileSize = 0;
         halfTileSizeCeil = 0;
         info = null;
@@ -78,14 +74,14 @@ class MapBlitter {
         realPos.x = initPos.x;
         pos.x = topTile.x;
         for (i in 0...tileCount.x) {
-            if (pos.x < 0 || pos.x >= parent.sizes.x) {
+            if (pos.x < 0 || pos.x >= data.sizes.x) {
                 continue;
             }
 
             realPos.y = initPos.y;
             pos.y = topTile.y;
             for (j in 0...tileCount.y) {
-                if (pos.y < 0 || pos.y >= parent.sizes.y) {
+                if (pos.y < 0 || pos.y >= data.sizes.y) {
                     continue;
                 }
 
@@ -94,9 +90,9 @@ class MapBlitter {
                 realTileRect.x = realPos.x;
                 realTileRect.y = realPos.y;
 
-                var tile:TerrainTile2 = parent.ttiles.get(pos.x).get(pos.y).get(pos.z);
-                var tinfo:TerrainTile = parent.map.getTileByInt3(pos);
-                var tinfoUpper:TerrainTile = pos.y > 0 ? parent.map.getTile(pos.x, pos.y - 1, pos.z) : null;
+                var tile:TerrainTile2 = data.ttiles.get(pos.x).get(pos.y).get(pos.z);
+                var tinfo:TerrainTile = data.map.getTileByInt3(pos);
+                var tinfoUpper:TerrainTile = pos.y > 0 ? data.map.getTile(pos.x, pos.y - 1, pos.z) : null;
 
                 if (isVisible || info.showAllTerrain) {
                     drawTileTerrain(tinfo, tile);
@@ -127,10 +123,10 @@ class MapBlitter {
                 realTileRect.x = realPos.x;
                 realTileRect.y = realPos.y;
 
-                if (pos.x < 0 || pos.x >= parent.sizes.x || pos.y < 0 || pos.y >= parent.sizes.y) {
+                if (pos.x < 0 || pos.x >= data.sizes.x || pos.y < 0 || pos.y >= data.sizes.y) {
                     drawFrame();
                 } else {
-                    var tile:TerrainTile2 = parent.ttiles.get(pos.x).get(pos.y).get(pos.z);
+                    var tile:TerrainTile2 = data.ttiles.get(pos.x).get(pos.y).get(pos.z);
 
                     if(!(settings.field("session").field("spectate"):Bool) && !info.visibilityMap[pos.x][pos.y][topTile.z] && !info.showAllTerrain) {
                         drawFow();
@@ -141,7 +137,7 @@ class MapBlitter {
 
                     // drawDebugVisitables()
                     if ((settings.field("session").field("showBlock"):Bool)) {
-                        if(parent.map.getTile(pos.x, pos.y, pos.z).blocked) { //temporary hiding blocked positions
+                        if(data.map.getTile(pos.x, pos.y, pos.z).blocked) { //temporary hiding blocked positions
                             var block:Dynamic /*SDL_Surface*/ = null;
                             if (!block) {
 //                                block = BitmapHandler.loadBitmap("blocked");
@@ -151,7 +147,7 @@ class MapBlitter {
                         }
                     }
                     if ((settings.field("session").field("showVisit"):Bool)) {
-                        if (parent.map.getTile(pos.x, pos.y, pos.z).visitable) { //temporary hiding visitable positions
+                        if (data.map.getTile(pos.x, pos.y, pos.z).visitable) { //temporary hiding visitable positions
                             var visit:Dynamic /*SDL_Surface*/ = null;
                             if (!visit) {
 //                                visit = BitmapHandler.loadBitmap("visitable");
@@ -236,7 +232,7 @@ class MapBlitter {
         if ((settings.field("session").field("spectate"):Bool))
             return true;
 
-        var neighbors = new NeighborTilesInfo(pos, parent.sizes, info.visibilityMap, (settings.field("session").field("spectate"):Bool));
+        var neighbors = new NeighborTilesInfo(pos, data.sizes, info.visibilityMap, (settings.field("session").field("spectate"):Bool));
         return !neighbors.areAllHidden();
     }
 
@@ -244,14 +240,14 @@ class MapBlitter {
         var destRect = new Rect(realTileRect.x, realTileRect.y, realTileRect.w, realTileRect.h);
         var rotation:Int = tinfo.extTileFlags % 4;
 
-        drawElement(parent.terrainImages[tinfo.terType][tinfo.terView][rotation], null, destRect);
+        drawElement(data.terrainImages[tinfo.terType][tinfo.terView][rotation], null, destRect);
     }
 
     public function drawRiver(tinfo:TerrainTile) {
         var destRect = Rect.fromRect(realTileRect);
         var rotation = (tinfo.extTileFlags >> 2) % 4;
 
-        drawElement(parent.riverImages[tinfo.riverType-1][tinfo.riverDir][rotation], null, destRect);
+        drawElement(data.riverImages[tinfo.riverType-1][tinfo.riverDir][rotation], null, destRect);
     }
 
     public function drawRoad(tinfo:TerrainTile, tinfoUpper:TerrainTile, i:Int, j:Int) {
@@ -259,14 +255,14 @@ class MapBlitter {
             var rotation:Int = (tinfoUpper.extTileFlags >> 4) % 4;
             var source = new Rect(0, halfTileSizeCeil, tileSize, halfTileSizeCeil);
             var dest = new Rect(realPos.x, realPos.y, tileSize, halfTileSizeCeil);
-            drawElement(parent.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir][rotation], source, dest);
+            drawElement(data.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir][rotation], source, dest);
         }
 
         if(tinfo.roadType != RoadType.NO_ROAD) {//print road from this tile
             var rotation:Int = (tinfo.extTileFlags >> 4) % 4;
             var source = new Rect(0, 0, tileSize, halfTileSizeCeil);
             var dest = new Rect(realPos.x, realPos.y + halfTileSizeCeil, tileSize, halfTileSizeCeil);
-            drawElement(parent.roadImages[tinfo.roadType - 1][tinfo.roadDir][rotation], source, dest);
+            drawElement(data.roadImages[tinfo.roadType - 1][tinfo.roadDir][rotation], source, dest);
         }
     }
 
@@ -450,13 +446,13 @@ class MapBlitter {
     }
 
     public function getPhaseShift(object:GObjectInstance):Int {
-        if(!parent.animationPhase.exists(object)) {
+        if(!data.animationPhase.exists(object)) {
             var ret = Std.random(254);
-            parent.animationPhase[object] = ret;
+            data.animationPhase[object] = ret;
             return ret;
         }
 
-        return parent.animationPhase[object];
+        return data.animationPhase[object];
 
     }
 
@@ -469,19 +465,19 @@ class MapBlitter {
     }
 
     public function drawFow() {
-        var neighborInfo = new NeighborTilesInfo(pos, parent.sizes, info.visibilityMap, (settings.field("session").field("spectate"):Bool));
+        var neighborInfo = new NeighborTilesInfo(pos, data.sizes, info.visibilityMap, (settings.field("session").field("spectate"):Bool));
 
         var retBitmapID:Int = neighborInfo.getBitmapID();// >=0 . partial hide, <0 - full hide
         if (retBitmapID < 0) {
-            retBitmapID = - parent.hideBitmap[pos.x][pos.y][pos.z] - 1; //fully hidden
+            retBitmapID = - data.hideBitmap[pos.x][pos.y][pos.z] - 1; //fully hidden
         }
 
         var image:IImage;
 
         if (retBitmapID >= 0) {
-            image = parent.fowPartialHide[retBitmapID];
+            image = data.fowPartialHide[retBitmapID];
         } else {
-            image = parent.fowFullHide[-retBitmapID - 1];
+            image = data.fowFullHide[-retBitmapID - 1];
         }
 
         var destRect = Rect.fromRect(realTileRect);

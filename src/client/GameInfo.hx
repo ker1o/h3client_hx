@@ -1,6 +1,6 @@
 package client;
 
-import client.maphandler.MapHandler;
+import client.maphandler.MapData;
 import mod.VLC;
 import artifacts.ArtHandler;
 import creature.CreatureHandler;
@@ -25,7 +25,7 @@ class GameInfo {
     public var objh:ObjectsHandler;
     public var objtypeh:ObjectClassesHandler;
     public var generaltexth:GeneralTextHandler;
-    public var mh:MapHandler;
+    public var mh:MapData;
     public var townh:TownHandler;
 
     public function new() {

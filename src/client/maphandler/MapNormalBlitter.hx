@@ -1,14 +1,15 @@
 package client.maphandler;
-
-import gui.IDrawer;
-import gui.animation.IImage;
 import js.html.CanvasRenderingContext2D;
+import gui.animation.IImage;
 import gui.geometries.Rect;
 
 class MapNormalBlitter extends MapBlitter {
-    public function new(p:MapHandler, d:IDrawer) {
-        super(p, d);
 
+    var targetSurf:CanvasRenderingContext2D;
+
+    public function new(data:MapData, targetSurf:CanvasRenderingContext2D) {
+        super(data);
+        this.targetSurf = targetSurf;
         tileSize = 32;
         halfTileSizeCeil = 16;
         defaultTileRect = new Rect(0, 0, tileSize, tileSize);
@@ -17,12 +18,12 @@ class MapNormalBlitter extends MapBlitter {
     override public function init(drawingInfo:MapDrawingInfo):Void {
         info = drawingInfo;
         // Width and height of the portion of the map to process. Units in tiles.
-        tileCount.x = parent.tilesW;
-        tileCount.y = parent.tilesH;
+        tileCount.x = data.tilesW;
+        tileCount.y = data.tilesH;
 
         topTile = info.topTile;
-        initPos.x = parent.offsetX + info.drawBounds.x;
-        initPos.y = parent.offsetY + info.drawBounds.y;
+        initPos.x = data.offsetX + info.drawBounds.x;
+        initPos.y = data.offsetY + info.drawBounds.y;
 
         realTileRect = new Rect(initPos.x, initPos.y, tileSize, tileSize);
 
@@ -50,17 +51,17 @@ class MapNormalBlitter extends MapBlitter {
         }
 
         // Reduce sizes if we go out of the full map.
-        if (topTile.x < -parent.frameW) {
-            topTile.x = -parent.frameW;
+        if (topTile.x < -data.frameW) {
+            topTile.x = -data.frameW;
         }
-        if (topTile.y < -parent.frameH) {
-            topTile.y = -parent.frameH;
+        if (topTile.y < -data.frameH) {
+            topTile.y = -data.frameH;
         }
-        if (topTile.x + tileCount.x > parent.sizes.x + parent.frameW) {
-            tileCount.x = parent.sizes.x + parent.frameW - topTile.x;
+        if (topTile.x + tileCount.x > data.sizes.x + data.frameW) {
+            tileCount.x = data.sizes.x + data.frameW - topTile.x;
         }
-        if (topTile.y + tileCount.y > parent.sizes.y + parent.frameH) {
-            tileCount.y = parent.sizes.y + parent.frameH - topTile.y;
+        if (topTile.y + tileCount.y > data.sizes.y + data.frameH) {
+            tileCount.y = data.sizes.y + data.frameH - topTile.y;
         }
     }
 
@@ -79,8 +80,7 @@ class MapNormalBlitter extends MapBlitter {
     }
 
     override public function drawElement(source:IImage, sourceRect:Rect, destRect:Rect) {
-        // что здесь должно быть, дровер рисовать сорс. Либо сорсу говорить нарисуйся на дровере?
-//        source.(drawer, destRect, sourceRect);
+        source.drawToRect(targetSurf, destRect, sourceRect);
     }
 
     override public function postProcessing() {

@@ -1,5 +1,6 @@
 package gui;
 
+import pixi.core.sprites.Sprite;
 import gui.animation.TextureImage;
 import gui.animation.IImage;
 import gui.geometries.Rect;
@@ -14,7 +15,9 @@ class TextureDrawer implements IDrawer {
 
     public function draw(source:IImage, sourceRect:Rect, destRect:Rect):Void {
         var tex:TextureImage = cast source;
-        tex.
-        _root.addChild();
+        var image = new Sprite(tex);
+        image.x = destRect.x;
+        image.y = destRect.y;
+        _root.addChild(image);
     }
 }
