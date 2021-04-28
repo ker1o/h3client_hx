@@ -1,5 +1,7 @@
 package client;
 
+import client.Graphics.FlippedAnimations;
+import pixi.core.textures.Texture;
 import gui.Animation;
 import pixi.core.sprites.Sprite;
 import js.lib.Promise;
@@ -11,8 +13,8 @@ import pixi.extras.AnimatedSprite;
 
 using Reflect;
 
-typedef TFlippedAnimations = Array<AnimatedSprite>; //[type, rotation]
-typedef TFlippedCache = Array<Array<Sprite>>; //[type, view type, rotation]
+typedef TFlippedAnimations = Array<AnimatedSprite>; //[type]
+typedef TFlippedCache = Array<Array<Texture>>; //[type, view type]
 
 class TextureGraphics {
     public static var instance(default, null) = new TextureGraphics();
@@ -26,7 +28,7 @@ class TextureGraphics {
     public var boatAnimations:Array<AnimatedSprite>;
     public var boatFlagAnimations:Array<Array<AnimatedSprite>>;
 
-    public var mapObjectAnimations:Map<String, AnimatedSprite>;
+    public var mapObjectAnimations:Map<String, Promise<AnimatedSprite>>;
 
     public var fogOfWarFullHide:AnimatedSprite;
     public var fogOfWarPartialHide:AnimatedSprite;
@@ -40,7 +42,7 @@ class TextureGraphics {
 
     public function new() {
         boatAnimations = new Array<AnimatedSprite>();
-        mapObjectAnimations = new Map<String, AnimatedSprite>();
+        mapObjectAnimations = new Map<String, Promise<AnimatedSprite>>();
     }
 
     public function load() {
@@ -50,13 +52,12 @@ class TextureGraphics {
     public function getAnimation(obj:GObjectInstance):Promise<AnimatedSprite> {
         var animationName = obj.appearance.animationFile;
         if (mapObjectAnimations.exists(animationName)) {
-            return Promise.resolve(mapObjectAnimations.get(animationName));
+            return mapObjectAnimations.get(animationName);
         } else {
             var animation = Graphics.instance.getAnimation(obj);
-            return getAnimatedSprite(animation).then(function(animatedSprite:AnimatedSprite) {
-                mapObjectAnimations.set(animationName, animatedSprite);
-                return animatedSprite;
-            });
+            var animatedSpritePromise = getAnimatedSprite(animation);
+            mapObjectAnimations.set(animationName, animatedSpritePromise);
+            return animatedSpritePromise;
         }
     }
 
@@ -76,8 +77,17 @@ class TextureGraphics {
         });
     }
 
-    private function initTerrainGraphics():Promise<Dynamic> {
+    private function initTerrainGraphics():Promise<Bool> {
         var graphics = Graphics.instance;
+
+        function fill(animations:FlippedAnimations, texturedAnimations:TFlippedAnimations, textures:TFlippedCache, spriteSheet:Spritesheet) {
+            for(i in 0...animations.length) {
+                var animation = graphics.terrainAnimations[i][0];
+                var animatedSprite = new AnimatedSprite(spriteSheet.animations.field(animation.name + "_0"), false);
+                texturedAnimations[i] = animatedSprite;
+                textures[i] = animatedSprite.textures.copy();
+            }
+        }
 
         terrainAnimations = []; //[terrain type]
         terrainImages = []; //[terrain type, view type]
@@ -86,44 +96,33 @@ class TextureGraphics {
         riverAnimations = []; //[river type]
         riverImages = []; //[river type, view type]
 
-        var promises = [];
+        var atlasBuilder = new AtlasBuilder();
         for(i in 0...graphics.terrainAnimations.length) {
             var animation = graphics.terrainAnimations[i][0];
-            promises.push(getAnimatedSprite(animation));
+            atlasBuilder.addAnim(animation);
         }
-
-//        for(i in 0...graphics.terrainImages.length) {
-//            for(j in 0...graphics.terrainImages[i].length){
-//                var animation = graphics.terrainImages[i][j][0];
-//                promises.push(getAnimatedSprite(animation));
-//            }
-//        }
 
         for(i in 0...graphics.roadAnimations.length) {
             var animation = graphics.roadAnimations[i][0];
-            promises.push(getAnimatedSprite(animation));
+            atlasBuilder.addAnim(animation);
         }
-
-//        for(i in 0...graphics.roadImages.length) {
-//            for(j in 0...graphics.roadImages[i].length){
-//                var animation = graphics.roadImages[i][j][0];
-//                promises.push(getAnimatedSprite(animation));
-//            }
-//        }
 
         for(i in 0...graphics.riverAnimations.length) {
             var animation = graphics.riverAnimations[i][0];
-            promises.push(getAnimatedSprite(animation));
+            atlasBuilder.addAnim(animation);
         }
 
-//        for(i in 0...graphics.riverImages.length) {
-//            for(j in 0...graphics.riverImages[i].length){
-//                var animation = graphics.riverImages[i][j][0];
-//                promises.push(getAnimatedSprite(animation));
-//            }
-//        }
+        var atlas = atlasBuilder.build();
+        var base = BaseTexture.fromBuffer(atlas.bytes, atlas.w, atlas.h, {});
 
-        // todo: combine all this terrain tiles to one texture and set images to local vars
-        return Promise.all(promises);
+        var spriteSheet = new Spritesheet(base, atlas.description, "terrains");
+        return new Promise(function (resolve, reject) {
+            spriteSheet.parse(function() {
+                fill(graphics.terrainAnimations, terrainAnimations, terrainImages, spriteSheet);
+                fill(graphics.roadAnimations, roadAnimations, roadImages, spriteSheet);
+                fill(graphics.riverAnimations, riverAnimations, riverImages, spriteSheet);
+                resolve(true);
+            });
+        });
     }
 }

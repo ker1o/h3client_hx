@@ -110,14 +110,14 @@ class Graphics {
             "lavrvr.def"
         ];
 
-        function loadFlipped(types:Int, files:Array<String>):{animation:FlippedAnimations, cache:FlippedCache} {
+        function loadFlipped(files:Array<String>):{animation:FlippedAnimations, cache:FlippedCache} {
             //animation.resize(types);
             var animation:FlippedAnimations = [];
             //cache.resize(types);
             var cache:FlippedCache = new FlippedCache();
 
             //no rotation and basic setup
-            for (i in 0...types) {
+            for (i in 0...files.length) {
                 animation[i] = [];
                 animation[i][0] = new Animation(files[i]);
                 animation[i][0].preload();
@@ -132,7 +132,7 @@ class Graphics {
             }
 
             for (rotation in 1...4) {
-                for (i in 0...types) {
+                for (i in 0...files.length) {
                     animation[i][rotation] = new Animation(files[i]);
                     animation[i][rotation].preload();
                     var views:Int = animation[i][rotation].size(0);
@@ -156,15 +156,15 @@ class Graphics {
         };
 
         var temp:{animation:FlippedAnimations, cache:FlippedCache};
-        temp = loadFlipped(GameConstants.TERRAIN_TYPES, TERRAIN_FILES);
+        temp = loadFlipped(TERRAIN_FILES);
         terrainAnimations = temp.animation;
         terrainImages = temp.cache;
 
-        temp = loadFlipped(3, ROAD_FILES);
+        temp = loadFlipped(ROAD_FILES);
         roadAnimations = temp.animation;
         roadImages = temp.cache;
 
-        temp = loadFlipped(4, RIVER_FILES);
+        temp = loadFlipped(RIVER_FILES);
         riverAnimations = temp.animation;
         riverImages = temp.cache;
     }
