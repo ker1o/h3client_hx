@@ -1,4 +1,6 @@
 package ;
+import pixi.core.textures.Texture;
+import pixi.core.sprites.Sprite;
 import client.TextureGraphics;
 import js.lib.Promise;
 import client.view.pixijs.PixiBlitter;
@@ -74,6 +76,8 @@ class Game {
             })
             .then(function(_) {
                 startRendering();
+//                var sprite = new Sprite(new Texture(TextureGraphics.instance.roadImages[1][1].baseTexture));
+//                app.stage.addChild(sprite);
             });
     }
 
@@ -95,7 +99,7 @@ class Game {
     function initPixiRendering():Promise<Dynamic> {
         app = new Application({width: 704, height: 704});
         Browser.document.body.appendChild(app.view);
-        pixiBlitter = new PixiBlitter(gameInfo.mapData, app.view);
+        pixiBlitter = new PixiBlitter(gameInfo.mapData, app.stage);
         return pixiBlitter.initAtlases();
     }
 
@@ -126,6 +130,8 @@ class Game {
 
     var animValHitCount = 0;
 
+    var pixiDrawn = false;
+
     function renderMap() {
         animValHitCount++;
         if(animValHitCount == 4) {
@@ -136,6 +142,9 @@ class Game {
         info.anim = animFrame;
         info.heroAnim = 6;
         normalBlitter.draw(info);
-        pixiBlitter.draw(info);
+        if(!pixiDrawn) {
+            pixiDrawn = true;
+            pixiBlitter.draw(info);
+        }
     }
 }

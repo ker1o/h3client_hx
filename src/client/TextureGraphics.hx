@@ -3,7 +3,6 @@ package client;
 import client.Graphics.FlippedAnimations;
 import pixi.core.textures.Texture;
 import gui.Animation;
-import pixi.core.sprites.Sprite;
 import js.lib.Promise;
 import mapObjects.GObjectInstance;
 import pixi.core.textures.Spritesheet;
@@ -49,19 +48,28 @@ class TextureGraphics {
         initTerrainGraphics();
     }
 
-    public function getAnimation(obj:GObjectInstance):Promise<AnimatedSprite> {
+    public function loadAnimation(obj:GObjectInstance):Promise<AnimatedSprite> {
         var animationName = obj.appearance.animationFile;
         if (mapObjectAnimations.exists(animationName)) {
             return mapObjectAnimations.get(animationName);
         } else {
             var animation = Graphics.instance.getAnimation(obj);
-            var animatedSpritePromise = getAnimatedSprite(animation);
+            var animatedSpritePromise = loadAnimatedSprite(animation);
             mapObjectAnimations.set(animationName, animatedSpritePromise);
             return animatedSpritePromise;
         }
     }
 
-    private function getAnimatedSprite(animation:Animation):Promise<AnimatedSprite> {
+    public function getAnimation(obj:GObjectInstance):AnimatedSprite {
+        var animationName = obj.appearance.animationFile;
+        if (mapObjectAnimations.exists(animationName)) {
+            return mapObjectAnimations.get(animationName);
+        } else {
+            throw 'No animation $animationName';
+        }
+    }
+
+    private function loadAnimatedSprite(animation:Animation):Promise<AnimatedSprite> {
         return new Promise(function (resolve, reject) {
             var atlasBuilder = new AtlasBuilder();
             atlasBuilder.addAnim(animation);
@@ -82,7 +90,7 @@ class TextureGraphics {
 
         function fill(animations:FlippedAnimations, texturedAnimations:TFlippedAnimations, textures:TFlippedCache, spriteSheet:Spritesheet) {
             for(i in 0...animations.length) {
-                var animation = graphics.terrainAnimations[i][0];
+                var animation = animations[i][0];
                 var animatedSprite = new AnimatedSprite(spriteSheet.animations.field(animation.name + "_0"), false);
                 texturedAnimations[i] = animatedSprite;
                 textures[i] = animatedSprite.textures.copy();
