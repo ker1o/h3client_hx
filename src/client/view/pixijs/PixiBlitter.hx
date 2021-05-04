@@ -71,7 +71,7 @@ class PixiBlitter implements IMapDrawer {
     }
 
     public function initAtlases():Promise<Array<Dynamic>> {
-        var map = new Map<String, Promise<AnimatedSprite>>();
+        var map = new Map<String, Promise<PixiAnimation>>();
         for (obj in data.map.objects) {
             var name = obj.appearance.animationFile;
             if(!map.exists(name)) {
@@ -112,7 +112,7 @@ class PixiBlitter implements IMapDrawer {
                 if (isVisible || info.showAllTerrain) {
                     drawTileTerrain(tinfo, tile);
                     if (tinfo.riverType != RiverType.NO_RIVER) {
-//                        drawRiver(tinfo);
+                        drawRiver(tinfo);
                     }
                     drawRoad(tinfo, tinfoUpper, i, j);
                 }
@@ -282,14 +282,14 @@ class PixiBlitter implements IMapDrawer {
         var destRect = new Rect(realTileRect.x, realTileRect.y, realTileRect.w, realTileRect.h);
         var rotation:Int = tinfo.extTileFlags % 4;
 
-        drawElement(graphics.terrainImages[tinfo.terType][tinfo.terView], rotation, null, destRect);
+        drawElement(graphics.terrainImages[tinfo.terType][tinfo.terView], null, destRect, rotation);
     }
 
     function drawRiver(tinfo:TerrainTile) {
         var destRect = Rect.fromRect(realTileRect);
         var rotation = (tinfo.extTileFlags >> 2) % 4;
 
-        drawElement(graphics.riverImages[tinfo.riverType-1][tinfo.riverDir], rotation, null, destRect);
+        drawElement(graphics.riverImages[tinfo.riverType-1][tinfo.riverDir], null, destRect, rotation);
     }
 
     function drawRoad(tinfo:TerrainTile, tinfoUpper:TerrainTile, i:Int, j:Int) {
@@ -297,14 +297,14 @@ class PixiBlitter implements IMapDrawer {
             var rotation:Int = (tinfoUpper.extTileFlags >> 4) % 4;
             var source = new Rect(0, halfTileSizeCeil, tileSize, halfTileSizeCeil);
             var dest = new Rect(realPos.x, realPos.y, tileSize, halfTileSizeCeil);
-            drawElement(graphics.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir], rotation, source, dest);
+            drawElement(graphics.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir], source, dest, rotation);
         }
 
         if(tinfo.roadType != RoadType.NO_ROAD) {//print road from this tile
             var rotation:Int = (tinfo.extTileFlags >> 4) % 4;
             var source = new Rect(0, 0, tileSize, halfTileSizeCeil);
             var dest = new Rect(realPos.x, realPos.y + halfTileSizeCeil, tileSize, halfTileSizeCeil);
-            drawElement(graphics.roadImages[tinfo.roadType - 1][tinfo.roadDir], rotation, source, dest);
+            drawElement(graphics.roadImages[tinfo.roadType - 1][tinfo.roadDir], source, dest, rotation);
         }
     }
 
@@ -351,13 +351,13 @@ class PixiBlitter implements IMapDrawer {
 //        }
 
         // normal object
-        var animation:AnimatedSprite = TextureGraphics.instance.getAnimation(obj);
-        var groupSize:Int = animation.textures.length;
+        var animation:PixiAnimation = TextureGraphics.instance.getAnimation(obj);
+        var groupSize:Int = animation.size();
         if (groupSize == 0) {
             return new AnimTextureHolder();
         }
 
-        var bitmap = animation.textures[(anim + getPhaseShift(obj)) % groupSize];
+        var bitmap = animation.getTexture((anim + getPhaseShift(obj)) % groupSize);
         if (bitmap == null) {
             return new AnimTextureHolder();
         }
@@ -367,7 +367,7 @@ class PixiBlitter implements IMapDrawer {
         return new AnimTextureHolder(bitmap);
     }
 
-    function drawElement(source:Texture, rotation:Int, src:Rect, dest:Rect) {
+    function drawElement(source:Texture, src:Rect, dest:Rect, rotation:Int = 0) {
         var sprite = new Sprite(source);
         sprite.x = dest.x;
         sprite.y = dest.y;

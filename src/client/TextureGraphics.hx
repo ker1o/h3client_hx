@@ -1,5 +1,6 @@
 package client;
 
+import client.view.pixijs.PixiAnimation;
 import client.Graphics.FlippedAnimations;
 import pixi.core.textures.Texture;
 import gui.Animation;
@@ -12,25 +13,26 @@ import pixi.extras.AnimatedSprite;
 
 using Reflect;
 
-typedef TFlippedAnimations = Array<AnimatedSprite>; //[type]
+typedef TFlippedAnimations = Array<PixiAnimation>; //[type]
 typedef TFlippedCache = Array<Array<Texture>>; //[type, view type]
 
 class TextureGraphics {
     public static var instance(default, null) = new TextureGraphics();
 
-    public var heroMoveArrows:AnimatedSprite;
+    public var heroMoveArrows:PixiAnimation;
     // [hero class def name]  //added group 10: up - left, 11 - left and 12 - left down // 13 - up-left standing; 14 - left standing; 15 - left down standing
-    public var heroAnimations:Map<String, AnimatedSprite>;
-    public var heroFlagAnimations:Array<AnimatedSprite>;
+    public var heroAnimations:Map<String, PixiAnimation>;
+    public var heroFlagAnimations:Array<PixiAnimation>;
 
     // [boat type: 0 .. 2]  //added group 10: up - left, 11 - left and 12 - left down // 13 - up-left standing; 14 - left standing; 15 - left down standing
-    public var boatAnimations:Array<AnimatedSprite>;
-    public var boatFlagAnimations:Array<Array<AnimatedSprite>>;
+    public var boatAnimations:Array<PixiAnimation>;
+    public var boatFlagAnimations:Array<Array<PixiAnimation>>;
 
-    public var mapObjectAnimations:Map<String, Promise<AnimatedSprite>>;
+    public var mapObjectAnimationPromises:Map<String, Promise<PixiAnimation>>;
+    public var mapObjectAnimations:Map<String, PixiAnimation>;
 
-    public var fogOfWarFullHide:AnimatedSprite;
-    public var fogOfWarPartialHide:AnimatedSprite;
+    public var fogOfWarFullHide:PixiAnimation;
+    public var fogOfWarPartialHide:PixiAnimation;
 
     public var terrainAnimations:TFlippedAnimations; //[terrain type, rotation]
     public var terrainImages:TFlippedCache; //[terrain type, view type, rotation]
@@ -40,27 +42,34 @@ class TextureGraphics {
     public var riverImages:TFlippedCache; //[river type, view type, rotation]
 
     public function new() {
-        boatAnimations = new Array<AnimatedSprite>();
-        mapObjectAnimations = new Map<String, Promise<AnimatedSprite>>();
+        boatAnimations = new Array<PixiAnimation>();
+        mapObjectAnimations = new Map<String, PixiAnimation>();
+        mapObjectAnimationPromises = new Map<String, Promise<PixiAnimation>>();
     }
 
     public function load() {
         initTerrainGraphics();
     }
 
-    public function loadAnimation(obj:GObjectInstance):Promise<AnimatedSprite> {
+    public function loadAnimation(obj:GObjectInstance):Promise<PixiAnimation> {
         var animationName = obj.appearance.animationFile;
         if (mapObjectAnimations.exists(animationName)) {
-            return mapObjectAnimations.get(animationName);
+            return Promise.resolve(mapObjectAnimations.get(animationName));
+        } else if (mapObjectAnimationPromises.exists(animationName)) {
+            return mapObjectAnimationPromises.get(animationName);
         } else {
             var animation = Graphics.instance.getAnimation(obj);
-            var animatedSpritePromise = loadAnimatedSprite(animation);
-            mapObjectAnimations.set(animationName, animatedSpritePromise);
+            var animatedSpritePromise = loadPixiAnimation(animation).then(function(pixiAnimation:PixiAnimation) {
+                mapObjectAnimations.set(animationName, pixiAnimation);
+                mapObjectAnimationPromises.remove(animationName);
+                return pixiAnimation;
+            });
+            mapObjectAnimationPromises.set(animationName, animatedSpritePromise);
             return animatedSpritePromise;
         }
     }
 
-    public function getAnimation(obj:GObjectInstance):AnimatedSprite {
+    public function getAnimation(obj:GObjectInstance):PixiAnimation {
         var animationName = obj.appearance.animationFile;
         if (mapObjectAnimations.exists(animationName)) {
             return mapObjectAnimations.get(animationName);
@@ -69,7 +78,7 @@ class TextureGraphics {
         }
     }
 
-    private function loadAnimatedSprite(animation:Animation):Promise<AnimatedSprite> {
+    private function loadPixiAnimation(animation:Animation):Promise<PixiAnimation> {
         return new Promise(function (resolve, reject) {
             var atlasBuilder = new AtlasBuilder();
             atlasBuilder.addAnim(animation);
@@ -80,7 +89,11 @@ class TextureGraphics {
             var name = animation.name;
             var spriteSheet = new Spritesheet(base, atlas.description, name);
             spriteSheet.parse(function() {
-                resolve(new AnimatedSprite(spriteSheet.animations.field(name + "_0"), false));
+                var pixiAnimation = new PixiAnimation();
+                for(group in animation.images.keys()) {
+                    pixiAnimation[group] = new AnimatedSprite(spriteSheet.animations.field(name + "_" + group), false);
+                }
+                resolve(pixiAnimation);
             });
         });
     }
@@ -91,8 +104,10 @@ class TextureGraphics {
         function fill(animations:FlippedAnimations, texturedAnimations:TFlippedAnimations, textures:TFlippedCache, spriteSheet:Spritesheet) {
             for(i in 0...animations.length) {
                 var animation = animations[i][0];
+                var pixiAnimation = new PixiAnimation();
                 var animatedSprite = new AnimatedSprite(spriteSheet.animations.field(animation.name + "_0"), false);
-                texturedAnimations[i] = animatedSprite;
+                pixiAnimation[0] = animatedSprite;
+                texturedAnimations[i] = pixiAnimation;
                 textures[i] = animatedSprite.textures.copy();
             }
         }
