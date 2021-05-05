@@ -1,4 +1,5 @@
 package client.view.pixijs;
+import client.maphandler.TerrainTile2;
 import client.maphandler.AnimTextureHolder;
 import pixi.core.textures.BaseTexture;
 import pixi.core.display.Container;
@@ -84,50 +85,12 @@ class PixiBlitter implements IMapDrawer {
     public function draw(info:MapDrawingInfo) {
         preDraw(info);
 
-        pos = new Int3(0, 0, topTile.z);
 
-        realPos.x = initPos.x;
-        pos.x = topTile.x;
-        for (i in 0...tileCount.x) {
-            if (pos.x < 0 || pos.x >= data.sizes.x) {
-                continue;
-            }
+        drawLayer(drawTileTerrain, info.showAllTerrain);
+        drawLayer(drawRiver, info.showAllTerrain);
+        drawLayer(drawRoad, info.showAllTerrain);
 
-            realPos.y = initPos.y;
-            pos.y = topTile.y;
-            for (j in 0...tileCount.y) {
-                if (pos.y < 0 || pos.y >= data.sizes.y) {
-                    continue;
-                }
-
-                var isVisible:Bool = canDrawCurrentTile();
-
-                realTileRect.x = realPos.x;
-                realTileRect.y = realPos.y;
-
-                var tile:TerrainTile2 = data.ttiles.get(pos.x).get(pos.y).get(pos.z);
-                var tinfo:TerrainTile = data.map.getTileByInt3(pos);
-                var tinfoUpper:TerrainTile = pos.y > 0 ? data.map.getTile(pos.x, pos.y - 1, pos.z) : null;
-
-                if (isVisible || info.showAllTerrain) {
-                    drawTileTerrain(tinfo, tile);
-                    if (tinfo.riverType != RiverType.NO_RIVER) {
-                        drawRiver(tinfo);
-                    }
-                    drawRoad(tinfo, tinfoUpper, i, j);
-                }
-
-                if (isVisible) {
-                    drawObjects(tile);
-                }
-
-                pos.y++;
-                realPos.y += tileSize;
-            }
-
-            pos.x++;
-            realPos.x += tileSize;
-        }
+        drawLayer(drawObjects, false);
 
         realPos.x = initPos.x;
         pos.x = topTile.x;
@@ -215,6 +178,45 @@ class PixiBlitter implements IMapDrawer {
         }
     }
 
+    function drawLayer(func:TerrainTile->TerrainTile->TerrainTile2->Void, showAll:Bool) {
+        pos = new Int3(0, 0, topTile.z);
+
+        realPos.x = initPos.x;
+        pos.x = topTile.x;
+        for (i in 0...tileCount.x) {
+            if (pos.x < 0 || pos.x >= data.sizes.x) {
+                continue;
+            }
+
+            realPos.y = initPos.y;
+            pos.y = topTile.y;
+            for (j in 0...tileCount.y) {
+                if (pos.y < 0 || pos.y >= data.sizes.y) {
+                    continue;
+                }
+
+                var isVisible:Bool = canDrawCurrentTile();
+
+                realTileRect.x = realPos.x;
+                realTileRect.y = realPos.y;
+
+                var tile:TerrainTile2 = data.ttiles.get(pos.x).get(pos.y).get(pos.z);
+                var tinfo:TerrainTile = data.map.getTileByInt3(pos);
+                var tinfoUpper:TerrainTile = pos.y > 0 ? data.map.getTile(pos.x, pos.y - 1, pos.z) : null;
+
+                if(isVisible || showAll) {
+                    func(tinfo, tinfoUpper, tile);
+                }
+
+                pos.y++;
+                realPos.y += tileSize;
+            }
+
+            pos.x++;
+            realPos.x += tileSize;
+        }
+    }
+
     function preDraw(drawingInfo:MapDrawingInfo):Void {
         info = drawingInfo;
         // Width and height of the portion of the map to process. Units in tiles.
@@ -278,21 +280,25 @@ class PixiBlitter implements IMapDrawer {
         return obj.ID == Obj.HERO || obj.coveringAt(pos.x, pos.y);
     }
 
-    function drawTileTerrain(tinfo:TerrainTile, tile:TerrainTile2) {
+    function drawTileTerrain(tinfo:TerrainTile, tinfoUpper:TerrainTile = null, tile:TerrainTile2 = null) {
         var destRect = new Rect(realTileRect.x, realTileRect.y, realTileRect.w, realTileRect.h);
         var rotation:Int = tinfo.extTileFlags % 4;
 
         drawElement(graphics.terrainImages[tinfo.terType][tinfo.terView], null, destRect, rotation);
     }
 
-    function drawRiver(tinfo:TerrainTile) {
+    function drawRiver(tinfo:TerrainTile, tinfoUpper:TerrainTile = null, tile:TerrainTile2 = null) {
+        if(tinfo.riverType == RiverType.NO_RIVER) {
+            return;
+        }
+
         var destRect = Rect.fromRect(realTileRect);
         var rotation = (tinfo.extTileFlags >> 2) % 4;
 
         drawElement(graphics.riverImages[tinfo.riverType-1][tinfo.riverDir], null, destRect, rotation);
     }
 
-    function drawRoad(tinfo:TerrainTile, tinfoUpper:TerrainTile, i:Int, j:Int) {
+    function drawRoad(tinfo:TerrainTile, tinfoUpper:TerrainTile, tile:TerrainTile2 = null) {
         if (tinfoUpper != null && tinfoUpper.roadType != RoadType.NO_ROAD) {
             var rotation:Int = (tinfoUpper.extTileFlags >> 4) % 4;
             var source = new Rect(0, halfTileSizeCeil, tileSize, halfTileSizeCeil);
@@ -308,7 +314,7 @@ class PixiBlitter implements IMapDrawer {
         }
     }
 
-    function drawObjects(tile:TerrainTile2) {
+    function drawObjects(a:TerrainTile, b:TerrainTile, tile:TerrainTile2) {
         var objects = tile.objects;
         for(object in objects) {
             if (object.fadeAnimKey >= 0) {
@@ -368,6 +374,9 @@ class PixiBlitter implements IMapDrawer {
     }
 
     function drawElement(source:Texture, src:Rect, dest:Rect, rotation:Int = 0) {
+        if(src != null && (src.x > 0 || src.y > 0)) {
+            return;
+        }
         var sprite = new Sprite(source);
         sprite.x = dest.x;
         sprite.y = dest.y;

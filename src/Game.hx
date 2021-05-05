@@ -122,6 +122,7 @@ class Game {
         if(delta > 20) {
             delta = delta % 20;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            app.stage.removeChildren();
             renderMap();
         }
         oldTimestamp = timestamp;
@@ -129,8 +130,6 @@ class Game {
     }
 
     var animValHitCount = 0;
-
-    var pixiDrawn = false;
 
     function renderMap() {
         animValHitCount++;
@@ -142,9 +141,6 @@ class Game {
         info.anim = animFrame;
         info.heroAnim = 6;
         normalBlitter.draw(info);
-        if(!pixiDrawn) {
-            pixiDrawn = true;
-            pixiBlitter.draw(info);
-        }
+        pixiBlitter.draw(info);
     }
 }
