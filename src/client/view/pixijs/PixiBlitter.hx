@@ -85,12 +85,11 @@ class PixiBlitter implements IMapDrawer {
     public function draw(info:MapDrawingInfo) {
         preDraw(info);
 
-
         drawLayer(drawTileTerrain, info.showAllTerrain);
         drawLayer(drawRiver, info.showAllTerrain);
         drawLayer(drawRoad, info.showAllTerrain);
 
-        drawLayer(drawObjects, false);
+        drawObjects();
 
         realPos.x = initPos.x;
         pos.x = topTile.x;
@@ -178,20 +177,20 @@ class PixiBlitter implements IMapDrawer {
         }
     }
 
-    function drawLayer(func:TerrainTile->TerrainTile->TerrainTile2->Void, showAll:Bool) {
+    function drawLayer(func:TerrainTile->TerrainTile2->Void, showAll:Bool) {
         pos = new Int3(0, 0, topTile.z);
 
-        realPos.x = initPos.x;
-        pos.x = topTile.x;
-        for (i in 0...tileCount.x) {
-            if (pos.x < 0 || pos.x >= data.sizes.x) {
+        realPos.y = initPos.y;
+        pos.y = topTile.y;
+        for (j in 0...tileCount.y) {
+            if (pos.y < 0 || pos.y >= data.sizes.y) {
                 continue;
             }
 
-            realPos.y = initPos.y;
-            pos.y = topTile.y;
-            for (j in 0...tileCount.y) {
-                if (pos.y < 0 || pos.y >= data.sizes.y) {
+            realPos.x = initPos.x;
+            pos.x = topTile.x;
+            for (i in 0...tileCount.x) {
+                if (pos.x < 0 || pos.x >= data.sizes.x) {
                     continue;
                 }
 
@@ -201,19 +200,25 @@ class PixiBlitter implements IMapDrawer {
                 realTileRect.y = realPos.y;
 
                 var tile:TerrainTile2 = data.ttiles.get(pos.x).get(pos.y).get(pos.z);
-                var tinfo:TerrainTile = data.map.getTileByInt3(pos);
-                var tinfoUpper:TerrainTile = pos.y > 0 ? data.map.getTile(pos.x, pos.y - 1, pos.z) : null;
+                var tinfo:TerrainTile = null;
+                try {
+                    tinfo = data.map.getTileByInt3(pos);
 
-                if(isVisible || showAll) {
-                    func(tinfo, tinfoUpper, tile);
+                } catch(e:Dynamic) {
+                    trace("");
+
                 }
 
-                pos.y++;
-                realPos.y += tileSize;
+                if(isVisible || showAll) {
+                    func(tinfo, tile);
+                }
+
+                pos.x++;
+                realPos.x += tileSize;
             }
 
-            pos.x++;
-            realPos.x += tileSize;
+            pos.y++;
+            realPos.y += tileSize;
         }
     }
 
@@ -280,14 +285,14 @@ class PixiBlitter implements IMapDrawer {
         return obj.ID == Obj.HERO || obj.coveringAt(pos.x, pos.y);
     }
 
-    function drawTileTerrain(tinfo:TerrainTile, tinfoUpper:TerrainTile = null, tile:TerrainTile2 = null) {
+    function drawTileTerrain(tinfo:TerrainTile, tile:TerrainTile2 = null) {
         var destRect = new Rect(realTileRect.x, realTileRect.y, realTileRect.w, realTileRect.h);
         var rotation:Int = tinfo.extTileFlags % 4;
 
         drawElement(graphics.terrainImages[tinfo.terType][tinfo.terView], null, destRect, rotation);
     }
 
-    function drawRiver(tinfo:TerrainTile, tinfoUpper:TerrainTile = null, tile:TerrainTile2 = null) {
+    function drawRiver(tinfo:TerrainTile, tile:TerrainTile2 = null) {
         if(tinfo.riverType == RiverType.NO_RIVER) {
             return;
         }
@@ -298,51 +303,40 @@ class PixiBlitter implements IMapDrawer {
         drawElement(graphics.riverImages[tinfo.riverType-1][tinfo.riverDir], null, destRect, rotation);
     }
 
-    function drawRoad(tinfo:TerrainTile, tinfoUpper:TerrainTile, tile:TerrainTile2 = null) {
-        if (tinfoUpper != null && tinfoUpper.roadType != RoadType.NO_ROAD) {
-            var rotation:Int = (tinfoUpper.extTileFlags >> 4) % 4;
-            var source = new Rect(0, halfTileSizeCeil, tileSize, halfTileSizeCeil);
-            var dest = new Rect(realPos.x, realPos.y, tileSize, halfTileSizeCeil);
-            drawElement(graphics.roadImages[tinfoUpper.roadType - 1][tinfoUpper.roadDir], source, dest, rotation);
-        }
-
+    function drawRoad(tinfo:TerrainTile, tile:TerrainTile2 = null) {
         if(tinfo.roadType != RoadType.NO_ROAD) {//print road from this tile
             var rotation:Int = (tinfo.extTileFlags >> 4) % 4;
-            var source = new Rect(0, 0, tileSize, halfTileSizeCeil);
-            var dest = new Rect(realPos.x, realPos.y + halfTileSizeCeil, tileSize, halfTileSizeCeil);
+            var source = new Rect(0, 0, tileSize, tileSize);
+            var dest = new Rect(realPos.x, realPos.y + halfTileSizeCeil, tileSize, tileSize);
             drawElement(graphics.roadImages[tinfo.roadType - 1][tinfo.roadDir], source, dest, rotation);
         }
     }
 
-    function drawObjects(a:TerrainTile, b:TerrainTile, tile:TerrainTile2) {
-        var objects = tile.objects;
-        for(object in objects) {
-            if (object.fadeAnimKey >= 0) {
-                //ToDo
-                continue;
-            }
+    function drawObjects() {
+        for(object in data.map.objects) {
+//            if (object.fadeAnimKey >= 0) {
+//                //ToDo
+//                continue;
+//            }
 
-            var obj:GObjectInstance = object.obj;
+            var obj:GObjectInstance = object;
             if (obj == null) {
                 trace("Stray map object that isn't fading");
                 continue;
             }
 
-            if (!canDrawObject(obj))
-                continue;
+//            if (!canDrawObject(obj))
+//                continue;
 
             var objData = findObjectBitmap(obj, info.anim);
             if (objData.objBitmap != null) {
-                var srcRect = new Rect(object.rect.x, object.rect.y, tileSize, tileSize);
-
-                drawObject(objData.objBitmap, srcRect, objData.isMoving);
+                drawObject(objData.objBitmap, new Rect(initPos.x + (object.pos.x - topTile.x - object.getWidth() + 1) * tileSize, initPos.y + (object.pos.y - topTile.y - object.getHeight() + 1) * tileSize, object.getWidth() * tileSize, object.getHeight() * tileSize), objData.isMoving);
             }
         }
     }
 
-    function drawObject(source:Texture, sourceRect:Rect, moving:Bool) {
-        var dstRect = Rect.fromRect(realTileRect);
-        drawElement(source, sourceRect, dstRect);
+    function drawObject(source:Texture, positionRect:Rect, moving:Bool) {
+        drawElement(source, null, positionRect);
     }
 
     function findObjectBitmap(obj:GObjectInstance, anim:Int):AnimTextureHolder {
@@ -374,12 +368,11 @@ class PixiBlitter implements IMapDrawer {
     }
 
     function drawElement(source:Texture, src:Rect, dest:Rect, rotation:Int = 0) {
-        if(src != null && (src.x > 0 || src.y > 0)) {
-            return;
-        }
+        var paddingX = 0;
+        var paddingY = 0;
         var sprite = new Sprite(source);
-        sprite.x = dest.x;
-        sprite.y = dest.y;
+        sprite.x = dest.x - paddingX;
+        sprite.y = dest.y - paddingY;
         if (rotation == 2 || rotation == 3) {
             sprite.position.y += dest.h;
             sprite.scale.y = -1;

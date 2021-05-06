@@ -122,10 +122,7 @@ class MapData {
 
     function initObjectRects() {
         // values are inverted from original
-        var objectBlitOrderSorter = function(aa:TerrainTileObject, bb:TerrainTileObject):Int {
-            var a = aa.obj;
-            var b = bb.obj;
-
+        var objectsSorter = function(a:GObjectInstance, b:GObjectInstance) {
             if (a == null)
                 return -1;
             if (b == null)
@@ -148,6 +145,9 @@ class MapData {
             if(a.pos.x < b.pos.x)
                 return -1;
             return 1;
+        }
+        var objectBlitOrderSorter = function(aa:TerrainTileObject, bb:TerrainTileObject):Int {
+            return objectsSorter(aa.obj, bb.obj);
         }
 
         //initializing objects / rects
@@ -197,5 +197,8 @@ class MapData {
                 }
             }
         }
+
+        // for pixi
+        map.objects.sort(objectsSorter);
     }
 }
