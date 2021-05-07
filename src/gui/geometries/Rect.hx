@@ -17,4 +17,30 @@ class Rect {
     public static inline function fromRect(srcRect:Rect):Rect {
         return new Rect(srcRect.x, srcRect.y, srcRect.w, srcRect.h);
     }
+
+    public static inline function fromRightBottom(x:Int, y:Int, w:Int, h:Int):Rect {
+        return new Rect(x - w, y - h, w, h);
+    }
+
+    // rewrite to getters
+    public inline function left() {
+        return x;
+    }
+
+    public inline function top() {
+        return y;
+    }
+
+    public inline function right() {
+        return x + w;
+    }
+
+    public inline function bottom() {
+        return y + h;
+    }
+
+    public inline function cross(rect:Rect) {
+        return ((x <= rect.x && rect.x <= right() || x <= rect.right() && rect.right() <= right())
+            && (y <= rect.y && rect.y <= bottom() || y <= rect.bottom() && rect.bottom() <= bottom()));
+    }
 }

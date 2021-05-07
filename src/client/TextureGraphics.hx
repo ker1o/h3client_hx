@@ -1,7 +1,7 @@
 package client;
 
 import client.view.pixijs.PixiAnimation;
-import client.Graphics.FlippedAnimations;
+import client.SdlGraphics.FlippedAnimations;
 import pixi.core.textures.Texture;
 import gui.Animation;
 import js.lib.Promise;
@@ -58,7 +58,7 @@ class TextureGraphics {
         } else if (mapObjectAnimationPromises.exists(animationName)) {
             return mapObjectAnimationPromises.get(animationName);
         } else {
-            var animation = Graphics.instance.getAnimation(obj);
+            var animation = SdlGraphics.instance.getAnimation(obj);
             var animatedSpritePromise = loadPixiAnimation(animation).then(function(pixiAnimation:PixiAnimation) {
                 mapObjectAnimations.set(animationName, pixiAnimation);
                 mapObjectAnimationPromises.remove(animationName);
@@ -99,7 +99,7 @@ class TextureGraphics {
     }
 
     private function initTerrainGraphics():Promise<Bool> {
-        var graphics = Graphics.instance;
+        var graphics = SdlGraphics.instance;
 
         function fill(animations:FlippedAnimations, texturedAnimations:TFlippedAnimations, textures:TFlippedCache, spriteSheet:Spritesheet) {
             for(i in 0...animations.length) {

@@ -82,10 +82,10 @@ class MapData {
 
     function prepareFowDefs() {
         //assume all frames in group 0
-        var size:Int = Graphics.instance.fogOfWarFullHide.size(0);
+        var size:Int = SdlGraphics.instance.fogOfWarFullHide.size(0);
         fowFullHide = [];
         for(frame in 0...size) {
-            fowFullHide[frame] = Graphics.instance.fogOfWarFullHide.getImage(frame);
+            fowFullHide[frame] = SdlGraphics.instance.fogOfWarFullHide.getImage(frame);
         }
 
         //initialization of type of full-hide image
@@ -100,10 +100,10 @@ class MapData {
             }
         }
 
-        size = Graphics.instance.fogOfWarPartialHide.size(0);
+        size = SdlGraphics.instance.fogOfWarPartialHide.size(0);
         fowPartialHide = [];
         for(frame in 0...size) {
-            fowPartialHide[frame] = Graphics.instance.fogOfWarPartialHide.getImage(frame);
+            fowPartialHide[frame] = SdlGraphics.instance.fogOfWarPartialHide.getImage(frame);
         }
     }
 
@@ -160,7 +160,7 @@ class MapData {
                 continue;
             }
 
-            var animation:Animation = Graphics.instance.getAnimation(obj);
+            var animation:Animation = SdlGraphics.instance.getAnimation(obj);
 
             //no animation at all
             if (animation == null)

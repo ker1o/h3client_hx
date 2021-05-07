@@ -34,11 +34,11 @@ class MapBlitter implements IMapDrawer {
 
     private var settings:Dynamic;
 
-    var graphics:Graphics;
+    var graphics:SdlGraphics;
 
     public function new(data:MapData) {
         this.data = data;
-        graphics = Graphics.instance;
+        graphics = SdlGraphics.instance;
 
         tileSize = 0;
         halfTileSizeCeil = 0;
@@ -341,7 +341,7 @@ class MapBlitter implements IMapDrawer {
         }
 
         // normal object
-        var animation:Animation = Graphics.instance.getAnimation(obj);
+        var animation:Animation = SdlGraphics.instance.getAnimation(obj);
         var groupSize:Int = animation.size();
         if (groupSize == 0) {
             return new AnimBitmapHolder();
@@ -368,9 +368,9 @@ class MapBlitter implements IMapDrawer {
             //pick graphics of hero (or boat if hero is sailing)
             var animation:Animation;
             if (hero.boat != null) {
-                animation = Graphics.instance.boatAnimations[hero.boat.subID];
+                animation = SdlGraphics.instance.boatAnimations[hero.boat.subID];
             } else {
-                animation = Graphics.instance.heroAnimations[hero.appearance.animationFile];
+                animation = SdlGraphics.instance.heroAnimations[hero.appearance.animationFile];
             }
 
             var moving = !hero.isStanding;
@@ -402,7 +402,7 @@ class MapBlitter implements IMapDrawer {
     }
 
     public function findBoatBitmap(boat:GBoat, anim:Int):AnimBitmapHolder {
-        var animation = Graphics.instance.boatAnimations[boat.subID];
+        var animation = SdlGraphics.instance.boatAnimations[boat.subID];
         var group:Int = getHeroFrameGroup(boat.direction, false);
         if (animation.size(group) > 0) {
             return new AnimBitmapHolder(animation.getImage(anim % animation.size(group), group));
@@ -412,17 +412,17 @@ class MapBlitter implements IMapDrawer {
     }
 
     private function findHeroFlagBitmap(hero:GHeroInstance, anim:Int, color:PlayerColor, group:Int):IImage {
-        return findFlagBitmapInternal(Graphics.instance.heroFlagAnimations[color.getNum()], anim, group, hero.moveDir, !hero.isStanding);
+        return findFlagBitmapInternal(SdlGraphics.instance.heroFlagAnimations[color.getNum()], anim, group, hero.moveDir, !hero.isStanding);
     }
 
     private function findBoatFlagBitmap(boat:GBoat, anim:Int, color:PlayerColor, group:Int, dir:Int):IImage {
         var boatType:Int = boat.subID;
-        if (boatType < 0 || boatType >= Graphics.instance.boatFlagAnimations.length) {
+        if (boatType < 0 || boatType >= SdlGraphics.instance.boatFlagAnimations.length) {
             trace('Not supported boat subtype: ${boat.subID}');
             return null;
         }
 
-        var subtypeFlags = Graphics.instance.boatFlagAnimations[boatType];
+        var subtypeFlags = SdlGraphics.instance.boatFlagAnimations[boatType];
 
         var colorIndex:Int = color.getNum();
 

@@ -12,7 +12,7 @@ import pixi.core.Application;
 import gui.geometries.Rect;
 import client.maphandler.MapDrawingInfo;
 import utils.Int3;
-import client.Graphics;
+import client.SdlGraphics;
 import mapping.MapBody;
 import client.maphandler.MapData;
 import client.GameInfo;
@@ -60,7 +60,7 @@ class Game {
                 VLC.instance.loadFilesystem();
                 VLC.instance.init();
                 gameInfo.setFromLib();
-                Graphics.instance.load();
+                SdlGraphics.instance.load();
                 return TextureGraphics.instance.load();
             })
             .then(function(_) {
