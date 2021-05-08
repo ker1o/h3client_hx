@@ -12,7 +12,7 @@ import mapping.MapBody;
 import utils.Int3;
 
 class MapData {
-    public var ttiles:PseudoV<PseudoV<PseudoV<TerrainTile2>>> = new PseudoV<PseudoV<PseudoV<TerrainTile2>>>(); //informations about map tiles
+    public var ttiles = new Array<Array<Array<TerrainTile2>>>(); //informations about map tiles
 
     public var sizes:Int3; //map size (x = width, y = height, z = number of levels)
     public var map:MapBody;
@@ -109,15 +109,22 @@ class MapData {
 
     function initMapTiles() {
         // Create enough room for the whole map and its frame
-        ttiles.resize(sizes.x, frameW, frameW, PseudoV);
-        for (i in (0 - frameW)...(ttiles.size() - frameW)) {
-            ttiles.get(i).resize(sizes.y, frameH, frameH, PseudoV);
-        }
-        for (i in (0 - frameW)...(ttiles.size() - frameW)) {
-            for (j in (0 - frameH)...(sizes.y + frameH)) {
-                ttiles.get(i).get(j).resize(sizes.z, 0, 0, TerrainTile2);
+        for(i in 0...sizes.x) {
+            ttiles.push([]);
+            for(j in 0...sizes.y) {
+                ttiles[i].push([]);
+                ttiles[i][j] = [for(z in 0...sizes.z) new TerrainTile2()];
             }
         }
+//        ttiles.resize(sizes.x, frameW, frameW, PseudoV);
+//        for (i in (0 - frameW)...(ttiles.size() - frameW)) {
+//            ttiles.get(i).resize(sizes.y, frameH, frameH, PseudoV);
+//        }
+//        for (i in (0 - frameW)...(ttiles.size() - frameW)) {
+//            for (j in (0 - frameH)...(sizes.y + frameH)) {
+//                ttiles.get(i).get(j).resize(sizes.z, 0, 0, TerrainTile2);
+//            }
+//        }
     }
 
     function initObjectRects() {
@@ -184,16 +191,16 @@ class MapData {
                         obj.coveringAt(currTile.x, currTile.y) // object is visible here
                     )
                     {
-                        ttiles.get(currTile.x).get(currTile.y).get(currTile.z).objects.push(toAdd);
+                        ttiles[currTile.x][currTile.y][currTile.z].objects.push(toAdd);
                     }
                 }
             }
         }
 
-        for(ix in 0...(ttiles.size() - frameW)) {
-            for(iy in 0...(ttiles.get(0).size() - frameH)) {
-                for(iz in 0...ttiles.get(0).get(0).size()) {
-                    ttiles.get(ix).get(iy).get(iz).objects.sort(objectBlitOrderSorter);
+        for(ix in 0...ttiles.length) {
+            for(iy in 0...ttiles[0].length) {
+                for(iz in 0...ttiles[0][0].length) {
+                    ttiles[ix][iy][iz].objects.sort(objectBlitOrderSorter);
                 }
             }
         }

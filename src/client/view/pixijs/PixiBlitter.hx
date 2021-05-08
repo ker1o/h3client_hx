@@ -96,7 +96,7 @@ class PixiBlitter implements IMapDrawer {
                 if (pos.x < 0 || pos.x >= data.sizes.x || pos.y < 0 || pos.y >= data.sizes.y) {
 //                    drawFrame();
                 } else {
-                    var tile:TerrainTile2 = data.ttiles.get(pos.x).get(pos.y).get(pos.z);
+                    var tile:TerrainTile2 = data.ttiles[pos.x][pos.y][pos.z];
 
 //                    if(!(settings.field("session").field("spectate"):Bool) && !info.visibilityMap[pos.x][pos.y][topTile.z] && !info.showAllTerrain) {
 //                        drawFow();

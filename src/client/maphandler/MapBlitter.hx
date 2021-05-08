@@ -92,7 +92,7 @@ class MapBlitter implements IMapDrawer {
                 realTileRect.x = realPos.x;
                 realTileRect.y = realPos.y;
 
-                var tile:TerrainTile2 = data.ttiles.get(pos.x).get(pos.y).get(pos.z);
+                var tile:TerrainTile2 = data.ttiles[pos.x][pos.y][pos.z];
                 var tinfo:TerrainTile = data.map.getTileByInt3(pos);
                 var tinfoUpper:TerrainTile = pos.y > 0 ? data.map.getTile(pos.x, pos.y - 1, pos.z) : null;
 
@@ -128,7 +128,7 @@ class MapBlitter implements IMapDrawer {
                 if (pos.x < 0 || pos.x >= data.sizes.x || pos.y < 0 || pos.y >= data.sizes.y) {
                     drawFrame();
                 } else {
-                    var tile:TerrainTile2 = data.ttiles.get(pos.x).get(pos.y).get(pos.z);
+                    var tile:TerrainTile2 = data.ttiles[pos.x][pos.y][pos.z];
 
                     if(!(settings.field("session").field("spectate"):Bool) && !info.visibilityMap[pos.x][pos.y][topTile.z] && !info.showAllTerrain) {
                         drawFow();
