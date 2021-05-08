@@ -97,7 +97,7 @@ class Game {
     }
 
     function initPixiRendering():Promise<Dynamic> {
-        app = new Application({width: 704, height: 704});
+        app = new Application({width: MAP_SCREEN_TILED_WIDTH * 32, height: MAP_SCREEN_TILED_HEIGHT * 32});
         Browser.document.body.appendChild(app.view);
         pixiBlitter = new PixiBlitter(gameInfo.mapData, app.stage);
         return pixiBlitter.initAtlases();

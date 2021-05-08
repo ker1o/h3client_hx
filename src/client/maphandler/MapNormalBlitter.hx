@@ -19,13 +19,10 @@ class MapNormalBlitter extends MapBlitter {
 
     override function preDraw(drawingInfo:MapDrawingInfo):Void {
         info = drawingInfo;
-        // Width and height of the portion of the map to process. Units in tiles.
-        tileCount.x = data.tilesW;
-        tileCount.y = data.tilesH;
 
         topTile = info.topTile;
-        initPos.x = data.offsetX + info.drawBounds.x;
-        initPos.y = data.offsetY + info.drawBounds.y;
+        initPos.x = info.drawBounds.x;
+        initPos.y = info.drawBounds.y;
 
         realTileRect = new Rect(initPos.x, initPos.y, tileSize, tileSize);
 
@@ -50,20 +47,6 @@ class MapNormalBlitter extends MapBlitter {
                 topTile.y--;
                 initPos.y -= tileSize;
             }
-        }
-
-        // Reduce sizes if we go out of the full map.
-        if (topTile.x < -data.frameW) {
-            topTile.x = -data.frameW;
-        }
-        if (topTile.y < -data.frameH) {
-            topTile.y = -data.frameH;
-        }
-        if (topTile.x + tileCount.x > data.sizes.x + data.frameW) {
-            tileCount.x = data.sizes.x + data.frameW - topTile.x;
-        }
-        if (topTile.y + tileCount.y > data.sizes.y + data.frameH) {
-            tileCount.y = data.sizes.y + data.frameH - topTile.y;
         }
     }
 

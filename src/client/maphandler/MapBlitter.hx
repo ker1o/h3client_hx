@@ -61,6 +61,25 @@ class MapBlitter implements IMapDrawer {
                 showGrid:false
             }
         };
+
+        calculateTileSize();
+    }
+
+    function calculateTileSize() {
+        // calculate tiles that fit drawing area
+        var mapW = Game.MAP_SCREEN_TILED_WIDTH * 32;
+        var mapH = Game.MAP_SCREEN_TILED_HEIGHT * 32;
+        // Total number of visible tiles. Subtract the center tile, then
+        // compute the number of tiles on each side, and reassemble.
+        var t1:Int;
+        var t2:Int;
+        t1 = Std.int((mapW - 32) / 2);
+        t2 = mapW - 32 - t1;
+        tileCount.x = Std.int(1 + (t1 + 31) / 32 + (t2 + 31) / 32);
+
+        t1 = Std.int((mapH - 32) / 2);
+        t2 = mapH - 32 - t1;
+        tileCount.y = Std.int(1 + (t1 + 31) / 32 + (t2 + 31) / 32);
     }
 
     /// initializes frame-drawing (called at the start of every redraw)

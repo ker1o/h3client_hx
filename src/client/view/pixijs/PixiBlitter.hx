@@ -63,7 +63,27 @@ class PixiBlitter implements IMapDrawer {
             }
         };
 
+        // for tiles grid
         graphicLayer = new Graphics();
+
+        calculateTileSize();
+    }
+
+    function calculateTileSize() {
+        // calculate tiles that fit drawing area
+        var mapW = Game.MAP_SCREEN_TILED_WIDTH * 32;
+        var mapH = Game.MAP_SCREEN_TILED_HEIGHT * 32;
+        // Total number of visible tiles. Subtract the center tile, then
+        // compute the number of tiles on each side, and reassemble.
+        var t1:Int;
+        var t2:Int;
+        t1 = Std.int((mapW - 32) / 2);
+        t2 = mapW - 32 - t1;
+        tileCount.x = Std.int(1 + (t1 + 31) / 32 + (t2 + 31) / 32);
+
+        t1 = Std.int((mapH - 32) / 2);
+        t2 = mapH - 32 - t1;
+        tileCount.y = Std.int(1 + (t1 + 31) / 32 + (t2 + 31) / 32);
     }
 
     public function initAtlases():Promise<Array<Dynamic>> {
@@ -175,12 +195,9 @@ class PixiBlitter implements IMapDrawer {
     function preDraw(drawingInfo:MapDrawingInfo):Void {
         info = drawingInfo;
         // Width and height of the portion of the map to process. Units in tiles.
-        tileCount.x = data.tilesW;
-        tileCount.y = data.tilesH;
-
         topTile = info.topTile;
-        initPos.x = data.offsetX + info.drawBounds.x;
-        initPos.y = data.offsetY + info.drawBounds.y;
+        initPos.x = info.drawBounds.x;
+        initPos.y = info.drawBounds.y;
 
         // If moving, we need to add an extra column/line
         if (info.movement.x != 0) {
@@ -203,20 +220,6 @@ class PixiBlitter implements IMapDrawer {
                 topTile.y--;
                 initPos.y -= tileSize;
             }
-        }
-
-        // Reduce sizes if we go out of the full map.
-        if (topTile.x < -data.frameW) {
-            topTile.x = -data.frameW;
-        }
-        if (topTile.y < -data.frameH) {
-            topTile.y = -data.frameH;
-        }
-        if (topTile.x + tileCount.x > data.sizes.x + data.frameW) {
-            tileCount.x = data.sizes.x + data.frameW - topTile.x;
-        }
-        if (topTile.y + tileCount.y > data.sizes.y + data.frameH) {
-            tileCount.y = data.sizes.y + data.frameH - topTile.y;
         }
     }
 

@@ -17,21 +17,6 @@ class MapData {
     public var sizes:Int3; //map size (x = width, y = height, z = number of levels)
     public var map:MapBody;
 
-    // Max number of tiles that will fit in the map screen. Tiles
-    // can be partial on each edges.
-    public var tilesW:Int = 0;
-    public var tilesH:Int = 0;
-
-    // size of each side of the frame around the whole map, in tiles
-    public var frameH:Int = 0;
-    public var frameW:Int = 0;
-
-    // Coord in pixels of the top left corner of the top left tile to
-    // draw. Values range is [-31..0]. A negative value
-    // implies that part of the tile won't be displayed.
-    public var offsetX:Int = 0;
-    public var offsetY:Int = 0;
-
     //Fog of War cache (not owned)
     public var fowFullHide:Array<IImage>;
     public var hideBitmap:Array<Array<Array<Int>>>; //frame indexes (in FoWfullHide) of graphic that should be used to fully hide a tile
@@ -43,36 +28,11 @@ class MapData {
     public function new() {}
 
     public function init() {
-        // Size of visible terrain.
-        var mapW:Int = Game.MAP_SCREEN_TILED_WIDTH * 32; /*conf.go().ac.advmapW*/
-        var mapH:Int = Game.MAP_SCREEN_TILED_HEIGHT * 32; /*conf.go().ac.advmapH*/
-
         //sizes of terrain
         sizes = new Int3();
         sizes.x = map.width;
         sizes.y = map.height;
         sizes.z = map.twoLevel ? 2 : 1;
-
-        // Total number of visible tiles. Subtract the center tile, then
-        // compute the number of tiles on each side, and reassemble.
-        var t1:Int;
-        var t2:Int;
-        t1 = Std.int((mapW - 32) / 2);
-        t2 = mapW - 32 - t1;
-        tilesW = Std.int(1 + (t1 + 31) / 32 + (t2 + 31) / 32);
-
-        t1 = Std.int((mapH - 32) / 2);
-        t2 = mapH - 32 - t1;
-        tilesH = Std.int(1 + (t1 + 31) / 32 + (t2 + 31) / 32);
-
-        // Size of the frame around the map. In extremes positions, the
-        // frame must not be on the center of the map, but right on the
-        // edge of the center tile.
-        frameW = Std.int((mapW + 31) /32 / 2);
-        frameH = Std.int((mapH + 31) /32 / 2);
-
-        offsetX = Std.int((mapW - (2 * frameW + 1) * 32) / 2);
-        offsetY = Std.int((mapH - (2 * frameH + 1) * 32) / 2);
 
         prepareFowDefs();
         initMapTiles();
@@ -108,23 +68,12 @@ class MapData {
     }
 
     function initMapTiles() {
-        // Create enough room for the whole map and its frame
         for(i in 0...sizes.x) {
             ttiles.push([]);
             for(j in 0...sizes.y) {
-                ttiles[i].push([]);
-                ttiles[i][j] = [for(z in 0...sizes.z) new TerrainTile2()];
+                ttiles[i].push([for(z in 0...sizes.z) new TerrainTile2()]);
             }
         }
-//        ttiles.resize(sizes.x, frameW, frameW, PseudoV);
-//        for (i in (0 - frameW)...(ttiles.size() - frameW)) {
-//            ttiles.get(i).resize(sizes.y, frameH, frameH, PseudoV);
-//        }
-//        for (i in (0 - frameW)...(ttiles.size() - frameW)) {
-//            for (j in (0 - frameH)...(sizes.y + frameH)) {
-//                ttiles.get(i).get(j).resize(sizes.z, 0, 0, TerrainTile2);
-//            }
-//        }
     }
 
     function initObjectRects() {
