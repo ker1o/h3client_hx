@@ -236,7 +236,6 @@ class PixiBlitter implements IMapDrawer {
     function drawTileTerrain(tinfo:TerrainTile) {
         var destRect = new Rect(realPos.x, realPos.y, tileSize, tileSize);
         var rotation:Int = tinfo.extTileFlags % 4;
-
         drawElement(graphics.terrainImages[tinfo.terType][tinfo.terView], null, destRect, rotation);
     }
 
@@ -244,25 +243,26 @@ class PixiBlitter implements IMapDrawer {
         if(tinfo.riverType == RiverType.NO_RIVER) {
             return;
         }
-
         var destRect = new Rect(realPos.x, realPos.y, tileSize, tileSize);
         var rotation = (tinfo.extTileFlags >> 2) % 4;
-
         drawElement(graphics.riverImages[tinfo.riverType-1][tinfo.riverDir], null, destRect, rotation);
     }
 
     function drawRoad(tinfo:TerrainTile) {
-        if(tinfo.roadType != RoadType.NO_ROAD) {
-            var destRect = new Rect(realPos.x, realPos.y + halfTileSizeCeil, tileSize, tileSize);
-            var rotation:Int = (tinfo.extTileFlags >> 4) % 4;
-            drawElement(graphics.roadImages[tinfo.roadType - 1][tinfo.roadDir], null, destRect, rotation);
+        if(tinfo.roadType == RoadType.NO_ROAD) {
+            return;
         }
+        var destRect = new Rect(realPos.x, realPos.y + halfTileSizeCeil, tileSize, tileSize);
+        var rotation:Int = (tinfo.extTileFlags >> 4) % 4;
+        drawElement(graphics.roadImages[tinfo.roadType - 1][tinfo.roadDir], null, destRect, rotation);
     }
 
     function drawObjects() {
-        var canvasRect = new Rect(topTile.x, topTile.y, topTile.x + tileCount.x, tileCount.y);
+        var canvasBounds = new Rect(topTile.x, topTile.y, topTile.x + tileCount.x, tileCount.y);
+        var objectBounds = new Rect();
         for(object in data.map.objects) {
-            if (!canvasRect.cross(Rect.fromRightBottom(object.pos.x, object.pos.y, object.getWidth(), object.getHeight()))) {
+            objectBounds.update(object.getLeft(), object.getTop(), object.getWidth(), object.getHeight());
+            if (!canvasBounds.cross(objectBounds)) {
                 continue;
             }
 //            if (object.fadeAnimKey >= 0) {
@@ -280,13 +280,21 @@ class PixiBlitter implements IMapDrawer {
 
             var objData = findObjectBitmap(object, info.anim);
             if (objData.objBitmap != null) {
-                drawObject(objData.objBitmap, new Rect(initPos.x + (object.pos.x - topTile.x - object.getWidth() + 1) * tileSize, initPos.y + (object.pos.y - topTile.y - object.getHeight() + 1) * tileSize, object.getWidth() * tileSize, object.getHeight() * tileSize), objData.isMoving);
+                drawObject(
+                    objData.objBitmap,
+                    new Rect(
+                        initPos.x + (objectBounds.x - topTile.x) * tileSize,
+                        initPos.y + (objectBounds.y - topTile.y) * tileSize,
+                        objectBounds.w * tileSize,
+                        objectBounds.h * tileSize
+                    ),
+                    objData.isMoving);
             }
         }
     }
 
-    function drawObject(source:Texture, positionRect:Rect, moving:Bool) {
-        drawElement(source, null, positionRect);
+    function drawObject(source:Texture, drawRect:Rect, moving:Bool) {
+        drawElement(source, null, drawRect);
     }
 
     function findObjectBitmap(obj:GObjectInstance, anim:Int):AnimTextureHolder {
@@ -321,6 +329,8 @@ class PixiBlitter implements IMapDrawer {
         var sprite = new Sprite(source);
         sprite.x = dest.x;
         sprite.y = dest.y;
+
+        // flipping
         if (rotation == 2 || rotation == 3) {
             sprite.position.y += dest.h;
             sprite.scale.y = -1;
@@ -342,9 +352,10 @@ class PixiBlitter implements IMapDrawer {
         return data.animationPhase[object];
     }
 
+    // dangerous, leads browser crash in some time
     private function drawDebugGrid() {
-        graphicLayer.lineStyle(1, 0x555555);
         if ((settings.field("session").field("showGrid"):Bool)) {
+            graphicLayer.lineStyle(1, 0x555555);
             realPos.x = initPos.x;
             for (i in 0...tileCount.x) {
                 graphicLayer.moveTo(realPos.x, info.drawBounds.y);
@@ -357,7 +368,7 @@ class PixiBlitter implements IMapDrawer {
                 graphicLayer.lineTo(info.drawBounds.x + tileCount.y * tileSize, realPos.y);
                 realPos.y += tileSize;
             }
+            container.addChild(graphicLayer);
         }
-        container.addChild(graphicLayer);
     }
 }

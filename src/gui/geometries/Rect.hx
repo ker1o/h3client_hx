@@ -22,6 +22,13 @@ class Rect {
         return new Rect(x - w, y - h, w, h);
     }
 
+    public inline function update(x:Int, y:Int, w:Int, h:Int) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+    }
+
     // rewrite to getters
     public inline function left() {
         return x;
