@@ -6,7 +6,7 @@ import client.maphandler.IMapDrawer;
 import client.maphandler.MapData;
 import client.maphandler.MapDrawingInfo;
 import client.maphandler.NeighborTilesInfo;
-import client.maphandler.TerrainTile2;
+import client.maphandler.MapTile;
 import constants.Obj;
 import gui.geometries.Rect;
 import js.lib.Promise;
@@ -23,6 +23,8 @@ using Lambda;
 using Reflect;
 
 class PixiBlitter implements IMapDrawer {
+    private var FRAMES_PER_MOVE_ANIM_GROUP:Int = 8;
+
     var data:MapData;
     var container:Container;
 
@@ -116,11 +118,11 @@ class PixiBlitter implements IMapDrawer {
                 if (pos.x < 0 || pos.x >= data.sizes.x || pos.y < 0 || pos.y >= data.sizes.y) {
 //                    drawFrame();
                 } else {
-                    var tile:TerrainTile2 = data.ttiles[pos.x][pos.y][pos.z];
+                    var tile:MapTile = data.ttiles[pos.x][pos.y][pos.z];
 
-//                    if(!(settings.field("session").field("spectate"):Bool) && !info.visibilityMap[pos.x][pos.y][topTile.z] && !info.showAllTerrain) {
-//                        drawFow();
-//                    }
+                    if(!(settings.field("session").field("spectate"):Bool) && !info.visibilityMap[pos.x][pos.y][topTile.z] && !info.showAllTerrain) {
+//                        drawFow(pos);
+                    }
 
                     // overlay needs to be drawn over fow, because of artifacts-aura-like spells
 //                    drawTileOverlay(tile);
@@ -260,6 +262,26 @@ class PixiBlitter implements IMapDrawer {
         drawElement(graphics.roadImages[tinfo.roadType - 1][tinfo.roadDir], null, destRect, rotation);
     }
 
+    public function drawFow(pos:Int3) {
+        var neighborInfo = new NeighborTilesInfo(pos, data.sizes, info.visibilityMap, (settings.field("session").field("spectate"):Bool));
+
+        var retBitmapID:Int = neighborInfo.getBitmapID();// >=0 . partial hide, <0 - full hide
+        if (retBitmapID < 0) {
+            retBitmapID = - data.hideBitmap[pos.x][pos.y][pos.z] - 1; //fully hidden
+        }
+
+        var image:Texture;
+
+        if (retBitmapID >= 0) {
+            image = graphics.fogOfWarFullHide.getTexture(retBitmapID);
+        } else {
+            image = graphics.fogOfWarPartialHide.getTexture(-retBitmapID - 1);
+        }
+
+        var destRect = new Rect(realPos.x, realPos.y, tileSize, tileSize);
+        drawElement(image, null, destRect);
+    }
+
     function drawObjects() {
         var canvasBounds = new Rect(topTile.x, topTile.y, topTile.x + tileCount.x, tileCount.y);
         var objectBounds = new Rect();
@@ -292,12 +314,28 @@ class PixiBlitter implements IMapDrawer {
                         objectBounds.h * tileSize
                     ),
                     objData.isMoving);
+
+                if (objData.flagBitmap != null) {
+                    if (objData.isMoving) {
+//                        srcRect.y += FRAMES_PER_MOVE_ANIM_GROUP * 2 - tileSize;
+                        var dstRect = new Rect(object.pos.x, Std.int(object.pos.y - tileSize / 2), tileSize, tileSize);
+                        drawHeroFlag(objData.flagBitmap, /*srcRect*/null, dstRect, true);
+                    } else {
+                        var dstRect = new Rect(object.pos.x - 2 * tileSize, object.pos.y - tileSize, 3 * tileSize, 2 * tileSize);
+                        drawHeroFlag(objData.flagBitmap, null, dstRect, false);
+                    }
+                }
+
             }
         }
     }
 
     function drawObject(source:Texture, drawRect:Rect, moving:Bool) {
         drawElement(source, null, drawRect);
+    }
+
+    public function drawHeroFlag(source:Texture, sourceRect:Rect, destRect:Rect, moving:Bool) {
+        drawElement(source, sourceRect, destRect);
     }
 
     function findObjectBitmap(obj:GObjectInstance, anim:Int):AnimTextureHolder {

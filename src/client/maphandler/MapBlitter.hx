@@ -111,7 +111,7 @@ class MapBlitter implements IMapDrawer {
                 realTileRect.x = realPos.x;
                 realTileRect.y = realPos.y;
 
-                var tile:TerrainTile2 = data.ttiles[pos.x][pos.y][pos.z];
+                var tile:MapTile = data.ttiles[pos.x][pos.y][pos.z];
                 var tinfo:TerrainTile = data.map.getTileByInt3(pos);
                 var tinfoUpper:TerrainTile = pos.y > 0 ? data.map.getTile(pos.x, pos.y - 1, pos.z) : null;
 
@@ -147,7 +147,7 @@ class MapBlitter implements IMapDrawer {
                 if (pos.x < 0 || pos.x >= data.sizes.x || pos.y < 0 || pos.y >= data.sizes.y) {
                     drawFrame();
                 } else {
-                    var tile:TerrainTile2 = data.ttiles[pos.x][pos.y][pos.z];
+                    var tile:MapTile = data.ttiles[pos.x][pos.y][pos.z];
 
                     if(!(settings.field("session").field("spectate"):Bool) && !info.visibilityMap[pos.x][pos.y][topTile.z] && !info.showAllTerrain) {
                         drawFow();
@@ -237,7 +237,7 @@ class MapBlitter implements IMapDrawer {
         throw 'MapBlitter.postProcessing()';
     }
 
-    public function drawTileOverlay(tile:TerrainTile2) {
+    public function drawTileOverlay(tile:MapTile) {
         throw 'MapBlitter.drawTileOverlay()';
     }
 
@@ -257,7 +257,7 @@ class MapBlitter implements IMapDrawer {
         return !neighbors.areAllHidden();
     }
 
-    public function drawTileTerrain(tinfo:TerrainTile, tile:TerrainTile2) {
+    public function drawTileTerrain(tinfo:TerrainTile, tile:MapTile) {
         var destRect = new Rect(realTileRect.x, realTileRect.y, realTileRect.w, realTileRect.h);
         var rotation:Int = tinfo.extTileFlags % 4;
 
@@ -287,7 +287,7 @@ class MapBlitter implements IMapDrawer {
         }
     }
 
-    public function drawObjects(tile:TerrainTile2) {
+    public function drawObjects(tile:MapTile) {
         var objects = tile.objects;
         for(object in objects) {
             if (object.fadeAnimKey >= 0) {
@@ -496,9 +496,9 @@ class MapBlitter implements IMapDrawer {
         var image:IImage;
 
         if (retBitmapID >= 0) {
-            image = data.fowPartialHide[retBitmapID];
+            image = SdlGraphics.instance.fogOfWarFullHide.getImage(retBitmapID);
         } else {
-            image = data.fowFullHide[-retBitmapID - 1];
+            image = SdlGraphics.instance.fogOfWarPartialHide.getImage(-retBitmapID - 1);
         }
 
         var destRect = Rect.fromRect(realTileRect);

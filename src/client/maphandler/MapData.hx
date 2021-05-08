@@ -12,15 +12,13 @@ import mapping.MapBody;
 import utils.Int3;
 
 class MapData {
-    public var ttiles = new Array<Array<Array<TerrainTile2>>>(); //informations about map tiles
+    public var ttiles = new Array<Array<Array<MapTile>>>(); //informations about map tiles
 
     public var sizes:Int3; //map size (x = width, y = height, z = number of levels)
     public var map:MapBody;
 
     //Fog of War cache (not owned)
-    public var fowFullHide:Array<IImage>;
     public var hideBitmap:Array<Array<Array<Int>>>; //frame indexes (in FoWfullHide) of graphic that should be used to fully hide a tile
-    public var fowPartialHide:Array<IImage>;
     public var animationPhase:Map<GObjectInstance, Int> = new Map<GObjectInstance, Int>();
 
     private var fadeAnimCounter:Int = 0;
@@ -43,10 +41,6 @@ class MapData {
     function prepareFowDefs() {
         //assume all frames in group 0
         var size:Int = SdlGraphics.instance.fogOfWarFullHide.size(0);
-        fowFullHide = [];
-        for(frame in 0...size) {
-            fowFullHide[frame] = SdlGraphics.instance.fogOfWarFullHide.getImage(frame);
-        }
 
         //initialization of type of full-hide image
         hideBitmap = [];
@@ -59,19 +53,13 @@ class MapData {
                 }
             }
         }
-
-        size = SdlGraphics.instance.fogOfWarPartialHide.size(0);
-        fowPartialHide = [];
-        for(frame in 0...size) {
-            fowPartialHide[frame] = SdlGraphics.instance.fogOfWarPartialHide.getImage(frame);
-        }
     }
 
     function initMapTiles() {
         for(i in 0...sizes.x) {
             ttiles.push([]);
             for(j in 0...sizes.y) {
-                ttiles[i].push([for(z in 0...sizes.z) new TerrainTile2()]);
+                ttiles[i].push([for(z in 0...sizes.z) new MapTile()]);
             }
         }
     }
@@ -102,7 +90,7 @@ class MapData {
                 return -1;
             return 1;
         }
-        var objectBlitOrderSorter = function(aa:TerrainTileObject, bb:TerrainTileObject):Int {
+        var objectBlitOrderSorter = function(aa:MapTileObject, bb:MapTileObject):Int {
             return objectsSorter(aa.obj, bb.obj);
         }
 
@@ -132,7 +120,7 @@ class MapData {
                 for(fy in 0...obj.getHeight()) {
                     var currTile = new Int3(obj.pos.x - fx, obj.pos.y - fy, obj.pos.z);
                     var cr:Rect = new Rect(image.width - fx * 32 - 32, image.height - fy * 32 - 32, 32, 32);
-                    var toAdd = new TerrainTileObject(obj, cr, obj.visitableAt(currTile.x, currTile.y));
+                    var toAdd = new MapTileObject(obj, cr, obj.visitableAt(currTile.x, currTile.y));
 
                     if (map.isInTheMap(currTile) && // within map
                         cr.x + cr.w > 0 &&           // image has data on this tile

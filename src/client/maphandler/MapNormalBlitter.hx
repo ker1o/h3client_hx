@@ -60,7 +60,7 @@ class MapNormalBlitter extends MapBlitter {
         //ToDo
     }
 
-    override function drawTileOverlay(tile:TerrainTile2) {
+    override function drawTileOverlay(tile:MapTile) {
         //ToDo
     }
 

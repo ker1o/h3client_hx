@@ -3,7 +3,7 @@ package client.maphandler;
 import gui.geometries.Rect;
 import mapObjects.GObjectInstance;
 
-class TerrainTileObject {
+class MapTileObject {
     public var obj:GObjectInstance;
     public var rect:Rect;
     public var fadeAnimKey:Int;
