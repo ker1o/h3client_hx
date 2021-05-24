@@ -6,7 +6,7 @@ import artifacts.ArtHandler;
 import creature.CreatureHandler;
 import hero.HeroHandler;
 import mapObjects.ObjectClassesHandler;
-import mapObjects.ObjectsHandler;
+import mapObjects.ObjectHandler;
 import mod.ModHandler;
 import skill.SkillHandler;
 import spells.SpellHandler;
@@ -22,7 +22,7 @@ class GameInfo {
     public var creh:CreatureHandler;
     public var spellh:SpellHandler;
     public var skillh:SkillHandler;
-    public var objh:ObjectsHandler;
+    public var objh:ObjectHandler;
     public var objtypeh:ObjectClassesHandler;
     public var generaltexth:GeneralTextHandler;
     public var mapData:MapData;
