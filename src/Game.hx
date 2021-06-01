@@ -1,6 +1,10 @@
 package ;
-import pixi.core.textures.Texture;
-import pixi.core.sprites.Sprite;
+
+import mapObjects.AObjectTypeHandler;
+import mapObjects.GObjectInstance;
+import gamecallback.GameCallback;
+import gamecallback.IGameCallback;
+import gamestate.GameState;
 import client.TextureGraphics;
 import js.lib.Promise;
 import client.view.pixijs.PixiBlitter;
@@ -44,7 +48,12 @@ class Game {
     var canvas(default, null):CanvasElement;
     var ctx(default, null):CanvasRenderingContext2D;
 
+    var _gameCallback:GameCallback;
+
     public function new() {
+        _gameCallback = new GameCallback();
+        GObjectInstance.cb = _gameCallback;
+
         var mapName:String = "Vial of Life.h3m";
 
         gameInfo = new GameInfo();
@@ -68,16 +77,14 @@ class Game {
             })
             .then(function(_) {
                 var mapService = new MapService();
-                mapService.loadMapHeaderByName(mapName);
-                map = mapService.loadMapByName(mapName);
-                initMapData(map);
+                @:privateAccess _gameCallback._gs = new GameState();
+                @:privateAccess _gameCallback._gs.init(mapService);
 
+                initMapData();
                 return initPixiRendering();
             })
             .then(function(_) {
                 startRendering();
-//                var sprite = new Sprite(new Texture(TextureGraphics.instance.roadImages[1][1].baseTexture));
-//                app.stage.addChild(sprite);
             });
     }
 
@@ -103,10 +110,13 @@ class Game {
         return pixiBlitter.initAtlases();
     }
 
-    function initMapData(data:MapBody) {
+    function initMapData() {
         gameInfo.mapData = new MapData();
-        gameInfo.mapData.map = data;
+        gameInfo.mapData.map = @:privateAccess _gameCallback._gs.map;
         gameInfo.mapData.init();
+
+        // for checks on keyboards actions
+        map = gameInfo.mapData.map;
 
         canvas = cast Browser.document.getElementById("webgl");
         ctx = canvas.getContext2d();
@@ -140,7 +150,7 @@ class Game {
         info.otherheroAnim = true;
         info.anim = animFrame;
         info.heroAnim = 6;
-        normalBlitter.draw(info);
+//        normalBlitter.draw(info);
         pixiBlitter.draw(info);
     }
 }

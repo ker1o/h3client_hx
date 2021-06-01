@@ -1646,7 +1646,7 @@
                 { "town": 7, "h3": 19, "vcmi": 21 },
                 { "town": 8, "h3": 18, "vcmi": 21 }
             ]
-        }
+        },
         "config/startres.json": {
             "difficulty":
                 [

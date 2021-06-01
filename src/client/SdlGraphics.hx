@@ -38,6 +38,7 @@ class SdlGraphics {
     private function new() {
         boatAnimations = new Array<Animation>();
         mapObjectAnimations = new Map<String, Animation>();
+        heroAnimations = new Map<String, Animation>();
     }
 
     public function load() {
