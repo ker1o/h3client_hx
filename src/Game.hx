@@ -1,5 +1,6 @@
 package ;
 
+import constants.id.PlayerColor;
 import mapObjects.AObjectTypeHandler;
 import mapObjects.GObjectInstance;
 import gamecallback.GameCallback;
@@ -58,7 +59,6 @@ class Game {
 
         gameInfo = new GameInfo();
         topTile = new Int3(14, 76, 0);
-        info = new MapDrawingInfo(topTile, [[[]]], new Rect(0, 0, 594, 546));
 
         // init html objects
         initControls();
@@ -79,6 +79,9 @@ class Game {
                 var mapService = new MapService();
                 @:privateAccess _gameCallback._gs = new GameState();
                 @:privateAccess _gameCallback._gs.init(mapService);
+
+                var me = new PlayerColor(0);
+                info = new MapDrawingInfo(topTile, @:privateAccess _gameCallback._gs.getPlayerTeam(me).fogOfWarMap, new Rect(0, 0, 594, 546));
 
                 initMapData();
                 return initPixiRendering();

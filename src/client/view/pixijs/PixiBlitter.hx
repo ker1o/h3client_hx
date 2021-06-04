@@ -1,5 +1,8 @@
 package client.view.pixijs;
 
+import constants.id.PlayerColor;
+import mapObjects.misc.GBoat;
+import mapObjects.hero.GHeroInstance;
 import pixi.core.graphics.Graphics;
 import client.maphandler.AnimTextureHolder;
 import client.maphandler.IMapDrawer;
@@ -23,6 +26,9 @@ using Lambda;
 using Reflect;
 
 class PixiBlitter implements IMapDrawer {
+    private static var movingHeroFrameGroup:Array<Int> = [0xff, 10, 5, 6, 7, 8, 9, 12, 11];
+    private static var heroFrameGroup:Array<Int> = [0xff, 13, 0, 1, 2, 3, 4, 15, 14];
+
     private var FRAMES_PER_MOVE_ANIM_GROUP:Int = 8;
 
     var data:MapData;
@@ -61,7 +67,7 @@ class PixiBlitter implements IMapDrawer {
                 spectate:true,
                 showBlock:false,
                 showVisit:false,
-                showGrid:true
+                showGrid:false
             }
         };
 
@@ -121,7 +127,7 @@ class PixiBlitter implements IMapDrawer {
                     var tile:MapTile = data.ttiles[pos.x][pos.y][pos.z];
 
                     if(!(settings.field("session").field("spectate"):Bool) && !info.visibilityMap[pos.x][pos.y][topTile.z] && !info.showAllTerrain) {
-//                        drawFow(pos);
+                        drawFow(pos);
                     }
 
                     // overlay needs to be drawn over fow, because of artifacts-aura-like spells
@@ -273,9 +279,9 @@ class PixiBlitter implements IMapDrawer {
         var image:Texture;
 
         if (retBitmapID >= 0) {
-            image = graphics.fogOfWarFullHide.getTexture(retBitmapID);
+            image = graphics.fogOfWarPartialHide.getTexture(retBitmapID);
         } else {
-            image = graphics.fogOfWarPartialHide.getTexture(-retBitmapID - 1);
+            image = graphics.fogOfWarFullHide.getTexture(-retBitmapID - 1);
         }
 
         var destRect = new Rect(realPos.x, realPos.y, tileSize, tileSize);
@@ -318,10 +324,20 @@ class PixiBlitter implements IMapDrawer {
                 if (objData.flagBitmap != null) {
                     if (objData.isMoving) {
 //                        srcRect.y += FRAMES_PER_MOVE_ANIM_GROUP * 2 - tileSize;
-                        var dstRect = new Rect(object.pos.x, Std.int(object.pos.y - tileSize / 2), tileSize, tileSize);
+                        var dstRect = new Rect(
+                            initPos.x + (objectBounds.x - topTile.x) * tileSize,
+                            initPos.y + Std.int((objectBounds.y - topTile.y - 0.5) * tileSize),
+                            tileSize,
+                            tileSize
+                        );
                         drawHeroFlag(objData.flagBitmap, /*srcRect*/null, dstRect, true);
                     } else {
-                        var dstRect = new Rect(object.pos.x - 2 * tileSize, object.pos.y - tileSize, 3 * tileSize, 2 * tileSize);
+                        var dstRect = new Rect(
+                            initPos.x + (objectBounds.x - topTile.x) * tileSize,
+                            initPos.y + (objectBounds.y - topTile.y) * tileSize,
+                            tileSize,
+                            tileSize
+                        );
                         drawHeroFlag(objData.flagBitmap, null, dstRect, false);
                     }
                 }
@@ -342,12 +358,12 @@ class PixiBlitter implements IMapDrawer {
         if (obj == null) {
             return new AnimTextureHolder();
         }
-//        if (obj.ID == Obj.HERO) {
-//            return findHeroBitmap(cast(obj, GHeroInstance), anim);
-//        }
-//        if (obj.ID == Obj.BOAT) {
-//            return findBoatBitmap(cast(obj, GBoat), anim);
-//        }
+        if (obj.ID == Obj.HERO) {
+            return findHeroBitmap(cast(obj, GHeroInstance), anim);
+        }
+        if (obj.ID == Obj.BOAT) {
+            return findBoatBitmap(cast(obj, GBoat), anim);
+        }
 
         // normal object
         var animation:PixiAnimation = TextureGraphics.instance.getAnimation(obj);
@@ -364,6 +380,108 @@ class PixiBlitter implements IMapDrawer {
 //        bitmap.setFlagColor(obj.tempOwner);
 
         return new AnimTextureHolder(bitmap);
+    }
+
+    public function findHeroBitmap(hero:GHeroInstance, anim:Int):AnimTextureHolder {
+        if (hero != null && hero.moveDir > 0 && hero.type != null) {//it's hero or boat
+            if (hero.tempOwner.getNum() >= PlayerColor.PLAYER_LIMIT) { //Neutral hero?
+                trace('[Error] A neutral hero ${hero.name} at ${hero.pos.toString()}. Should not happen!');
+                return new AnimTextureHolder();
+            }
+
+            //pick graphics of hero (or boat if hero is sailing)
+            var animation:PixiAnimation;
+            if (hero.boat != null) {
+                animation = TextureGraphics.instance.boatAnimations[hero.boat.subID];
+            } else {
+                animation = TextureGraphics.instance.heroAnimations[hero.appearance.animationFile];
+            }
+
+            var moving = !hero.isStanding;
+            var group = getHeroFrameGroup(hero.moveDir, moving);
+
+            try {
+                if (animation.size(group) > 0) {
+                    var frame = anim % animation.size(group);
+                    var heroImage = animation.getTexture(frame, group);
+
+                    //get flag overlay only if we have main image
+                    var flagImage = findFlagBitmap(hero, anim, hero.tempOwner, group);
+
+                    return new AnimTextureHolder(heroImage, flagImage, moving);
+                }
+            }
+            catch(e:Dynamic) {
+                trace(e);
+            }
+        }
+        return new AnimTextureHolder();
+    }
+
+    public function findBoatBitmap(boat:GBoat, anim:Int) {
+        var animation = TextureGraphics.instance.boatAnimations[boat.subID];
+        var group:Int = getHeroFrameGroup(boat.direction, false);
+        if (animation.size(group) > 0) {
+            return new AnimTextureHolder(animation.getTexture(anim % animation.size(group), group));
+        } else {
+            return new AnimTextureHolder();
+        }
+    }
+
+    public function getHeroFrameGroup(dir:Int, isMoving:Bool):Int {
+        return if (isMoving) {
+            movingHeroFrameGroup[dir];
+        } else {
+            heroFrameGroup[dir];
+        }
+    }
+
+    private function findFlagBitmap(hero:GHeroInstance, anim:Int, color:PlayerColor, group:Int) {
+        if (hero == null) {
+            //ToDo
+            return null;
+        }
+
+        if(hero.boat != null) {
+            return findBoatFlagBitmap(hero.boat, anim, color, group, hero.moveDir);
+        }
+        return findHeroFlagBitmap(hero, anim, color, group);
+    }
+
+    private function findBoatFlagBitmap(boat:GBoat, anim:Int, color:PlayerColor, group:Int, dir:Int) {
+        var boatType:Int = boat.subID;
+        if (boatType < 0 || boatType >= SdlGraphics.instance.boatFlagAnimations.length) {
+            trace('Not supported boat subtype: ${boat.subID}');
+            return null;
+        }
+
+        var subtypeFlags = TextureGraphics.instance.boatFlagAnimations[boatType];
+
+        var colorIndex:Int = color.getNum();
+
+        if (colorIndex < 0 || colorIndex >= subtypeFlags.length) {
+            trace('[Error] Invalid player color {colorIndex}');
+            return null;
+        }
+
+        return findFlagBitmapInternal(subtypeFlags[colorIndex], anim, group, dir, false);
+    }
+
+    private function findHeroFlagBitmap(hero:GHeroInstance, anim:Int, color:PlayerColor, group:Int) {
+        return findFlagBitmapInternal(TextureGraphics.instance.heroFlagAnimations[color.getNum()], anim, group, hero.moveDir, !hero.isStanding);
+    }
+
+    private function findFlagBitmapInternal(animation:PixiAnimation, anim:Int, group:Int, dir:Int, moving:Bool) {
+        var groupSize = animation.size(group);
+        if (groupSize == 0) {
+            return null;
+        }
+
+        if (moving) {
+            return animation.getTexture(anim % groupSize, group);
+        } else {
+            return animation.getTexture(Std.int(anim / 4) % groupSize, group);
+        }
     }
 
     function drawElement(source:Texture, src:Rect, dest:Rect, rotation:Int = 0) {

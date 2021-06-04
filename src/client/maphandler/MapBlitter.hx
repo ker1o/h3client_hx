@@ -17,7 +17,7 @@ using Reflect;
 
 class MapBlitter implements IMapDrawer {
     private static var movingHeroFrameGroup:Array<Int> = [0xff, 10, 5, 6, 7, 8, 9, 12, 11];
-    private static var heroFrameGroup:Array<Int> = [0xff, 10, 5, 6, 7, 8, 9, 12, 11];
+    private static var heroFrameGroup:Array<Int> = [0xff, 13, 0, 1, 2, 3, 4, 15, 14];
 
     private var FRAMES_PER_MOVE_ANIM_GROUP:Int = 8;
     private var data:MapData; // ptr to enclosing private var handler:map; generally for legacy reasons, probably could/should be refactored out of here
@@ -493,12 +493,14 @@ class MapBlitter implements IMapDrawer {
             retBitmapID = - data.hideBitmap[pos.x][pos.y][pos.z] - 1; //fully hidden
         }
 
+        var graphics = SdlGraphics.instance;
+
         var image:IImage;
 
         if (retBitmapID >= 0) {
-            image = SdlGraphics.instance.fogOfWarFullHide.getImage(retBitmapID);
+            image = graphics.fogOfWarPartialHide.getImage(retBitmapID);
         } else {
-            image = SdlGraphics.instance.fogOfWarPartialHide.getImage(-retBitmapID - 1);
+            image = graphics.fogOfWarFullHide.getImage(-retBitmapID - 1);
         }
 
         var destRect = Rect.fromRect(realTileRect);

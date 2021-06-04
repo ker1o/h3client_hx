@@ -21,15 +21,15 @@ class TextureGraphics {
 
     public var heroMoveArrows:PixiAnimation;
     // [hero class def name]  //added group 10: up - left, 11 - left and 12 - left down // 13 - up-left standing; 14 - left standing; 15 - left down standing
-    public var heroAnimations:Map<String, PixiAnimation>;
-    public var heroFlagAnimations:Array<PixiAnimation>;
+    public var heroAnimations = new Map<String, PixiAnimation>();
+    public var heroFlagAnimations = new Array<PixiAnimation>();
 
     // [boat type: 0 .. 2]  //added group 10: up - left, 11 - left and 12 - left down // 13 - up-left standing; 14 - left standing; 15 - left down standing
-    public var boatAnimations:Array<PixiAnimation>;
-    public var boatFlagAnimations:Array<Array<PixiAnimation>>;
+    public var boatAnimations = new Array<PixiAnimation>();
+    public var boatFlagAnimations = new Array<Array<PixiAnimation>>();
 
-    public var mapObjectAnimationPromises:Map<String, Promise<PixiAnimation>>;
-    public var mapObjectAnimations:Map<String, PixiAnimation>;
+    public var mapObjectAnimationPromises = new Map<String, Promise<PixiAnimation>>();
+    public var mapObjectAnimations = new Map<String, PixiAnimation>();
 
     public var fogOfWarFullHide:PixiAnimation;
     public var fogOfWarPartialHide:PixiAnimation;
@@ -49,6 +49,8 @@ class TextureGraphics {
 
     public function load() {
         initTerrainGraphics();
+        loadHeroAnimations();
+        loadFogOfWar();
     }
 
     public function loadAnimation(obj:GObjectInstance):Promise<PixiAnimation> {
@@ -147,5 +149,78 @@ class TextureGraphics {
                 resolve(true);
             });
         });
+    }
+
+    function loadHeroAnimations():Promise<Dynamic> {
+        function getAnimatedSprite(animation:Animation, spriteSheet:Spritesheet) {
+            var pixiAnimation = new PixiAnimation();
+            for(group in animation.images.keys()) {
+                pixiAnimation[group] = new AnimatedSprite(spriteSheet.animations.field(animation.name + "_" + group), false);
+            }
+            return pixiAnimation;
+        }
+
+        function fillArray(pixiAnimations:Array<PixiAnimation>, animations:Array<Animation>, spriteSheet:Spritesheet) {
+            for(anim in animations) {
+                pixiAnimations.push(getAnimatedSprite(anim, spriteSheet));
+            }
+        }
+
+        function fillMap(pixiAnimations:Map<String, PixiAnimation>, animations:Map<String, Animation>, spriteSheet:Spritesheet) {
+            for(anim in animations) {
+                pixiAnimations.set(anim.name, getAnimatedSprite(anim, spriteSheet));
+            }
+        }
+
+        var atlasBuilder = new AtlasBuilder();
+        for(anim in SdlGraphics.instance.heroAnimations) {
+            atlasBuilder.addAnim(anim);
+        }
+
+        for(anim in SdlGraphics.instance.boatAnimations) {
+            atlasBuilder.addAnim(anim);
+        }
+
+        for(anim in SdlGraphics.instance.heroFlagAnimations) {
+            atlasBuilder.addAnim(anim);
+        }
+
+        for(animArr in SdlGraphics.instance.boatFlagAnimations) {
+            for(anim in animArr) {
+                atlasBuilder.addAnim(anim);
+            }
+        }
+
+        var atlas = atlasBuilder.build();
+        var base = BaseTexture.fromBuffer(atlas.bytes, atlas.w, atlas.h, {});
+
+        var spriteSheet = new Spritesheet(base, atlas.description, "heroAnimations");
+        return new Promise(function (resolve, reject) {
+            spriteSheet.parse(function() {
+                fillMap(heroAnimations, SdlGraphics.instance.heroAnimations, spriteSheet);
+                fillArray(boatAnimations, SdlGraphics.instance.boatAnimations, spriteSheet);
+                fillArray(heroFlagAnimations, SdlGraphics.instance.heroFlagAnimations, spriteSheet);
+                for (i in 0...SdlGraphics.instance.boatFlagAnimations.length) {
+                    boatFlagAnimations[i] = [];
+                    fillArray(boatFlagAnimations[i], SdlGraphics.instance.boatFlagAnimations[i], spriteSheet);
+                }
+
+                mapObjectAnimations["AB01_.DEF"] = boatAnimations[0];
+                mapObjectAnimations["AB02_.DEF"] = boatAnimations[1];
+                mapObjectAnimations["AB03_.DEF"] = boatAnimations[2];
+                resolve(true);
+            });
+        });
+    }
+
+    function loadFogOfWar():Promise<Dynamic> {
+        return Promise.all([
+            loadPixiAnimation(SdlGraphics.instance.fogOfWarFullHide).then(function(pixiAnimation:PixiAnimation) {
+                fogOfWarFullHide = pixiAnimation;
+            }),
+            loadPixiAnimation(SdlGraphics.instance.fogOfWarPartialHide).then(function(pixiAnimation:PixiAnimation) {
+                fogOfWarPartialHide = pixiAnimation;
+            })
+        ]);
     }
 }

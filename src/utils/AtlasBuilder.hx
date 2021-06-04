@@ -9,7 +9,7 @@ import gui.Animation;
 using Reflect;
 
 class AtlasBuilder {
-    private static var MAX_SIZE:Int = 2048;
+    private static var MAX_SIZE:Int = 4096;
     private static var MIN_SIZE:Int = 32;
     private static var sizes:Map<Int, {w:Int, h:Int}>;
 
@@ -46,6 +46,9 @@ class AtlasBuilder {
         var sum:Int = 0;
 
         for (anim in _anims) {
+            if(anim.name == "AH01_.def") {
+                trace("!");
+            }
             for (group in anim.images.keys()) {
                 var frameImgs = anim.images[group];
                 for (i in 0...frameImgs.length) {
