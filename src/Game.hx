@@ -153,7 +153,7 @@ class Game {
         info.otherheroAnim = true;
         info.anim = animFrame;
         info.heroAnim = 6;
-//        normalBlitter.draw(info);
+        normalBlitter.draw(info);
         pixiBlitter.draw(info);
     }
 }

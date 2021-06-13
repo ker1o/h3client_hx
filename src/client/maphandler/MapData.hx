@@ -1,5 +1,6 @@
 package client.maphandler;
 
+import gui.FadeAnimation;
 import mapObjects.misc.GBoat;
 import mapObjects.hero.GHeroInstance;
 import constants.Obj;
@@ -19,8 +20,9 @@ class MapData {
 
     //Fog of War cache (not owned)
     public var hideBitmap:Array<Array<Array<Int>>>; //frame indexes (in FoWfullHide) of graphic that should be used to fully hide a tile
-    public var animationPhase:Map<GObjectInstance, Int> = new Map<GObjectInstance, Int>();
+    public var animationPhase = new Map<GObjectInstance, Int>();
 
+    public var fadeAnims = new Map<Int, {pos:Int3, anim:FadeAnimation}>();
     private var fadeAnimCounter:Int = 0;
 
     public function new() {}
@@ -143,6 +145,40 @@ class MapData {
         }
 
         // for pixi
-        map.objects.sort(objectsSorter);
+//        map.objects.sort(objectsSorter);
+    }
+
+    public function updateObjectsFade() {
+        var fadeAnimKeys = fadeAnims.keys();
+        for (fadeAnimKey in fadeAnimKeys) {
+            var fadeAnim:{pos:Int3, anim:FadeAnimation} = fadeAnims[fadeAnimKey];
+            var pos:Int3 = fadeAnim.pos;
+            var anim:FadeAnimation = fadeAnim.anim;
+
+            anim.update();
+
+            if (anim.isFading()) {
+                continue;
+            } else {// fade finished
+                var objs = ttiles[pos.x][pos.y][pos.z].objects;
+                var objIndex = 0;
+                while (objIndex < objs.length) {
+                    var obj = objs[objIndex];
+                    if (obj.fadeAnimKey == objIndex) {
+                        trace('Fade anim finished for obj at ${pos}');
+                        if (anim.fadingMode == FadingMode.OUT) {
+                            objs.splice(objIndex, 1); // if this was fadeout, remove the object from the map
+                        } else {
+                            obj.fadeAnimKey = -1; // for fadein, just remove its connection to the finished fade
+                        }
+                        break;
+                    }
+                    objIndex++;
+                }
+                fadeAnims.remove(fadeAnimKey);
+            }
+        }
+
+        return fadeAnims.iterator().hasNext();
     }
 }

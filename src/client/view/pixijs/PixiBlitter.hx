@@ -1,5 +1,6 @@
 package client.view.pixijs;
 
+import gui.FadeAnimation;
 import constants.id.PlayerColor;
 import mapObjects.misc.GBoat;
 import mapObjects.hero.GHeroInstance;
@@ -289,69 +290,96 @@ class PixiBlitter implements IMapDrawer {
     }
 
     function drawObjects() {
-        var canvasBounds = new Rect(topTile.x, topTile.y, topTile.x + tileCount.x, tileCount.y);
-        var objectBounds = new Rect();
-        for(object in data.map.objects) {
-            objectBounds.update(object.getLeft(), object.getTop(), object.getWidth(), object.getHeight());
-            if (!canvasBounds.cross(objectBounds)) {
-                continue;
-            }
-//            if (object.fadeAnimKey >= 0) {
-//                //ToDo
-//                continue;
-//            }
+        var pos = new Int3();
 
-            if (object == null) {
-                trace("Stray map object that isn't fading");
-                continue;
+        realPos.y = initPos.y;
+        pos.y = topTile.y;
+        for (j in 0...tileCount.y) {
+            realPos.x = initPos.x;
+            pos.x = topTile.x;
+            for (i in 0...tileCount.x) {
+                var tile:MapTile = data.ttiles[pos.x][pos.y][pos.z];
+                var objects = tile.objects;
+                for(object in objects) {
+                    if(object.obj.pos.equals(pos)) {
+                        drawObj(object.obj);
+                    }
+                }
+                pos.x++;
+                realPos.x += tileSize;
             }
+            pos.y++;
+            realPos.y += tileSize;
+        }
+    }
+
+    function drawObj(object:GObjectInstance) {
+        var alpha = 1.0;
+        var objectBounds = new Rect();
+        objectBounds.update(object.getLeft(), object.getTop(), object.getWidth(), object.getHeight());
+//        if (!canvasBounds.cross(objectBounds)) {
+//            continue;
+//        }
+        if (object.fadeAnimKey >= 0) {
+            if (object.fadeAnimKey >= 0) {
+                if (data.fadeAnims.exists(object.fadeAnimKey)) {
+                    // this object is currently fading, so skip normal drawing
+                    var fade:FadeAnimation = data.fadeAnims[object.fadeAnimKey].anim;
+                    alpha = fade.alpha;
+                }
+                trace('Fading map object with missing fade anim : ${object.fadeAnimKey}');
+            }
+        }
+
+        if (object == null) {
+            trace("Stray map object that isn't fading");
+            return;
+        }
 
 //            if (!canDrawObject(obj))
 //                continue;
 
-            var objData = findObjectBitmap(object, info.anim);
-            if (objData.objBitmap != null) {
-                drawObject(
-                    objData.objBitmap,
-                    new Rect(
-                        initPos.x + (objectBounds.x - topTile.x) * tileSize,
-                        initPos.y + (objectBounds.y - topTile.y) * tileSize,
-                        objectBounds.w * tileSize,
-                        objectBounds.h * tileSize
-                    ),
-                    objData.isMoving);
+        var objData = findObjectBitmap(object, info.anim);
+        if (objData.objBitmap != null) {
+            drawObject(
+                objData.objBitmap,
+                new Rect(
+                initPos.x + (objectBounds.x - topTile.x) * tileSize,
+                initPos.y + (objectBounds.y - topTile.y) * tileSize,
+                objectBounds.w * tileSize,
+                objectBounds.h * tileSize
+                ),
+                objData.isMoving);
 
-                if (objData.flagBitmap != null) {
-                    if (objData.isMoving) {
+            if (objData.flagBitmap != null) {
+                if (objData.isMoving) {
 //                        srcRect.y += FRAMES_PER_MOVE_ANIM_GROUP * 2 - tileSize;
-                        var dstRect = new Rect(
-                            initPos.x + (objectBounds.x - topTile.x) * tileSize,
-                            initPos.y + Std.int((objectBounds.y - topTile.y - 0.5) * tileSize),
-                            tileSize,
-                            tileSize
-                        );
-                        drawHeroFlag(objData.flagBitmap, /*srcRect*/null, dstRect, true);
-                    } else {
-                        var dstRect = new Rect(
-                            initPos.x + (objectBounds.x - topTile.x) * tileSize,
-                            initPos.y + (objectBounds.y - topTile.y) * tileSize,
-                            tileSize,
-                            tileSize
-                        );
-                        drawHeroFlag(objData.flagBitmap, null, dstRect, false);
-                    }
+                    var dstRect = new Rect(
+                    initPos.x + (objectBounds.x - topTile.x) * tileSize,
+                    initPos.y + Std.int((objectBounds.y - topTile.y - 0.5) * tileSize),
+                    tileSize,
+                    tileSize
+                    );
+                    drawHeroFlag(objData.flagBitmap, /*srcRect*/null, dstRect, true);
+                } else {
+                    var dstRect = new Rect(
+                    initPos.x + (objectBounds.x - topTile.x) * tileSize,
+                    initPos.y + (objectBounds.y - topTile.y) * tileSize,
+                    tileSize,
+                    tileSize
+                    );
+                    drawHeroFlag(objData.flagBitmap, null, dstRect, false);
                 }
-
             }
         }
     }
 
-    function drawObject(source:Texture, drawRect:Rect, moving:Bool) {
-        drawElement(source, null, drawRect);
+    function drawObject(source:Texture, drawRect:Rect, moving:Bool, alpha:Float = 1) {
+        drawElement(source, null, drawRect, alpha);
     }
 
-    public function drawHeroFlag(source:Texture, sourceRect:Rect, destRect:Rect, moving:Bool) {
-        drawElement(source, sourceRect, destRect);
+    public function drawHeroFlag(source:Texture, sourceRect:Rect, destRect:Rect, moving:Bool, alpha:Float = 1) {
+        drawElement(source, sourceRect, destRect, alpha);
     }
 
     function findObjectBitmap(obj:GObjectInstance, anim:Int):AnimTextureHolder {
@@ -484,10 +512,11 @@ class PixiBlitter implements IMapDrawer {
         }
     }
 
-    function drawElement(source:Texture, src:Rect, dest:Rect, rotation:Int = 0) {
+    function drawElement(source:Texture, src:Rect, dest:Rect, rotation:Int = 0, alpha:Float = 1) {
         var sprite = new Sprite(source);
         sprite.x = dest.x;
         sprite.y = dest.y;
+        sprite.alpha = alpha;
 
         // flipping
         if (rotation == 2 || rotation == 3) {
