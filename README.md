@@ -6,6 +6,9 @@ Original C++ project: https://github.com/vcmi/vcmi
 
 Currently porting is in progress and the project works just as a map viewer for a hardcoded map (Vial of Life.h3m).
 
+For this time you can see map rendering ([https://pbs.twimg.com/tweet_video_thumb/EOmFiTSWoAADiy9.jpg](https://video.twimg.com/tweet_video/EOmFiTSWoAADiy9.mp4))
+
+
 ## Reqirements
 Haxe 4
 
